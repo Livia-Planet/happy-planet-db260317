@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { PassportData, Language } from '../types';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
-import { calculateStats, generateFlavorText, getDominantStat, TRANSLATIONS, getStarDate, ALL_PRESETS } from '../utils/gameLogic';
+import { calculateStats, generateFlavorText, getDominantStat, TRANSLATIONS, getStarDate, ALL_PRESETS, getMixedTraits } from '../utils/gameLogic';
+import { RadarChart } from './RadarChart';
 
 interface PassportBookProps {
   passports: PassportData[];
@@ -13,7 +13,7 @@ interface PassportBookProps {
   lang: Language;
 }
 
-type Tab = 'bio' | 'relations' | 'story' | 'stats';
+type Tab = 'profile' | 'personality' | 'relations' | 'story';
 
 const THEMES = [
   { id: 'space', bg: '#2c3e50', text: 'text-white', isLight: false },
@@ -33,8 +33,9 @@ export const PassportBook: React.FC<PassportBookProps> = ({
 }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>('bio');
+  const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isJobPickerOpen, setIsJobPickerOpen] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(THEMES[0]);
 
   // Find selected passport
@@ -137,7 +138,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
             return (
               <div
                 key={p.id}
-                onClick={() => { setSelectedId(p.id); setIsFlipped(false); setActiveTab('bio'); }}
+                onClick={() => { setSelectedId(p.id); setIsFlipped(false); setActiveTab('profile'); }}
                 className={`group cursor-pointer bg-white p-3 pb-6 border-[3px] border-black rounded-xl transition-all relative
                    ${currentTheme.isLight
                     ? 'shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.2)]'
@@ -231,7 +232,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
 
         {/* Tabs */}
         <div className="flex px-6 mt-6 border-b-2 border-gray-200">
-          {(['bio', 'relations', 'story', 'stats'] as Tab[]).map(tab => (
+          {(['profile', 'personality', 'relations', 'story'] as Tab[]).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -250,8 +251,8 @@ export const PassportBook: React.FC<PassportBookProps> = ({
         {/* Content Area */}
         <div className="p-6 flex-1 min-h-[300px]">
 
-          {/* TAB: BIO */}
-          {activeTab === 'bio' && (
+          {/* TAB: PROFILE (formerly BIO) */}
+          {activeTab === 'profile' && (
             <div className="space-y-4 animate-fade-in">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -329,37 +330,96 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                 </div>
               </div>
 
-              {/* OCCUPATIONS (NEW) */}
+              {/* OCCUPATIONS (UPGRADED) */}
               <div className="mt-4">
                 <label className={`block font-hand font-bold text-sm mb-2 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
                   {TRANSLATIONS.ui.labels.occupationLabel[lang]}
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {Object.entries(TRANSLATIONS.ui.occupations).map(([key, val]) => {
-                    const isSelected = activePassport.occupations?.includes(key);
+                  {/* Selected Labels Only */}
+                  {(activePassport.occupations || []).map((key) => {
+                    const presetVal = (TRANSLATIONS.ui.occupations as any)[key];
+                    const label = presetVal ? presetVal[lang] : key;
+
                     return (
-                      <button
+                      <div
                         key={key}
-                        onClick={() => {
-                          const current = activePassport.occupations || [];
-                          const next = isSelected
-                            ? current.filter(o => o !== key)
-                            : [...current, key];
-                          onUpdatePassport(activePassport.id, 'occupations', next);
-                        }}
                         className={`
-                                  px-3 py-1 rounded-full border-2 text-xs font-bold transition-all
-                                  ${isSelected
-                            ? (isFlipped ? 'bg-livia-blue border-white text-white rotate-1 scale-110' : 'bg-livia-blue border-black text-white shadow-[3px_3px_0_black] -rotate-1 scale-105')
-                            : (isFlipped ? 'bg-white/5 border-gray-700 text-gray-400' : 'bg-gray-100 border-gray-200 text-gray-400 hover:border-gray-300')}
-                                `}
+                          px-3 py-1 rounded-full border-2 text-xs font-bold transition-all flex items-center gap-2
+                          ${isFlipped ? 'bg-livia-blue border-white text-white' : 'bg-livia-blue border-black text-white shadow-[3px_3px_0_black]'}
+                        `}
                       >
-                        {(val as any)[lang]}
-                      </button>
+                        {label}
+                        <button
+                          onClick={() => {
+                            const next = activePassport.occupations?.filter(o => o !== key);
+                            onUpdatePassport(activePassport.id, 'occupations', next);
+                          }}
+                          className="hover:text-red-300 font-bold"
+                        >
+                          ×
+                        </button>
+                      </div>
                     );
                   })}
+
+                  {/* Open Job Picker Button */}
+                  <button
+                    onClick={() => setIsJobPickerOpen(true)}
+                    className={`
+                      px-3 py-1 rounded-full border-2 border-dashed flex items-center justify-center font-bold text-sm transition-all
+                      ${isFlipped ? 'border-gray-600 text-gray-500 hover:text-white' : 'border-gray-300 text-gray-400 hover:border-black hover:text-black'}
+                    `}
+                  >
+                    + {lang === 'cn' ? "选择职业" : "Pick Occupation"}
+                  </button>
                 </div>
               </div>
+
+              {/* JOB PICKER MODAL (Simple Grid) */}
+              {isJobPickerOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                  <div className={`w-full max-w-md p-6 rounded-2xl border-[4px] border-black shadow-[8px_8px_0_black] animate-scale-in ${isFlipped ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-xl font-black uppercase tracking-tight">{TRANSLATIONS.ui.labels.occupationLabel[lang]}</h3>
+                      <button onClick={() => setIsJobPickerOpen(false)} className="text-2xl font-black hover:scale-110 transition-transform">&times;</button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                      {Object.entries(TRANSLATIONS.ui.occupations).map(([key, val]) => {
+                        const isSelected = activePassport.occupations?.includes(key);
+                        return (
+                          <button
+                            key={key}
+                            onClick={() => {
+                              const current = activePassport.occupations || [];
+                              const next = isSelected
+                                ? current.filter(o => o !== key)
+                                : [...current, key];
+                              onUpdatePassport(activePassport.id, 'occupations', next);
+                            }}
+                            className={`
+                              p-3 rounded-xl border-2 font-bold transition-all text-sm
+                              ${isSelected
+                                ? 'bg-livia-blue border-black text-white shadow-[3px_3px_0_black] -translate-y-0.5'
+                                : isFlipped ? 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500' : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-black hover:text-black'}
+                            `}
+                          >
+                            {(val as any)[lang]}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      onClick={() => setIsJobPickerOpen(false)}
+                      className="w-full mt-6 py-3 bg-black text-white font-black rounded-xl hover:bg-gray-800 transition-colors uppercase tracking-widest"
+                    >
+                      {lang === 'cn' ? "完成" : "DONE"}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="mt-4">
                 <label className={`block font-hand font-bold text-sm mb-1 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -373,21 +433,115 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                   placeholder={lang === 'cn' ? '未知星球' : 'Unknown Planet'}
                 />
               </div>
+
+              {/* Delete Button Detail (Hidden for permanent residents) */}
+              {!ALL_PRESETS.some(preset => preset.id.toUpperCase() === activePassport.id.toUpperCase()) && (
+                <div className="pt-6 border-t border-dashed border-gray-200">
+                  <button
+                    onClick={() => setDeleteId(activePassport.id)}
+                    className="flex items-center gap-2 text-red-500 font-bold hover:underline py-2"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                    </svg>
+                    {TRANSLATIONS.ui.delete[lang]}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Delete Button Detail (Hidden for permanent residents) */}
-          {!ALL_PRESETS.some(preset => preset.id.toUpperCase() === activePassport.id.toUpperCase()) && (
-            <div className="pt-4 flex justify-end">
-              <button
-                onClick={() => setDeleteId(activePassport.id)}
-                className="flex items-center gap-2 text-red-500 font-bold hover:underline"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                </svg>
-                {TRANSLATIONS.ui.delete[lang]}
-              </button>
+          {/* TAB: PERSONALITY (formerly STATS) */}
+          {activeTab === 'personality' && (
+            <div className="animate-fade-in pt-2">
+              <div className="flex flex-col md:flex-row gap-6 items-center">
+                {/* Left: Traits & Bars */}
+                <div className="flex-1 space-y-6 w-full">
+                  {/* Traits bubble Display */}
+                  <div className="flex flex-wrap justify-start gap-2 py-2">
+                    {getMixedTraits(activePassport.id, activeStats).map((trait, idx) => (
+                      <div
+                        key={idx}
+                        className="px-3 py-1.5 rounded-xl border-[2.5px] border-black flex items-center justify-center shadow-[3px_3px_0_rgba(0,0,0,0.1)] transition-all"
+                        style={{
+                          backgroundColor: trait.type === 'mod' ? '#FFDADA' : trait.type === 'klurighet' ? '#D1E9FF' : '#FFF4D1',
+                          color: '#000'
+                        }}
+                      >
+                        <span className="font-black whitespace-nowrap leading-none uppercase tracking-tight text-xs">
+                          {trait.name[lang]}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Stat Bars Detail */}
+                  <div className="space-y-4">
+                    {/* Courage */}
+                    <div className="flex items-center gap-3">
+                      <span className={`w-16 font-bold font-hand text-lg ${isFlipped ? 'text-red-400' : 'text-gray-800'}`}>
+                        {TRANSLATIONS.stats.mod[lang]}
+                      </span>
+                      <div className="flex gap-1.5">
+                        {Array.from({ length: 9 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className={`w-2.5 h-2.5 rounded-full border-[1.5px] ${i < activeStats.mod
+                              ? (isFlipped ? 'bg-red-500 border-red-400 shadow-[0_0_5px_red]' : 'bg-livia-red border-black')
+                              : (isFlipped ? 'border-gray-700 bg-transparent' : 'border-gray-300 bg-transparent')
+                              }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    {/* Mischief */}
+                    <div className="flex items-center gap-3">
+                      <span className={`w-16 font-bold font-hand text-lg ${isFlipped ? 'text-yellow-400' : 'text-gray-800'}`}>
+                        {TRANSLATIONS.stats.bus[lang]}
+                      </span>
+                      <div className="flex gap-1.5">
+                        {Array.from({ length: 9 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className={`w-2.5 h-2.5 rounded-full border-[1.5px] ${i < activeStats.bus
+                              ? (isFlipped ? 'bg-yellow-400 border-yellow-300 shadow-[0_0_5px_yellow]' : 'bg-livia-yellow border-black')
+                              : (isFlipped ? 'border-gray-700 bg-transparent' : 'border-gray-300 bg-transparent')
+                              }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    {/* Wisdom */}
+                    <div className="flex items-center gap-3">
+                      <span className={`w-16 font-bold font-hand text-lg ${isFlipped ? 'text-blue-400' : 'text-gray-800'}`}>
+                        {TRANSLATIONS.stats.klurighet[lang]}
+                      </span>
+                      <div className="flex gap-1.5">
+                        {Array.from({ length: 9 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className={`w-2.5 h-2.5 rounded-full border-[1.5px] ${i < activeStats.klurighet
+                              ? (isFlipped ? 'bg-blue-400 border-blue-300 shadow-[0_0_5px_cyan]' : 'bg-livia-blue border-black')
+                              : (isFlipped ? 'border-gray-700 bg-transparent' : 'border-gray-300 bg-transparent')
+                              }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Radar Chart */}
+                <div className="flex-1 flex justify-center items-center py-2 min-h-[200px]">
+                  <RadarChart stats={activeStats} lang={lang} isDark={isFlipped} />
+                </div>
+              </div>
+
+              <div className={`mt-6 p-4 rounded-xl border-2 border-dashed ${isFlipped ? 'border-gray-600 bg-white/5' : 'border-gray-300 bg-gray-50'}`}>
+                <p className={`font-hand text-lg italic text-center ${isFlipped ? 'text-gray-300' : 'text-gray-600'}`}>
+                  "{activeFlavor}"
+                </p>
+              </div>
             </div>
           )}
 
@@ -509,69 +663,6 @@ export const PassportBook: React.FC<PassportBookProps> = ({
               />
             </div>
           )}
-
-          {/* TAB: STATS */}
-          {activeTab === 'stats' && (
-            <div className="space-y-6 animate-fade-in pt-2">
-              {/* Courage */}
-              <div className="flex items-center gap-4">
-                <span className={`w-20 font-bold font-hand text-xl ${isFlipped ? 'text-red-400' : 'text-gray-800'}`}>
-                  {TRANSLATIONS.stats.mod[lang]}
-                </span>
-                <div className="flex gap-2">
-                  {Array.from({ length: 9 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`w-3 h-3 rounded-full border-2 ${i < activeStats.mod
-                        ? (isFlipped ? 'bg-red-500 border-red-400 shadow-[0_0_5px_red]' : 'bg-livia-red border-black')
-                        : (isFlipped ? 'border-gray-700 bg-transparent' : 'border-gray-300 bg-transparent')
-                        }`}
-                    />
-                  ))}
-                </div>
-              </div>
-              {/* Mischief */}
-              <div className="flex items-center gap-4">
-                <span className={`w-20 font-bold font-hand text-xl ${isFlipped ? 'text-yellow-400' : 'text-gray-800'}`}>
-                  {TRANSLATIONS.stats.bus[lang]}
-                </span>
-                <div className="flex gap-2">
-                  {Array.from({ length: 9 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`w-3 h-3 rounded-full border-2 ${i < activeStats.bus
-                        ? (isFlipped ? 'bg-yellow-400 border-yellow-300 shadow-[0_0_5px_yellow]' : 'bg-livia-yellow border-black')
-                        : (isFlipped ? 'border-gray-700 bg-transparent' : 'border-gray-300 bg-transparent')
-                        }`}
-                    />
-                  ))}
-                </div>
-              </div>
-              {/* Wisdom */}
-              <div className="flex items-center gap-4">
-                <span className={`w-20 font-bold font-hand text-xl ${isFlipped ? 'text-blue-400' : 'text-gray-800'}`}>
-                  {TRANSLATIONS.stats.klurighet[lang]}
-                </span>
-                <div className="flex gap-2">
-                  {Array.from({ length: 9 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`w-3 h-3 rounded-full border-2 ${i < activeStats.klurighet
-                        ? (isFlipped ? 'bg-blue-400 border-blue-300 shadow-[0_0_5px_cyan]' : 'bg-livia-blue border-black')
-                        : (isFlipped ? 'border-gray-700 bg-transparent' : 'border-gray-300 bg-transparent')
-                        }`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className={`mt-8 p-4 rounded-xl border-2 border-dashed ${isFlipped ? 'border-gray-600 bg-white/5' : 'border-gray-300 bg-gray-50'}`}>
-                <p className={`font-hand text-lg italic text-center ${isFlipped ? 'text-gray-300' : 'text-gray-600'}`}>
-                  "{activeFlavor}"
-                </p>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Footer / Stamp */}
@@ -580,7 +671,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
             OFFICIAL<br />CITIZEN<br />OF<br />HAPPY PLANET
           </div>
         </div>
-      </div>
+      </div >
 
     </div >
   );

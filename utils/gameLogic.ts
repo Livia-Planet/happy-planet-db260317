@@ -90,10 +90,10 @@ export const TRANSLATIONS = {
       cn: "确定要把这个居民从星际档案中移除吗？此操作不可撤销。"
     },
     tabs: {
-      bio: { se: "BIO", en: "BIO", cn: "档案" },
+      profile: { se: "PROFIL", en: "PROFILE", cn: "档案" },
+      personality: { se: "PERSONLIGHET", en: "PERSONALITY", cn: "性格" },
       relations: { se: "RELATIONER", en: "RELATIONS", cn: "关系" },
-      story: { se: "SAGA", en: "STORY", cn: "故事" },
-      stats: { se: "KRAFT", en: "STATS", cn: "能力" }
+      story: { se: "BERÄTTELSE", en: "STORY", cn: "故事" }
     },
     labels: {
       age: { se: "ÅLDER", en: "AGE", cn: "年龄" },
@@ -119,7 +119,7 @@ export const TRANSLATIONS = {
       barber: { se: "Barberare", en: "Barber", cn: "理发师" },
       engineer: { se: "Ingenjör", en: "Engineer", cn: "工程师" },
       inventor: { se: "Uppfinnare", en: "Inventor", cn: "发明家" },
-      adventurer: { se: "Äventyrare", en: "Adventurer", cn: "探险家" },
+      explorer: { se: "Upptäckare", en: "Explorer", cn: "探险家" },
       skateboard_master: { se: "Skateboardmästare", en: "Skateboard Master", cn: "滑板大师" }
     },
     species: {
@@ -207,6 +207,165 @@ export const getPartName = (partId: string, lang: Language): string => {
   return TRANSLATIONS.parts[partId]?.[lang] || PARTS_DB[partId]?.name || partId;
 };
 
+// === PERSONALITY TRAITS SYSTEM 3.0 ===
+export const SuperTraitsPool = {
+  mod: {
+    normal: {
+      low: [
+        { cn: '胆小', en: 'Timid', se: 'Blyg' },
+        { cn: '谨慎', en: 'Cautious', se: 'Försiktig' },
+        { cn: '害羞', en: 'Shy', se: 'Blyg' }
+      ],
+      mid: [
+        { cn: '沉稳', en: 'Steady', se: 'Stabil' },
+        { cn: '温和', en: 'Gentle', se: 'Mild' },
+        { cn: '靠谱', en: 'Reliable', se: 'Pålitlig' }
+      ],
+      high: [
+        { cn: '勇敢', en: 'Brave', se: 'Modig' },
+        { cn: '热血', en: 'Passionate', se: 'Hängiven' },
+        { cn: '坚强', en: 'Strong', se: 'Stark' },
+        { cn: '刚毅', en: 'Resolute', se: 'Beslutsam' }
+      ]
+    },
+    scifi: {
+      low: [
+        { cn: '避雷针倾向', en: 'Lightning-Rod', se: 'Åskledare' },
+        { cn: '能量节省者', en: 'Energy-Saver', se: 'Energisparare' }
+      ],
+      mid: [
+        { cn: '亚光速惯性', en: 'Sub-light Inertia', se: 'Sub-ljus tröghet' },
+        { cn: '耀斑心脏', en: 'Flare-Heart', se: 'Flare-hjärta' }
+      ],
+      high: [
+        { cn: '超新星意志', en: 'Supernova-Will', se: 'Supernova-vilja' },
+        { cn: '维度锚点', en: 'Dimension-Anchor', se: 'Dimensionsankare' }
+      ]
+    }
+  },
+  klurighet: {
+    normal: {
+      low: [
+        { cn: '憨厚', en: 'Simple', se: 'Enkel' },
+        { cn: '单纯', en: 'Innocent', se: 'Oskyldig' },
+        { cn: '迷糊', en: 'Clumsy', se: 'Vimsig' }
+      ],
+      mid: [
+        { cn: '乐于助人', en: 'Helpful', se: 'Hjälpsam' },
+        { cn: '务实', en: 'Pragmatic', se: 'Pragmatisk' },
+        { cn: '勤奋', en: 'Diligent', se: 'Flitig' }
+      ],
+      high: [
+        { cn: '睿智', en: 'Wise', se: 'Vis' },
+        { cn: '天才', en: 'Genius', se: 'Geni' },
+        { cn: '敏锐', en: 'Sharp', se: 'Skarp' },
+        { cn: '智多星', en: 'Mastermind', se: 'Tänkar-stjärna' }
+      ]
+    },
+    scifi: {
+      low: [
+        { cn: '原始信号', en: 'Original-Signal', se: 'Originalsignal' },
+        { cn: '星尘脑', en: 'Stardust-Brain', se: 'Stjärnstoftshjärna' }
+      ],
+      mid: [
+        { cn: '逻辑脉冲', en: 'Logic-Pulse', se: 'Logisk puls' },
+        { cn: '轨道计算者', en: 'Orbit-Calc', se: 'Banberäknare' }
+      ],
+      high: [
+        { cn: '量子态思维', en: 'Quantum-Mind', se: 'Kvanttanke' },
+        { cn: '算法直觉', en: 'Algo-Intuition', se: 'Algoritmisk intuition' }
+      ]
+    }
+  },
+  bus: {
+    normal: {
+      low: [
+        { cn: '严谨', en: 'Rigorous', se: 'Rigorös' },
+        { cn: '严肃', en: 'Serious', se: 'Allvarlig' },
+        { cn: '固执', en: 'Stubborn', se: 'Envis' }
+      ],
+      mid: [
+        { cn: '幽默', en: 'Humorous', se: 'Humoristisk' },
+        { cn: '梦想家', en: 'Dreamer', se: 'Drömmare' },
+        { cn: '开朗', en: 'Cheerful', se: 'Glad' }
+      ],
+      high: [
+        { cn: '顽皮', en: 'Playful', se: 'Lekfull' },
+        { cn: '叛逆', en: 'Rebellious', se: 'Rebellisk' },
+        { cn: '狂野', en: 'Wild', se: 'Vild' },
+        { cn: '捣蛋鬼', en: 'Troublemaker', se: 'Busfrö' }
+      ]
+    },
+    scifi: {
+      low: [
+        { cn: '绝对零度', en: 'Absolute-Zero', se: 'Absoluta nollpunkten' },
+        { cn: '黑洞引力', en: 'Blackhole-Grav', se: 'Svart håls grav' }
+      ],
+      mid: [
+        { cn: '星云漫想', en: 'Nebula-Reverie', se: 'Nebulosadrömmar' },
+        { cn: '自由漂浮', en: 'Free-Float', se: 'Fritt flytande' }
+      ],
+      high: [
+        { cn: '信号干扰', en: 'Signal-Jammer', se: 'Signalstörning' },
+        { cn: '混沌驱动', en: 'Chaos-Drive', se: 'Kaosdrift' }
+      ]
+    }
+  }
+};
+
+export const getMixedTraits = (id: string, stats: CharacterStats): { id: string; type: 'mod' | 'bus' | 'klurighet'; isScifi: boolean; name: Record<Language, string> }[] => {
+  // Hardcoded for Permanent Residents
+  if (id.includes('HP-00002-DUDDU-A')) {
+    return [
+      { id: 't1', type: 'mod', isScifi: false, name: { cn: '勇敢', en: 'Brave', se: 'Modig' } },
+      { id: 't2', type: 'klurighet', isScifi: false, name: { cn: '乐于助人', en: 'Helpful', se: 'Hjälpsam' } },
+      { id: 't3', type: 'mod', isScifi: true, name: { cn: '耀斑心脏', en: 'Flare-Heart', se: 'Flare-hjärta' } }
+    ];
+  }
+  if (id.includes('HP-00001-BOBU-B')) {
+    return [
+      { id: 't1', type: 'klurighet', isScifi: false, name: { cn: '好奇宝宝', en: 'Curious', se: 'Nyfiken' } },
+      { id: 't2', type: 'bus', isScifi: false, name: { cn: '梦想家', en: 'Dreamer', se: 'Drömmare' } },
+      { id: 't3', type: 'bus', isScifi: true, name: { cn: '信号干扰专家', en: 'Signal-Jammer', se: 'Signalstörning' } }
+    ];
+  }
+
+  // Generic Logic
+  const seed = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const dimensions: ('mod' | 'bus' | 'klurighet')[] = ['mod', 'bus', 'klurighet'];
+
+  // 1. Pick dimension for Sci-fi
+  const scifiDimIndex = seed % 3;
+  const scifiDim = dimensions[scifiDimIndex];
+
+  const getTier = (val: number): 'low' | 'mid' | 'high' => {
+    if (val <= 3) return 'low';
+    if (val <= 6) return 'mid';
+    return 'high';
+  };
+
+  const traits: any[] = [];
+
+  dimensions.forEach((dim, idx) => {
+    const isScifi = idx === scifiDimIndex;
+    const tier = getTier(stats[dim]);
+    const pool = isScifi ? (SuperTraitsPool as any)[dim].scifi[tier] : (SuperTraitsPool as any)[dim].normal[tier];
+
+    // Pick one from pool based on seed and dimension
+    const traitIndex = (seed + idx) % pool.length;
+    const traitData = pool[traitIndex];
+
+    traits.push({
+      id: `${dim}_${isScifi ? 'scifi' : 'normal'}_${idx}`,
+      type: dim,
+      isScifi: isScifi,
+      name: { cn: traitData.cn, en: traitData.en, se: traitData.se }
+    });
+  });
+
+  return traits;
+};
+
 const FLAVOR_TEXT_DB = {
   mod: {
     low: {
@@ -237,7 +396,7 @@ const FLAVOR_TEXT_DB = {
       en: "Loves mischief and laughter!"
     },
     high: {
-      se: "En riktig busunge med glitter i blicken!",
+      se: "En riktig busunge with glitter in blicken!",
       cn: "超级调皮大王，眼睛里闪烁着小星星！",
       en: "A true rascal with a twinkle in the eye!"
     }
@@ -335,7 +494,7 @@ export const BOBU_PRESET: PassportData = {
   age: '3',
   gender: 'female',
   species: 'rabbit',
-  occupations: ['student', 'adventurer'],
+  occupations: ['student', 'explorer'],
   location: 'Kaninplaneten',
   relationships: [{ targetId: 'HP-00002-DUDDU-A', relationType: 'best_friend' }],
   stats: {

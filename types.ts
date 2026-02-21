@@ -43,4 +43,5 @@ export interface PassportData extends CharacterData {
   savedAt: number; // Timestamp when passport was issued
   relationships: { targetId: string, relationType: string }[]; // New: Relationship system
   stats?: CharacterStats; // Optional: Override calculated stats
+  traits?: string[]; // Personality tags
 }
