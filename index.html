@@ -1,70 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Livia's Planet Customizer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              'hand': ['"Patrick Hand"', 'cursive'],
-              'rounded': ['"Fredoka"', 'sans-serif'],
-            },
-            colors: {
-              'livia-red': '#FF4D4D',
-              'livia-yellow': '#FFD93D',
-              'livia-blue': '#4D96FF',
-              'livia-orange': '#FF6B35',
-              'livia-bg': '#F7F4EB',
-            },
-            boxShadow: {
-              'comic': '6px 6px 0px 0px rgba(0,0,0,1)',
-            }
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Livia's Planet Customizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600;700&family=Patrick+Hand&display=swap"
+    rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            'hand': ['"Patrick Hand"', 'cursive'],
+            'rounded': ['"Fredoka"', 'sans-serif'],
+          },
+          colors: {
+            'livia-red': '#FF4D4D',
+            'livia-yellow': '#FFD93D',
+            'livia-blue': '#4D96FF',
+            'livia-orange': '#FF6B35',
+            'livia-bg': '#F7F4EB',
+          },
+          boxShadow: {
+            'comic': '6px 6px 0px 0px rgba(0,0,0,1)',
           }
         }
       }
-    </script>
-    <style>
-      body {
-        background-color: #f3f4f6;
+    }
+  </script>
+  <style>
+    body {
+      background-color: #f3f4f6;
+    }
+
+    /* Utilities for 3D Transform */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+
+    .transform-style-3d {
+      transform-style: preserve-3d;
+    }
+
+    .backface-hidden {
+      backface-visibility: hidden;
+    }
+
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+
+    @keyframes scale-in {
+      0% {
+        transform: scale(0.9);
+        opacity: 0;
       }
-      /* Utilities for 3D Transform */
-      .perspective-1000 {
-        perspective: 1000px;
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
       }
-      .transform-style-3d {
-        transform-style: preserve-3d;
+    }
+
+    .animate-scale-in {
+      animation: scale-in 0.2s ease-out forwards;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+
+    /* Holographic Radar Animations */
+    @keyframes holo-pulse {
+
+      0%,
+      100% {
+        opacity: 0.35;
       }
-      .backface-hidden {
-        backface-visibility: hidden;
+
+      50% {
+        opacity: 0.65;
       }
-      .rotate-y-180 {
-        transform: rotateY(180deg);
+    }
+
+    .animate-holo-pulse {
+      animation: holo-pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes scanline {
+      0% {
+        transform: translateY(-20px);
+        opacity: 0;
       }
-      @keyframes scale-in {
-        0% { transform: scale(0.9); opacity: 0; }
-        100% { transform: scale(1); opacity: 1; }
+
+      10% {
+        opacity: 1;
       }
-      .animate-scale-in {
-        animation: scale-in 0.2s ease-out forwards;
+
+      90% {
+        opacity: 1;
       }
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
+
+      100% {
+        transform: translateY(200px);
+        opacity: 0;
       }
-      .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
+    }
+
+    .animate-scanline {
+      animation: scanline 4s linear infinite;
+    }
+
+    @keyframes node-blink {
+
+      0%,
+      100% {
+        opacity: 1;
+        filter: brightness(1);
       }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: rgba(0,0,0,0.1);
-        border-radius: 10px;
+
+      50% {
+        opacity: 0.7;
+        filter: brightness(1.3);
       }
-    </style>
+    }
+
+    .animate-node-blink {
+      animation: node-blink 2s ease-in-out infinite;
+    }
+  </style>
   <script type="importmap">
 {
   "imports": {
@@ -74,10 +151,12 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+  <link rel="stylesheet" href="/index.css">
 </head>
-  <body>
-    <div id="root"></div>
+
+<body>
+  <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>

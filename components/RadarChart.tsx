@@ -81,8 +81,21 @@ export const RadarChart: React.FC<RadarChartProps> = ({ stats, lang, isDark }) =
                     stroke={isDark ? "#60EFFF" : "#7E57FF"}
                     strokeWidth="3.5"
                     strokeLinejoin="round"
-                    className="transition-all duration-700 ease-in-out"
+                    className="transition-all duration-700 ease-in-out animate-holo-pulse"
                 />
+
+                {/* Scanning Line Effect */}
+                <g className="pointer-events-none">
+                    <rect
+                        x="0"
+                        y="0"
+                        width={size}
+                        height="2"
+                        fill={isDark ? "rgba(96, 239, 255, 0.6)" : "rgba(126, 87, 255, 0.5)"}
+                        className="animate-scanline"
+                        style={{ filter: `blur(1px) drop-shadow(0 0 3px ${isDark ? '#60EFFF' : '#7E57FF'})` }}
+                    />
+                </g>
 
                 {/* Vertex Points */}
                 {[p1, p2, p3].map((p, i) => (
@@ -94,7 +107,8 @@ export const RadarChart: React.FC<RadarChartProps> = ({ stats, lang, isDark }) =
                         fill={isDark ? "#60EFFF" : "#7E57FF"}
                         stroke={isDark ? "#000" : "#fff"}
                         strokeWidth="2.5"
-                        className="transition-all duration-700 ease-in-out"
+                        className={`transition-all duration-700 ease-in-out animate-node-blink`}
+                        style={{ animationDelay: `${i * 0.6}s` }}
                     />
                 ))}
 
