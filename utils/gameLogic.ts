@@ -119,7 +119,8 @@ export const TRANSLATIONS = {
       barber: { se: "Barberare", en: "Barber", cn: "理发师" },
       engineer: { se: "Ingenjör", en: "Engineer", cn: "工程师" },
       inventor: { se: "Uppfinnare", en: "Inventor", cn: "发明家" },
-      adventurer: { se: "Äventyrare", en: "Adventurer", cn: "探险家" }
+      adventurer: { se: "Äventyrare", en: "Adventurer", cn: "探险家" },
+      skateboard_master: { se: "Skateboardmästare", en: "Skateboard Master", cn: "滑板大师" }
     },
     species: {
       rabbit: { se: "Kanin", en: "Rabbit", cn: "小兔子" },
@@ -133,6 +134,7 @@ export const TRANSLATIONS = {
     },
     relationTypes: {
       bestFriend: { se: "Bästis", en: "Besties", cn: "死党" },
+      best_friend: { se: "Bästis", en: "Bestie", cn: "死党" },
       foodie: { se: "Matkompis", en: "Foodie Pals", cn: "饭搭子" },
       rival: { se: "Rival", en: "Arch-rival", cn: "死对头" },
       teacher: { se: "Lärare/Elev", en: "Teacher/Student", cn: "师生" },
@@ -277,6 +279,11 @@ export const DEFAULT_BIOS = {
     en: "Bobu.B is a small rabbit from the Rabbit Planet who loves two things above all: mischief and food! Her appetite is endless!",
     cn: "Bobu.B 是一只来自兔子星球的小兔子，她最爱两件事：恶作剧和好吃的！她的胃口可是无底洞哦！"
   },
+  duddu: {
+    se: "Duddu.A är en modig kanin som älskar skateboard! Han är känd för sina häftiga tricks och är en riktig äventyrare som alltid hjälper sina vänner.",
+    en: "Duddu.A is a brave rabbit who loves skateboarding! Known for his cool tricks, he's a true adventurer who's always ready to be a hero for his friends.",
+    cn: "Duddu.A 是一只勇敢的小兔子。他超级热爱滑板，能做出各种惊人的特技，是朋友们眼中无所畏惧的冒险家和英雄！"
+  },
   general: {
     se: "En ny upptäcktsresande redo för att utforska galaxen.",
     en: "A new explorer ready to chart the galaxy.",
@@ -330,10 +337,44 @@ export const BOBU_PRESET: PassportData = {
   species: 'rabbit',
   occupations: ['student', 'adventurer'],
   location: 'Kaninplaneten',
-  relationships: [],
+  relationships: [{ targetId: 'HP-00002-DUDDU-A', relationType: 'best_friend' }],
   stats: {
     mod: 9,
     bus: 9,
     klurighet: 3
   }
 };
+
+export const DUDDU_PRESET: PassportData = {
+  id: 'HP-00002-DUDDU-A',
+  name: 'Duddu.A',
+  selectedParts: {
+    body: 'body_camel',
+    ears: 'ears_camel',
+    face: 'eyes_dot',
+    hair: 'hair_none',
+    access: 'access_helmet'
+  },
+  selectedPlanetParts: {
+    base: 'planet_base_green',
+    surface: 'planet_surf_none',
+    atmosphere: 'planet_atmo_rings',
+    companion: 'planet_comp_ufo'
+  },
+  lastModified: 1700000000000,
+  savedAt: 1700000000000,
+  bio: DEFAULT_BIOS.duddu.se,
+  age: '3',
+  gender: 'male',
+  species: 'rabbit',
+  occupations: ['student', 'skateboard_master'],
+  location: 'Kaninplaneten',
+  relationships: [{ targetId: 'HP-00001-BOBU-B', relationType: 'best_friend' }],
+  stats: {
+    mod: 8,
+    bus: 7,
+    klurighet: 6
+  }
+};
+
+export const ALL_PRESETS = [BOBU_PRESET, DUDDU_PRESET];

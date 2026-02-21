@@ -6,7 +6,7 @@ import { LanguageSelector } from './components/LanguageSelector';
 import { AudioPlayer } from './components/AudioPlayer';
 import { PassportBook } from './components/PassportBook';
 import { CharacterData, PartCategory, PlanetCategory, Language, PassportData } from './types';
-import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, BOBU_PRESET } from './utils/gameLogic';
+import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS } from './utils/gameLogic';
 
 const INITIAL_DATA: CharacterData = {
   name: "Bobu.B",
@@ -43,25 +43,25 @@ const App: React.FC = () => {
   // Load passports from LocalStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem('happyPlanet_passports');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        // Always update Bobu to the latest preset definition (Case-Insensitive check)
-        const others = parsed.filter((p: PassportData) => {
-          const upId = p.id.toUpperCase();
-          return upId !== BOBU_PRESET.id.toUpperCase() &&
-            upId !== 'HP-BOBU-B' &&
-            upId !== 'HP-00000000-BOBU';
-        });
-        setSavedPassports([BOBU_PRESET, ...others]);
-      } catch (e) {
-        console.error("Failed to load passports", e);
-        setSavedPassports([BOBU_PRESET]);
-      }
-    } else {
-      setSavedPassports([BOBU_PRESET]);
-    }
-  }, []);
+    const parsed = stored ? JSON.parse(stored) : [];
+
+    // Always update permanent presets (Case-Insensitive check)
+    const presetIds = ALL_PRESETS.map(p => p.id.toUpperCase());
+    const others = parsed.filter((p: PassportData) => {
+      const upId = p.id.toUpperCase();
+      return !presetIds.includes(upId) &&
+        upId !== 'HP-BOBU-B' &&
+        upId !== 'HP-00000000-BOBU';
+    });
+
+    // Synchronize preset data and apply language-specific bios
+    const syncedPresets = ALL_PRESETS.map(preset => ({
+      ...preset,
+      bio: preset.id.includes('BOBU') ? DEFAULT_BIOS.bobu[currentLang] : DEFAULT_BIOS.duddu[currentLang]
+    }));
+
+    setSavedPassports([...syncedPresets, ...others]);
+  }, [currentLang]);
 
   // === LOGIC ===
   // Derived state: Stats are calculated from selected parts whenever they change

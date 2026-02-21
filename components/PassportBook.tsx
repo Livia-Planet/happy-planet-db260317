@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { PassportData, Language } from '../types';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
-import { calculateStats, generateFlavorText, getDominantStat, TRANSLATIONS, getStarDate, BOBU_PRESET } from '../utils/gameLogic';
+import { calculateStats, generateFlavorText, getDominantStat, TRANSLATIONS, getStarDate, ALL_PRESETS } from '../utils/gameLogic';
 
 interface PassportBookProps {
   passports: PassportData[];
@@ -160,8 +160,8 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                   <p className="font-mono text-[10px] text-gray-400 mt-1 truncate">{p.id}</p>
                 </div>
 
-                {/* Delete Button (Hover only) - Hidden for BOBU */}
-                {p.id !== 'HP-00001-BOBU-B' && (
+                {/* Delete Button (Hover only) - Hidden for permanent residents */}
+                {!ALL_PRESETS.some(preset => preset.id.toUpperCase() === p.id.toUpperCase()) && (
                   <button
                     onClick={(e) => { e.stopPropagation(); setDeleteId(p.id); }}
                     className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full border-2 border-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 z-10 shadow-sm"
@@ -376,8 +376,8 @@ export const PassportBook: React.FC<PassportBookProps> = ({
             </div>
           )}
 
-          {/* Delete Button Detail (Hidden for BOBU) */}
-          {activePassport.id.toUpperCase() !== BOBU_PRESET.id.toUpperCase() && (
+          {/* Delete Button Detail (Hidden for permanent residents) */}
+          {!ALL_PRESETS.some(preset => preset.id.toUpperCase() === activePassport.id.toUpperCase()) && (
             <div className="pt-4 flex justify-end">
               <button
                 onClick={() => setDeleteId(activePassport.id)}
