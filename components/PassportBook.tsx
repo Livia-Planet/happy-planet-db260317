@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { PassportData, Language } from '../types';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
-import { calculateStats, generateFlavorText, getDominantStat, TRANSLATIONS } from '../utils/gameLogic';
+import { calculateStats, generateFlavorText, getDominantStat, TRANSLATIONS, getStarDate, BOBU_PRESET } from '../utils/gameLogic';
 
 interface PassportBookProps {
   passports: PassportData[];
@@ -13,7 +13,7 @@ interface PassportBookProps {
   lang: Language;
 }
 
-type Tab = 'bio' | 'story' | 'stats';
+type Tab = 'bio' | 'relations' | 'story' | 'stats';
 
 const THEMES = [
   { id: 'space', bg: '#2c3e50', text: 'text-white', isLight: false },
@@ -24,12 +24,12 @@ const THEMES = [
   { id: 'green', bg: '#A3B18A', text: 'text-[#1B5E20]', isLight: true }, // Deep Green
 ];
 
-export const PassportBook: React.FC<PassportBookProps> = ({ 
-  passports, 
-  onBack, 
-  onUpdatePassport, 
+export const PassportBook: React.FC<PassportBookProps> = ({
+  passports,
+  onBack,
+  onUpdatePassport,
   onDelete,
-  lang 
+  lang
 }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -39,9 +39,9 @@ export const PassportBook: React.FC<PassportBookProps> = ({
 
   // Find selected passport
   const activePassport = passports.find(p => p.id === selectedId);
-  
+
   // Calculate dynamic data for the active passport
-  const activeStats = activePassport ? calculateStats(activePassport.selectedParts) : null;
+  const activeStats = activePassport ? calculateStats(activePassport.selectedParts, activePassport.stats) : null;
   const activeFlavor = (activePassport && activeStats) ? generateFlavorText(activeStats, lang) : '';
 
   const handleDeleteConfirm = () => {
@@ -70,13 +70,13 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                 {TRANSLATIONS.ui.confirmDelete[lang]}
               </p>
               <div className="flex gap-4">
-                <button 
+                <button
                   onClick={() => setDeleteId(null)}
                   className="flex-1 py-3 font-bold border-2 border-black rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={handleDeleteConfirm}
                   className="flex-1 py-3 font-bold bg-red-500 text-white border-2 border-black rounded-lg shadow-[4px_4px_0_black] hover:translate-y-1 hover:shadow-[2px_2px_0_black] active:translate-y-2 active:shadow-none transition-all"
                 >
@@ -89,31 +89,31 @@ export const PassportBook: React.FC<PassportBookProps> = ({
 
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-           <button 
-             onClick={onBack}
-             className="px-6 py-2 bg-white border-[3px] border-black rounded-full font-bold shadow-[4px_4px_0_black] hover:translate-y-[2px] hover:shadow-[2px_2px_0_black] active:translate-y-[4px] active:shadow-none transition-all"
-           >
-             ← {lang === 'cn' ? '返回编辑器' : 'Back to Editor'}
-           </button>
-           
-           <div className="flex items-center gap-4">
-             {/* Theme Switcher */}
-             <div className="flex gap-2 bg-white/20 backdrop-blur-sm p-2 rounded-full border border-white/30 shadow-sm">
-               {THEMES.map(theme => (
-                 <button
-                   key={theme.id}
-                   onClick={() => setCurrentTheme(theme)}
-                   className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${currentTheme.id === theme.id ? 'border-white scale-125 shadow-md ring-2 ring-white/50' : 'border-transparent opacity-80 hover:opacity-100'}`}
-                   style={{ backgroundColor: theme.bg }}
-                   aria-label={`Select theme ${theme.id}`}
-                 />
-               ))}
-             </div>
+          <button
+            onClick={onBack}
+            className="px-6 py-2 bg-white border-[3px] border-black rounded-full font-bold shadow-[4px_4px_0_black] hover:translate-y-[2px] hover:shadow-[2px_2px_0_black] active:translate-y-[4px] active:shadow-none transition-all"
+          >
+            ← {lang === 'cn' ? '返回编辑器' : 'Back to Editor'}
+          </button>
 
-             <h2 className={`text-3xl md:text-4xl font-black drop-shadow-[2px_2px_0_black] stroke-black transition-colors duration-500 ${currentTheme.text}`} style={{WebkitTextStroke: '1.5px black'}}>
-               {lang === 'cn' ? '档案室' : 'ARCHIVES'}
-             </h2>
-           </div>
+          <div className="flex items-center gap-4">
+            {/* Theme Switcher */}
+            <div className="flex gap-2 bg-white/20 backdrop-blur-sm p-2 rounded-full border border-white/30 shadow-sm">
+              {THEMES.map(theme => (
+                <button
+                  key={theme.id}
+                  onClick={() => setCurrentTheme(theme)}
+                  className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${currentTheme.id === theme.id ? 'border-white scale-125 shadow-md ring-2 ring-white/50' : 'border-transparent opacity-80 hover:opacity-100'}`}
+                  style={{ backgroundColor: theme.bg }}
+                  aria-label={`Select theme ${theme.id}`}
+                />
+              ))}
+            </div>
+
+            <h2 className={`text-3xl md:text-4xl font-black drop-shadow-[2px_2px_0_black] stroke-black transition-colors duration-500 ${currentTheme.text}`} style={{ WebkitTextStroke: '1.5px black' }}>
+              {lang === 'cn' ? '档案室' : 'ARCHIVES'}
+            </h2>
+          </div>
         </div>
 
         {/* Empty State */}
@@ -132,44 +132,46 @@ export const PassportBook: React.FC<PassportBookProps> = ({
         {/* Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {passports.map(p => {
-             const pStats = calculateStats(p.selectedParts);
-             const domStat = getDominantStat(pStats);
-             return (
-               <div 
-                 key={p.id}
-                 onClick={() => { setSelectedId(p.id); setIsFlipped(false); setActiveTab('bio'); }}
-                 className={`group cursor-pointer bg-white p-3 pb-6 border-[3px] border-black rounded-xl transition-all relative
-                   ${currentTheme.isLight 
-                     ? 'shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.2)]' 
-                     : 'shadow-[4px_4px_0_black] hover:-translate-y-1 hover:shadow-[6px_6px_0_black]'}
+            const pStats = calculateStats(p.selectedParts, p.stats);
+            const domStat = getDominantStat(pStats);
+            return (
+              <div
+                key={p.id}
+                onClick={() => { setSelectedId(p.id); setIsFlipped(false); setActiveTab('bio'); }}
+                className={`group cursor-pointer bg-white p-3 pb-6 border-[3px] border-black rounded-xl transition-all relative
+                   ${currentTheme.isLight
+                    ? 'shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.2)]'
+                    : 'shadow-[4px_4px_0_black] hover:-translate-y-1 hover:shadow-[6px_6px_0_black]'}
                  `}
-               >
-                 {/* Tape Effect */}
-                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 bg-yellow-200/80 rotate-1 shadow-sm border-l border-r border-white/50"></div>
-                 
-                 {/* Thumbnail */}
-                 <div className="aspect-square bg-gray-100 rounded-lg border-2 border-gray-200 overflow-hidden mb-3 relative">
-                    <div className="transform scale-75 origin-center">
-                       <Avatar selectedParts={p.selectedParts} dominantStat={domStat} />
-                    </div>
-                 </div>
-                 
-                 {/* Name & ID */}
-                 <div className="text-center">
-                    <h3 className="font-bold font-rounded text-lg leading-none uppercase truncate px-1">{p.name}</h3>
-                    <p className="font-mono text-[10px] text-gray-400 mt-1 truncate">{p.id}</p>
-                 </div>
+              >
+                {/* Tape Effect */}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 bg-yellow-200/80 rotate-1 shadow-sm border-l border-r border-white/50"></div>
 
-                 {/* Delete Button (Hover only) */}
-                 <button
-                   onClick={(e) => { e.stopPropagation(); setDeleteId(p.id); }}
-                   className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full border-2 border-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 z-10 shadow-sm"
-                   title="Delete"
-                 >
-                   ×
-                 </button>
-               </div>
-             );
+                {/* Thumbnail */}
+                <div className="aspect-square bg-gray-100 rounded-lg border-2 border-gray-200 overflow-hidden mb-3 relative">
+                  <div className="transform scale-75 origin-center">
+                    <Avatar selectedParts={p.selectedParts} dominantStat={domStat} />
+                  </div>
+                </div>
+
+                {/* Name & ID */}
+                <div className="text-center">
+                  <h3 className="font-bold font-rounded text-lg leading-none uppercase truncate px-1">{p.name}</h3>
+                  <p className="font-mono text-[10px] text-gray-400 mt-1 truncate">{p.id}</p>
+                </div>
+
+                {/* Delete Button (Hover only) - Hidden for BOBU */}
+                {p.id !== 'HP-00001-BOBU-B' && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeleteId(p.id); }}
+                    className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full border-2 border-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 z-10 shadow-sm"
+                    title="Delete"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            );
           })}
         </div>
       </div>
@@ -181,9 +183,9 @@ export const PassportBook: React.FC<PassportBookProps> = ({
     <div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-8 items-start justify-center min-h-[600px] animate-fade-in relative">
       {/* Theme Background Override (Detail View) */}
       <div className="fixed inset-0 -z-10 transition-colors duration-700" style={{ backgroundColor: currentTheme.bg }}></div>
-      
+
       {/* Back Button (Mobile) */}
-      <button 
+      <button
         onClick={() => setSelectedId(null)}
         className="md:hidden px-4 py-2 bg-white border-2 border-black rounded-full font-bold mb-4"
       >
@@ -192,193 +194,394 @@ export const PassportBook: React.FC<PassportBookProps> = ({
 
       {/* LEFT: The Card (Interactable) */}
       <div className="flex flex-col items-center">
-         <Card 
-           data={activePassport}
-           stats={activeStats}
-           flavorText={activeFlavor}
-           isFlipped={isFlipped}
-           onFlip={() => setIsFlipped(!isFlipped)}
-           lang={lang}
-         />
-         <p className={`mt-4 font-hand text-lg ${isFlipped ? currentTheme.text === 'text-white' ? 'text-gray-300' : 'text-gray-600' : currentTheme.text === 'text-white' ? 'text-gray-300' : 'text-gray-600'}`}>
-           {isFlipped ? (lang === 'cn' ? '点击返回正面' : 'Tap to flip back') : (lang === 'cn' ? '点击查看背面' : 'Tap to see planet')}
-         </p>
+        <Card
+          data={activePassport}
+          stats={activeStats}
+          flavorText={activeFlavor}
+          isFlipped={isFlipped}
+          onFlip={() => setIsFlipped(!isFlipped)}
+          lang={lang}
+        />
+        <p className={`mt-4 font-hand text-lg ${isFlipped ? currentTheme.text === 'text-white' ? 'text-gray-300' : 'text-gray-600' : currentTheme.text === 'text-white' ? 'text-gray-300' : 'text-gray-600'}`}>
+          {isFlipped ? (lang === 'cn' ? '点击返回正面' : 'Tap to flip back') : (lang === 'cn' ? '点击查看背面' : 'Tap to see planet')}
+        </p>
       </div>
 
       {/* RIGHT: The Journal Page (Tabbed) */}
       <div className={`flex-1 w-full max-w-lg bg-[#FDFBF7] border-[4px] border-black rounded-3xl shadow-[8px_8px_0_rgba(0,0,0,0.2)] relative transition-colors duration-500 overflow-hidden flex flex-col ${isFlipped ? 'bg-[#1a1c29] border-gray-600' : 'bg-[#FDFBF7]'}`}>
-         
-         {/* Header */}
-         <div className="p-6 pb-0 flex justify-between items-start">
-            <div>
-               <h2 className={`text-3xl font-black uppercase tracking-wider ${isFlipped ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'text-gray-900'}`}>
-                 {activePassport.name}
-               </h2>
-               <p className={`font-mono text-xs mt-1 ${isFlipped ? 'text-livia-blue' : 'text-gray-500'}`}>
-                 ID: {activePassport.id}
-               </p>
-            </div>
-            {/* Close Button Desktop */}
-            <button 
-              onClick={() => setSelectedId(null)}
-              className={`hidden md:block text-4xl hover:scale-110 transition-transform ${isFlipped ? 'text-gray-400' : 'text-gray-300 hover:text-red-400'}`}
-            >
-              &times;
-            </button>
-         </div>
 
-         {/* Tabs */}
-         <div className="flex px-6 mt-6 border-b-2 border-gray-200">
-            {(['bio', 'story', 'stats'] as Tab[]).map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`
+        {/* Header */}
+        <div className="p-6 pb-0 flex justify-between items-start">
+          <div>
+            <h2 className={`text-3xl font-black uppercase tracking-wider ${isFlipped ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'text-gray-900'}`}>
+              {activePassport.name}
+            </h2>
+            <p className={`font-mono text-xs mt-1 ${isFlipped ? 'text-livia-blue' : 'text-gray-500'}`}>
+              ID: {activePassport.id}
+            </p>
+          </div>
+          {/* Close Button Desktop */}
+          <button
+            onClick={() => setSelectedId(null)}
+            className={`hidden md:block text-4xl hover:scale-110 transition-transform ${isFlipped ? 'text-gray-400' : 'text-gray-300 hover:text-red-400'}`}
+          >
+            &times;
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex px-6 mt-6 border-b-2 border-gray-200">
+          {(['bio', 'relations', 'story', 'stats'] as Tab[]).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`
                   px-4 py-2 font-bold font-rounded text-sm md:text-base transition-colors relative top-[2px] border-b-[3px]
-                  ${activeTab === tab 
-                    ? (isFlipped ? 'text-white border-livia-blue' : 'text-black border-livia-yellow') 
-                    : 'text-gray-400 border-transparent hover:text-gray-500'}
+                  ${activeTab === tab
+                  ? (isFlipped ? 'text-white border-livia-blue' : 'text-black border-livia-yellow')
+                  : 'text-gray-400 border-transparent hover:text-gray-500'}
                 `}
-              >
-                {TRANSLATIONS.ui.tabs[tab][lang]}
-              </button>
-            ))}
-         </div>
+            >
+              {TRANSLATIONS.ui.tabs[tab][lang]}
+            </button>
+          ))}
+        </div>
 
-         {/* Content Area */}
-         <div className="p-6 flex-1 min-h-[300px]">
-            
-            {/* TAB: BIO */}
-            {activeTab === 'bio' && (
-              <div className="space-y-4 animate-fade-in">
-                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className={`block font-hand font-bold text-sm mb-1 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {TRANSLATIONS.ui.labels.age[lang]}
-                      </label>
-                      <input 
-                        type="text"
-                        value={activePassport.age || ''}
-                        onChange={(e) => onUpdatePassport(activePassport.id, 'age', e.target.value)}
-                        className={`w-full bg-transparent border-b-2 font-hand text-xl focus:outline-none ${isFlipped ? 'text-white border-gray-600 focus:border-livia-blue' : 'text-black border-gray-300 focus:border-livia-yellow'}`}
-                        placeholder="?"
-                      />
-                    </div>
-                    <div>
-                      <label className={`block font-hand font-bold text-sm mb-1 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {TRANSLATIONS.ui.labels.date[lang]}
-                      </label>
-                      <div className={`font-mono text-sm pt-1 ${isFlipped ? 'text-gray-300' : 'text-gray-800'}`}>
-                        {new Date(activePassport.savedAt).toLocaleDateString()}
-                      </div>
-                    </div>
-                 </div>
-                 <div>
-                    <label className={`block font-hand font-bold text-sm mb-1 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {TRANSLATIONS.ui.labels.location[lang]}
-                    </label>
-                    <input 
-                      type="text"
-                      value={activePassport.location || ''}
-                      onChange={(e) => onUpdatePassport(activePassport.id, 'location', e.target.value)}
-                      className={`w-full bg-transparent border-b-2 font-hand text-xl focus:outline-none ${isFlipped ? 'text-white border-gray-600 focus:border-livia-blue' : 'text-black border-gray-300 focus:border-livia-yellow'}`}
-                      placeholder={lang === 'cn' ? '未知星球' : 'Unknown Planet'}
-                    />
-                 </div>
+        {/* Content Area */}
+        <div className="p-6 flex-1 min-h-[300px]">
+
+          {/* TAB: BIO */}
+          {activeTab === 'bio' && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block font-hand font-bold text-sm mb-1 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {TRANSLATIONS.ui.labels.age[lang]}
+                  </label>
+                  <input
+                    type="text"
+                    value={activePassport.age || ''}
+                    onChange={(e) => onUpdatePassport(activePassport.id, 'age', e.target.value)}
+                    className={`w-full bg-transparent border-b-2 font-hand text-xl focus:outline-none ${isFlipped ? 'text-white border-gray-600 focus:border-livia-blue' : 'text-black border-gray-300 focus:border-livia-yellow'}`}
+                    placeholder="?"
+                  />
+                </div>
+                <div>
+                  <label className={`block font-hand font-bold text-sm mb-1 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {TRANSLATIONS.ui.labels.date[lang]}
+                  </label>
+                  <div className={`font-mono text-sm pt-1 ${isFlipped ? 'text-gray-300' : 'text-gray-800'}`}>
+                    {new Date(activePassport.savedAt).toLocaleDateString()}
+                  </div>
+                </div>
               </div>
-            )}
+              <div className="grid grid-cols-2 gap-4">
+                {/* GENDER */}
+                <div>
+                  <label className={`block font-hand font-bold text-sm mb-1 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {TRANSLATIONS.ui.labels.genderLabel[lang]}
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={activePassport.gender || 'unknown'}
+                      onChange={(e) => onUpdatePassport(activePassport.id, 'gender', e.target.value)}
+                      className={`
+                        w-full py-2 px-3 rounded-xl border-[3px] font-hand text-lg transition-all appearance-none cursor-pointer
+                        ${isFlipped
+                          ? 'bg-gray-800 border-gray-600 text-white focus:border-livia-blue'
+                          : 'bg-white border-black text-black focus:border-livia-yellow shadow-[4px_4px_0_rgba(0,0,0,0.1)]'}
+                      `}
+                    >
+                      {Object.entries(TRANSLATIONS.ui.genders).map(([key, val]) => (
+                        <option key={key} value={key}>{(val as any)[lang]}</option>
+                      ))}
+                    </select>
+                    <div className={`absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
+                      ▼
+                    </div>
+                  </div>
+                </div>
 
-            {/* TAB: STORY */}
-            {activeTab === 'story' && (
-              <div className="h-full flex flex-col animate-fade-in">
-                <textarea
-                  value={activePassport.bio}
-                  onChange={(e) => onUpdatePassport(activePassport.id, 'bio', e.target.value)}
-                  className={`w-full h-full bg-transparent resize-none font-hand text-xl leading-relaxed p-2 focus:outline-none border-l-4 pl-4 focus:border-opacity-100 transition-colors
-                    ${isFlipped 
-                      ? 'text-gray-100 border-gray-600 focus:border-livia-blue drop-shadow-[0_0_2px_rgba(255,255,255,0.5)]' 
-                      : 'text-gray-800 border-gray-300 focus:border-livia-yellow placeholder-gray-300'}
-                  `}
-                  placeholder={lang === 'cn' ? '写下你的故事...' : 'Write your story here...'}
+                {/* SPECIES */}
+                <div>
+                  <label className={`block font-hand font-bold text-sm mb-1 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {TRANSLATIONS.ui.labels.speciesLabel[lang]}
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={activePassport.species || 'rabbit'}
+                      onChange={(e) => onUpdatePassport(activePassport.id, 'species', e.target.value)}
+                      className={`
+                        w-full py-2 px-3 rounded-xl border-[3px] font-hand text-lg transition-all appearance-none cursor-pointer
+                        ${isFlipped
+                          ? 'bg-gray-800 border-gray-600 text-white focus:border-livia-blue'
+                          : 'bg-white border-black text-black focus:border-livia-yellow shadow-[4px_4px_0_rgba(0,0,0,0.1)]'}
+                      `}
+                    >
+                      {Object.entries(TRANSLATIONS.ui.species).map(([key, val]) => (
+                        <option key={key} value={key}>{(val as any)[lang]}</option>
+                      ))}
+                    </select>
+                    <div className={`absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
+                      ▼
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* OCCUPATIONS (NEW) */}
+              <div className="mt-4">
+                <label className={`block font-hand font-bold text-sm mb-2 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {TRANSLATIONS.ui.labels.occupationLabel[lang]}
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(TRANSLATIONS.ui.occupations).map(([key, val]) => {
+                    const isSelected = activePassport.occupations?.includes(key);
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => {
+                          const current = activePassport.occupations || [];
+                          const next = isSelected
+                            ? current.filter(o => o !== key)
+                            : [...current, key];
+                          onUpdatePassport(activePassport.id, 'occupations', next);
+                        }}
+                        className={`
+                                  px-3 py-1 rounded-full border-2 text-xs font-bold transition-all
+                                  ${isSelected
+                            ? (isFlipped ? 'bg-livia-blue border-white text-white rotate-1 scale-110' : 'bg-livia-blue border-black text-white shadow-[3px_3px_0_black] -rotate-1 scale-105')
+                            : (isFlipped ? 'bg-white/5 border-gray-700 text-gray-400' : 'bg-gray-100 border-gray-200 text-gray-400 hover:border-gray-300')}
+                                `}
+                      >
+                        {(val as any)[lang]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className={`block font-hand font-bold text-sm mb-1 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {TRANSLATIONS.ui.labels.location[lang]}
+                </label>
+                <input
+                  type="text"
+                  value={activePassport.location || ''}
+                  onChange={(e) => onUpdatePassport(activePassport.id, 'location', e.target.value)}
+                  className={`w-full bg-transparent border-b-2 font-hand text-xl focus:outline-none ${isFlipped ? 'text-white border-gray-600 focus:border-livia-blue' : 'text-black border-gray-300 focus:border-livia-yellow'}`}
+                  placeholder={lang === 'cn' ? '未知星球' : 'Unknown Planet'}
                 />
               </div>
-            )}
-
-            {/* TAB: STATS */}
-            {activeTab === 'stats' && (
-              <div className="space-y-6 animate-fade-in pt-2">
-                 {/* Courage */}
-                 <div className="flex items-center gap-4">
-                    <span className={`w-20 font-bold font-hand text-xl ${isFlipped ? 'text-red-400' : 'text-gray-800'}`}>
-                      {TRANSLATIONS.stats.mod[lang]}
-                    </span>
-                    <div className="flex gap-2">
-                      {Array.from({length: 9}).map((_, i) => (
-                        <div 
-                          key={i} 
-                          className={`w-3 h-3 rounded-full border-2 ${
-                            i < activeStats.mod 
-                              ? (isFlipped ? 'bg-red-500 border-red-400 shadow-[0_0_5px_red]' : 'bg-livia-red border-black') 
-                              : (isFlipped ? 'border-gray-700 bg-transparent' : 'border-gray-300 bg-transparent')
-                          }`} 
-                        />
-                      ))}
-                    </div>
-                 </div>
-                 {/* Mischief */}
-                 <div className="flex items-center gap-4">
-                    <span className={`w-20 font-bold font-hand text-xl ${isFlipped ? 'text-yellow-400' : 'text-gray-800'}`}>
-                      {TRANSLATIONS.stats.bus[lang]}
-                    </span>
-                    <div className="flex gap-2">
-                      {Array.from({length: 9}).map((_, i) => (
-                        <div 
-                          key={i} 
-                          className={`w-3 h-3 rounded-full border-2 ${
-                            i < activeStats.bus 
-                              ? (isFlipped ? 'bg-yellow-400 border-yellow-300 shadow-[0_0_5px_yellow]' : 'bg-livia-yellow border-black') 
-                              : (isFlipped ? 'border-gray-700 bg-transparent' : 'border-gray-300 bg-transparent')
-                          }`} 
-                        />
-                      ))}
-                    </div>
-                 </div>
-                 {/* Wisdom */}
-                 <div className="flex items-center gap-4">
-                    <span className={`w-20 font-bold font-hand text-xl ${isFlipped ? 'text-blue-400' : 'text-gray-800'}`}>
-                      {TRANSLATIONS.stats.klurighet[lang]}
-                    </span>
-                    <div className="flex gap-2">
-                      {Array.from({length: 9}).map((_, i) => (
-                        <div 
-                          key={i} 
-                          className={`w-3 h-3 rounded-full border-2 ${
-                            i < activeStats.klurighet 
-                              ? (isFlipped ? 'bg-blue-400 border-blue-300 shadow-[0_0_5px_cyan]' : 'bg-livia-blue border-black') 
-                              : (isFlipped ? 'border-gray-700 bg-transparent' : 'border-gray-300 bg-transparent')
-                          }`} 
-                        />
-                      ))}
-                    </div>
-                 </div>
-                 
-                 <div className={`mt-8 p-4 rounded-xl border-2 border-dashed ${isFlipped ? 'border-gray-600 bg-white/5' : 'border-gray-300 bg-gray-50'}`}>
-                    <p className={`font-hand text-lg italic text-center ${isFlipped ? 'text-gray-300' : 'text-gray-600'}`}>
-                      "{activeFlavor}"
-                    </p>
-                 </div>
-              </div>
-            )}
-         </div>
-
-         {/* Footer / Stamp */}
-         <div className="absolute bottom-6 right-8 opacity-20 rotate-[-15deg] pointer-events-none">
-            <div className={`border-4 rounded-full w-24 h-24 flex items-center justify-center font-black text-xs uppercase text-center p-2 leading-tight ${isFlipped ? 'border-white text-white' : 'border-black text-black'}`}>
-               OFFICIAL<br/>CITIZEN<br/>OF<br/>HAPPY PLANET
             </div>
-         </div>
+          )}
+
+          {/* Delete Button Detail (Hidden for BOBU) */}
+          {activePassport.id.toUpperCase() !== BOBU_PRESET.id.toUpperCase() && (
+            <div className="pt-4 flex justify-end">
+              <button
+                onClick={() => setDeleteId(activePassport.id)}
+                className="flex items-center gap-2 text-red-500 font-bold hover:underline"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                </svg>
+                {TRANSLATIONS.ui.delete[lang]}
+              </button>
+            </div>
+          )}
+
+          {/* TAB: RELATIONS */}
+          {activeTab === 'relations' && (
+            <div className="space-y-4 animate-fade-in flex flex-col h-full">
+              <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+                {activePassport.relationships?.map((rel, index) => {
+                  const target = passports.find(p => p.id === rel.targetId);
+                  const relationTypeLabel = (TRANSLATIONS.ui.relationTypes as any)[rel.relationType]?.[lang] || rel.relationType;
+
+                  return (
+                    <div key={index} className={`flex items-center justify-between p-3 rounded-xl border-2 ${isFlipped ? 'bg-white/5 border-gray-700' : 'bg-white border-gray-100'}`}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center border border-black/10">
+                          {target ? (
+                            <div className="scale-[0.5] origin-center">
+                              <Avatar selectedParts={target.selectedParts} dominantStat={getDominantStat(calculateStats(target.selectedParts))} />
+                            </div>
+                          ) : (
+                            <span className="text-xl">👤</span>
+                          )}
+                        </div>
+                        <div>
+                          <p className={`font-bold text-sm ${isFlipped ? 'text-white' : 'text-gray-900'}`}>
+                            {target ? target.name : TRANSLATIONS.ui.labels.mystery[lang]}
+                          </p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${isFlipped ? 'bg-livia-blue/20 text-livia-blue' : 'bg-livia-yellow text-black font-bold'}`}>
+                            {relationTypeLabel}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const newRels = [...activePassport.relationships];
+                          newRels.splice(index, 1);
+                          onUpdatePassport(activePassport.id, 'relationships', newRels);
+                        }}
+                        className={`text-gray-400 hover:text-red-500 transition-colors p-1`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  );
+                })}
+
+                {(!activePassport.relationships || activePassport.relationships.length === 0) && (
+                  <p className={`text-center font-hand text-lg mt-8 ${isFlipped ? 'text-gray-500' : 'text-gray-400'}`}>
+                    {lang === 'cn' ? '暂无互动关系...' : 'No relationships yet...'}
+                  </p>
+                )}
+              </div>
+
+              {/* Add Relation Form */}
+              <div className={`mt-auto p-4 rounded-2xl border-2 ${isFlipped ? 'bg-white/5 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <select
+                    id="rel-target"
+                    className={`text-sm rounded-lg p-2 focus:outline-none border-2 ${isFlipped ? 'bg-gray-800 text-white border-gray-700' : 'bg-white border-gray-200'}`}
+                  >
+                    <option value="">{lang === 'cn' ? '选择居民' : 'Select'}</option>
+                    {passports
+                      .filter(p => p.id !== activePassport.id)
+                      .map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))
+                    }
+                  </select>
+                  <select
+                    id="rel-type"
+                    className={`text-sm rounded-lg p-2 focus:outline-none border-2 ${isFlipped ? 'bg-gray-800 text-white border-gray-700' : 'bg-white border-gray-200'}`}
+                  >
+                    {Object.entries(TRANSLATIONS.ui.relationTypes).map(([key, val]) => (
+                      <option key={key} value={key}>{(val as any)[lang]}</option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  onClick={() => {
+                    const targetId = (document.getElementById('rel-target') as HTMLSelectElement).value;
+                    const relationType = (document.getElementById('rel-type') as HTMLSelectElement).value;
+                    if (!targetId) return;
+
+                    const newRels = [...(activePassport.relationships || []), { targetId, relationType }];
+                    onUpdatePassport(activePassport.id, 'relationships', newRels);
+                  }}
+                  className="w-full bg-livia-yellow text-black font-bold py-2 rounded-lg border-2 border-black shadow-[2px_2px_0_black] hover:translate-y-0.5 hover:shadow-none active:bg-yellow-500 transition-all text-sm uppercase"
+                >
+                  {lang === 'cn' ? '+ 添加关系' : '+ Add Relation'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: STORY */}
+          {activeTab === 'story' && (
+            <div className="h-full flex flex-col animate-fade-in relative">
+              {/* Star Date Stamp */}
+              <div className="mb-4 self-start">
+                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-md border-2 font-mono text-xs font-bold ${isFlipped ? 'border-livia-blue text-livia-blue bg-livia-blue/10' : 'border-black text-black bg-yellow-100/50'}`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                    <path fillRule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401z" clipRule="evenodd" />
+                  </svg>
+                  {getStarDate()}
+                </div>
+              </div>
+
+              <textarea
+                value={activePassport.bio}
+                onChange={(e) => onUpdatePassport(activePassport.id, 'bio', e.target.value)}
+                className={`w-full h-full bg-transparent resize-none font-hand text-xl leading-relaxed p-2 focus:outline-none border-l-4 pl-4 focus:border-opacity-100 transition-colors
+                    ${isFlipped
+                    ? 'text-gray-100 border-gray-600 focus:border-livia-blue drop-shadow-[0_0_2px_rgba(255,255,255,0.5)]'
+                    : 'text-gray-800 border-gray-300 focus:border-livia-yellow placeholder-gray-300'}
+                  `}
+                placeholder={lang === 'cn' ? '写下你的故事...' : 'Write your story here...'}
+              />
+            </div>
+          )}
+
+          {/* TAB: STATS */}
+          {activeTab === 'stats' && (
+            <div className="space-y-6 animate-fade-in pt-2">
+              {/* Courage */}
+              <div className="flex items-center gap-4">
+                <span className={`w-20 font-bold font-hand text-xl ${isFlipped ? 'text-red-400' : 'text-gray-800'}`}>
+                  {TRANSLATIONS.stats.mod[lang]}
+                </span>
+                <div className="flex gap-2">
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-3 h-3 rounded-full border-2 ${i < activeStats.mod
+                        ? (isFlipped ? 'bg-red-500 border-red-400 shadow-[0_0_5px_red]' : 'bg-livia-red border-black')
+                        : (isFlipped ? 'border-gray-700 bg-transparent' : 'border-gray-300 bg-transparent')
+                        }`}
+                    />
+                  ))}
+                </div>
+              </div>
+              {/* Mischief */}
+              <div className="flex items-center gap-4">
+                <span className={`w-20 font-bold font-hand text-xl ${isFlipped ? 'text-yellow-400' : 'text-gray-800'}`}>
+                  {TRANSLATIONS.stats.bus[lang]}
+                </span>
+                <div className="flex gap-2">
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-3 h-3 rounded-full border-2 ${i < activeStats.bus
+                        ? (isFlipped ? 'bg-yellow-400 border-yellow-300 shadow-[0_0_5px_yellow]' : 'bg-livia-yellow border-black')
+                        : (isFlipped ? 'border-gray-700 bg-transparent' : 'border-gray-300 bg-transparent')
+                        }`}
+                    />
+                  ))}
+                </div>
+              </div>
+              {/* Wisdom */}
+              <div className="flex items-center gap-4">
+                <span className={`w-20 font-bold font-hand text-xl ${isFlipped ? 'text-blue-400' : 'text-gray-800'}`}>
+                  {TRANSLATIONS.stats.klurighet[lang]}
+                </span>
+                <div className="flex gap-2">
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-3 h-3 rounded-full border-2 ${i < activeStats.klurighet
+                        ? (isFlipped ? 'bg-blue-400 border-blue-300 shadow-[0_0_5px_cyan]' : 'bg-livia-blue border-black')
+                        : (isFlipped ? 'border-gray-700 bg-transparent' : 'border-gray-300 bg-transparent')
+                        }`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className={`mt-8 p-4 rounded-xl border-2 border-dashed ${isFlipped ? 'border-gray-600 bg-white/5' : 'border-gray-300 bg-gray-50'}`}>
+                <p className={`font-hand text-lg italic text-center ${isFlipped ? 'text-gray-300' : 'text-gray-600'}`}>
+                  "{activeFlavor}"
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer / Stamp */}
+        <div className="absolute bottom-6 right-8 opacity-20 rotate-[-15deg] pointer-events-none">
+          <div className={`border-4 rounded-full w-24 h-24 flex items-center justify-center font-black text-xs uppercase text-center p-2 leading-tight ${isFlipped ? 'border-white text-white' : 'border-black text-black'}`}>
+            OFFICIAL<br />CITIZEN<br />OF<br />HAPPY PLANET
+          </div>
+        </div>
       </div>
 
-    </div>
+    </div >
   );
 };

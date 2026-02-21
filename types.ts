@@ -19,7 +19,7 @@ export interface PartDefinition {
   id: string;
   name: string;
   category: PartCategory | PlanetCategory;
-  stats: CharacterStats; 
+  stats: CharacterStats;
   offsetY?: number;      // Vertical offset for fine-tuning gear rendering
   images: PartImages;    // Path to local PNG files
 }
@@ -36,6 +36,11 @@ export interface PassportData extends CharacterData {
   id: string;      // Unique ID string
   bio: string;     // Editable biography/story
   age?: string;    // Age of the character
+  gender?: string; // New: Gender field (stores key)
+  species?: string; // New: Species field (stores key)
+  occupations?: string[]; // New: Selected occupation keys
   location?: string; // Discovery location
   savedAt: number; // Timestamp when passport was issued
+  relationships: { targetId: string, relationType: string }[]; // New: Relationship system
+  stats?: CharacterStats; // Optional: Override calculated stats
 }

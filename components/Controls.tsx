@@ -19,23 +19,23 @@ interface ControlsProps {
 
 // Helper to get translated tab label key
 const getTabLabelKey = (id: string) => {
-  switch(id) {
+  switch (id) {
     case 'atmosphere': return 'atmos';
     case 'companion': return 'comp';
     default: return id; // body, ears, face, hair, access, base, surface
   }
 };
 
-export const Controls: React.FC<ControlsProps> = ({ 
-  data, 
-  derivedStats, 
-  activeTab, 
+export const Controls: React.FC<ControlsProps> = ({
+  data,
+  derivedStats,
+  activeTab,
   isBackView,
-  onTabChange, 
-  updateName, 
-  updatePart, 
-  updatePlanetPart, 
-  lang 
+  onTabChange,
+  updateName,
+  updatePart,
+  updatePlanetPart,
+  lang
 }) => {
   // === PAGINATION STATE ===
   const [currentPage, setCurrentPage] = useState(0);
@@ -59,23 +59,29 @@ export const Controls: React.FC<ControlsProps> = ({
 
   return (
     <div className="w-full max-w-[340px] h-[480px] flex flex-col mt-8 md:mt-0 relative">
-      
+
       {/* --- FOLDER TABS (Dynamic based on View) --- */}
-      <div className="flex pl-4 space-x-1 relative z-10 translate-y-[4px]">
+      <div className="flex w-full px-3 space-x-1 relative z-10 translate-y-[4px] overflow-hidden">
         {currentTabs.map((tabId) => {
           const uiKey = getTabLabelKey(tabId) as keyof typeof TRANSLATIONS.ui;
+          const label = TRANSLATIONS.ui[uiKey][lang];
+          // Adaptive font size based on label length to prevent overflow
+          const fontSize = label.length > 10 ? 'text-[9px]' : label.length > 7 ? 'text-[10px]' : 'text-xs md:text-sm';
+
           return (
             <button
               key={tabId}
               onClick={() => onTabChange(tabId)}
               className={`
-                px-2 py-2 rounded-t-lg font-rounded font-bold text-xs md:text-sm border-t-[4px] border-l-[4px] border-r-[4px] border-black transition-all
-                ${activeTab === tabId 
-                  ? 'bg-white pb-3 translate-y-0' 
+                flex-1 min-w-0 px-1 py-2 rounded-t-xl font-rounded font-bold border-t-[4px] border-l-[4px] border-r-[4px] border-black transition-all truncate
+                ${fontSize}
+                ${activeTab === tabId
+                  ? 'bg-white pb-4 translate-y-0'
                   : 'bg-gray-200 text-gray-500 hover:bg-gray-100 translate-y-1'}
               `}
+              title={label}
             >
-              {TRANSLATIONS.ui[uiKey][lang]}
+              {label}
             </button>
           );
         })}
@@ -83,14 +89,14 @@ export const Controls: React.FC<ControlsProps> = ({
 
       {/* --- MAIN PANEL --- */}
       <div className="flex-1 bg-white border-[6px] border-black rounded-xl rounded-tl-none shadow-comic p-5 flex flex-col relative z-20 overflow-hidden">
-        
+
         {/* Name Input Section (Always Visible) */}
         <div className="mb-4 border-b-[3px] border-gray-200 pb-3 shrink-0">
           <label className="block font-hand font-bold text-lg mb-1 text-gray-500">
             {TRANSLATIONS.ui.residentName[lang]}
           </label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={data.name}
             onChange={(e) => updateName(e.target.value)}
             className="w-full border-[3px] border-black rounded-lg p-2 font-rounded font-bold text-xl uppercase focus:outline-none focus:ring-4 focus:ring-livia-yellow transition-all"
@@ -101,10 +107,10 @@ export const Controls: React.FC<ControlsProps> = ({
 
         {/* --- PAGINATED GRID AREA --- */}
         <div className="flex-1 flex flex-col relative min-h-0">
-          
+
           {/* Grid Container with fixed layout properties to prevent jumping */}
           <div className="flex-1 overflow-y-auto scrollbar-hide">
-            <div 
+            <div
               key={`${activeTab}-${currentPage}`} // Trigger animation on change
               className="grid grid-cols-2 gap-3 animate-slideFade content-start pb-2"
             >
@@ -121,8 +127,8 @@ export const Controls: React.FC<ControlsProps> = ({
                   className={`
                     relative flex flex-col items-center p-2 rounded-lg border-[3px] transition-all transform duration-150
                     active:scale-95 hover:scale-[1.02] h-24 justify-between
-                    ${(isBackView ? data.selectedPlanetParts[activeTab as PlanetCategory] : data.selectedParts[activeTab as PartCategory]) === part.id 
-                      ? (isBackView ? 'bg-livia-blue border-black text-white shadow-[3px_3px_0_black] -translate-y-1' : 'bg-livia-yellow border-black text-black shadow-[3px_3px_0_black] -translate-y-1') 
+                    ${(isBackView ? data.selectedPlanetParts[activeTab as PlanetCategory] : data.selectedParts[activeTab as PartCategory]) === part.id
+                      ? (isBackView ? 'bg-livia-blue border-black text-white shadow-[3px_3px_0_black] -translate-y-1' : 'bg-livia-yellow border-black text-black shadow-[3px_3px_0_black] -translate-y-1')
                       : 'bg-white border-black text-gray-700 hover:bg-gray-50'}
                   `}
                 >
@@ -144,7 +150,7 @@ export const Controls: React.FC<ControlsProps> = ({
                   )}
 
                   <span className="text-xs font-bold font-rounded text-center leading-tight line-clamp-2">{getPartName(part.id, lang)}</span>
-                  
+
                   {/* Stats Dots (Only for Front View) */}
                   {!isBackView && (
                     <div className="flex gap-1 mt-1">
@@ -165,11 +171,10 @@ export const Controls: React.FC<ControlsProps> = ({
                 <button
                   key={idx}
                   onClick={() => setCurrentPage(idx)}
-                  className={`transition-all duration-300 rounded-full ${
-                    currentPage === idx 
+                  className={`transition-all duration-300 rounded-full ${currentPage === idx
                       ? 'w-8 h-3 bg-livia-yellow border border-black' // Active: Capsule
                       : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'      // Inactive: Dot
-                  }`}
+                    }`}
                   aria-label={`Go to page ${idx + 1}`}
                 />
               ))}
@@ -180,27 +185,27 @@ export const Controls: React.FC<ControlsProps> = ({
         {/* Stats Visualization (Mini) - Only show on Front View */}
         {!isBackView && (
           <div className="border-t-[3px] border-gray-200 pt-3 mt-2 space-y-1.5 opacity-80 pointer-events-none shrink-0">
-             <div className="flex items-center gap-2">
-               <div className="w-8 font-bold text-xs font-rounded text-livia-red">{TRANSLATIONS.statLabels.mod[lang]}</div>
-               <div className="flex-1 h-2 bg-gray-200 rounded-full border border-black overflow-hidden">
-                  <div className="h-full bg-livia-red transition-all duration-500" style={{ width: `${(derivedStats.mod / 9) * 100}%` }}></div>
-               </div>
-               <span className="text-xs font-bold w-3 text-right">{derivedStats.mod}</span>
-             </div>
-             <div className="flex items-center gap-2">
-               <div className="w-8 font-bold text-xs font-rounded text-yellow-600">{TRANSLATIONS.statLabels.bus[lang]}</div>
-               <div className="flex-1 h-2 bg-gray-200 rounded-full border border-black overflow-hidden">
-                  <div className="h-full bg-livia-yellow transition-all duration-500" style={{ width: `${(derivedStats.bus / 9) * 100}%` }}></div>
-               </div>
-               <span className="text-xs font-bold w-3 text-right">{derivedStats.bus}</span>
-             </div>
-             <div className="flex items-center gap-2">
-               <div className="w-8 font-bold text-xs font-rounded text-livia-blue">{TRANSLATIONS.statLabels.klurighet[lang]}</div>
-               <div className="flex-1 h-2 bg-gray-200 rounded-full border border-black overflow-hidden">
-                  <div className="h-full bg-livia-blue transition-all duration-500" style={{ width: `${(derivedStats.klurighet / 9) * 100}%` }}></div>
-               </div>
-               <span className="text-xs font-bold w-3 text-right">{derivedStats.klurighet}</span>
-             </div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 font-bold text-xs font-rounded text-livia-red">{TRANSLATIONS.statLabels.mod[lang]}</div>
+              <div className="flex-1 h-2 bg-gray-200 rounded-full border border-black overflow-hidden">
+                <div className="h-full bg-livia-red transition-all duration-500" style={{ width: `${(derivedStats.mod / 9) * 100}%` }}></div>
+              </div>
+              <span className="text-xs font-bold w-3 text-right">{derivedStats.mod}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 font-bold text-xs font-rounded text-yellow-600">{TRANSLATIONS.statLabels.bus[lang]}</div>
+              <div className="flex-1 h-2 bg-gray-200 rounded-full border border-black overflow-hidden">
+                <div className="h-full bg-livia-yellow transition-all duration-500" style={{ width: `${(derivedStats.bus / 9) * 100}%` }}></div>
+              </div>
+              <span className="text-xs font-bold w-3 text-right">{derivedStats.bus}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 font-bold text-xs font-rounded text-livia-blue">{TRANSLATIONS.statLabels.klurighet[lang]}</div>
+              <div className="flex-1 h-2 bg-gray-200 rounded-full border border-black overflow-hidden">
+                <div className="h-full bg-livia-blue transition-all duration-500" style={{ width: `${(derivedStats.klurighet / 9) * 100}%` }}></div>
+              </div>
+              <span className="text-xs font-bold w-3 text-right">{derivedStats.klurighet}</span>
+            </div>
           </div>
         )}
 

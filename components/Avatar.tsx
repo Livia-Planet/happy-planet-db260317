@@ -34,34 +34,36 @@ export const Avatar: React.FC<AvatarProps> = ({ selectedParts, dominantStat }) =
     const OFFSET_X = (canvas.width - SCALED_W) / 2; // Center horizontally
     const OFFSET_Y = 15; // Shift down slightly so ears don't clip the top curve, but head is high
 
+
     // Helper to load and draw an image
     const drawLayer = (src: string | undefined, x: number, y: number): Promise<void> => {
       if (!src) return Promise.resolve();
       return new Promise((resolve) => {
         const img = new Image();
-        img.src = src;
+        // Use encodeURI to handle spaces and special characters in URLs
+        const finalSrc = src.startsWith('http') ? encodeURI(decodeURI(src)) : src;
+        img.src = finalSrc;
         img.crossOrigin = "anonymous"; // Important for saving
         img.onload = () => {
           // Apply Scale and Offsets
-          // x, y params here are usually 0, or specific layer offsets (like hats)
-          // We scale the specific layer offset as well if needed, but usually it's small relative shifts.
           ctx.drawImage(
-            img, 
-            OFFSET_X + x, 
-            OFFSET_Y + y, 
-            SCALED_W, 
+            img,
+            OFFSET_X + x,
+            OFFSET_Y + y,
+            SCALED_W,
             SCALED_H
           );
           resolve();
         };
         img.onerror = () => {
-          console.warn(`Failed to load image: ${src}`);
+          console.warn(`Failed to load image: ${finalSrc}`);
           resolve(); // Resolve anyway to continue drawing other layers
         };
       });
     };
 
     const renderStack = async () => {
+
       // Fetch parts definition
       const ears = PARTS_DB[selectedParts.ears];
       const body = PARTS_DB[selectedParts.body];
@@ -113,15 +115,15 @@ export const Avatar: React.FC<AvatarProps> = ({ selectedParts, dominantStat }) =
 
   return (
     <div className={`w-40 h-40 border-4 border-black rounded-[80px_80px_20px_20px] flex items-center justify-center relative overflow-hidden shadow-[inset_0_10px_20px_rgba(255,255,255,0.5),inset_0_-5px_15px_rgba(0,0,0,0.05)] transition-colors duration-500 ${bgColors[dominantStat]} [mask-image:linear-gradient(to_bottom,black_85%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_85%,transparent_100%)]`}>
-      
+
       {/* The HTML5 Canvas Element */}
-      <canvas 
-        ref={canvasRef} 
-        width={400} 
-        height={400} 
+      <canvas
+        ref={canvasRef}
+        width={400}
+        height={400}
         className="w-full h-full relative z-10"
       />
-      
+
       {/* Glossy overlay */}
       <div className="absolute top-4 right-6 w-4 h-4 rounded-full bg-white opacity-40 pointer-events-none z-20"></div>
     </div>
