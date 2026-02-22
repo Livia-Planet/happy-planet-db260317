@@ -44,37 +44,27 @@ export const PassportBook: React.FC<PassportBookProps> = ({
 
   const [stories, setStories] = useState<StoryEntry[]>([]);
 
-  // Default stories for permanent residents
+  // Default stories for permanent residents (id = galaxyIndex-starIndex)
   const DEFAULT_STORIES: Record<string, StoryEntry[]> = {
     'HP-00001-BOBU-B': [
-      {
-        id: 9001, date: 'SD-2024.01',
-        title: { cn: '初遇星海', en: 'First Flight', se: 'Första Flyget' },
-        content: { cn: '这是我们冒险的开始，星海无边无际…', en: 'The journey begins among infinite stars…', se: 'Resan börjar bland oändliga stjärnor…' }
-      },
-      {
-        id: 9002, date: 'SD-2024.03',
-        title: { cn: '兔子星球的秘密', en: 'Rabbit Planet Secret', se: 'Kaninplanetens Hemlighet' },
-        content: { cn: '在兔子星球的地下发现了古老的壁画！', en: 'Ancient murals found underground on Rabbit Planet!', se: 'Uråldriga målningar hittades under Kaninplaneten!' }
-      },
-      {
-        id: 9003, date: 'SD-2024.06',
-        title: { cn: '星际野餐', en: 'Space Picnic', se: 'Rymdpicknick' },
-        content: { cn: '和Duddu在小行星带上野餐，吃了三个星球的零食！', en: 'Had a picnic on the asteroid belt with Duddu!', se: 'Picknickade på asteroidbältet med Duddu!' }
-      },
+      { id: '0-0', date: 'SD-2024.01', galaxyIndex: 0, starIndex: 0, title: { cn: '初遇星海', en: 'First Flight', se: 'Första Flyget' }, content: { cn: '这是我们冒险的开始，星海无边无际…', en: 'The journey begins among infinite stars…', se: 'Resan börjar bland oändliga stjärnor…' } },
+      { id: '0-1', date: 'SD-2024.03', galaxyIndex: 0, starIndex: 1, title: { cn: '兔子星球的秘密', en: 'Rabbit Planet Secret', se: 'Kaninplanetens Hemlighet' }, content: { cn: '在兔子星球的地下发现了古老的壁画！', en: 'Ancient murals found underground on Rabbit Planet!', se: 'Uråldriga målningar hittades under Kaninplaneten!' } },
+      { id: '0-2', date: 'SD-2024.06', galaxyIndex: 0, starIndex: 2, title: { cn: '星际野餐', en: 'Space Picnic', se: 'Rymdpicknick' }, content: { cn: '和Duddu在小行星带上野餐，吃了三个星球的零食！', en: 'Had a picnic on the asteroid belt with Duddu!', se: 'Picknickade på asteroidbältet med Duddu!' } },
     ],
     'HP-00002-DUDDU-A': [
-      {
-        id: 9101, date: 'SD-2024.02',
-        title: { cn: '滑板穿越星云', en: 'Skating Through Nebula', se: 'Skateboard Genom Nebulosan' },
-        content: { cn: '第一次用滑板穿过星云！速度超快！', en: 'First time skating through a nebula! So fast!', se: 'Första gången jag skateboardade genom en nebulosa!' }
-      },
-      {
-        id: 9102, date: 'SD-2024.05',
-        title: { cn: '勇者的誓言', en: 'Hero\'s Oath', se: 'Hjältens Ed' },
-        content: { cn: '我发誓要保护所有朋友，这是英雄的使命！', en: 'I swear to protect all my friends — a hero\'s duty!', se: 'Jag svär att skydda alla mina vänner — en hjältes plikt!' }
-      },
+      { id: '0-0', date: 'SD-2024.02', galaxyIndex: 0, starIndex: 0, title: { cn: '滑板穿越星云', en: 'Skating Through Nebula', se: 'Skateboard Genom Nebulosan' }, content: { cn: '第一次用滑板穿过星云！速度超快！', en: 'First time skating through a nebula! So fast!', se: 'Första gången jag skateboardade genom en nebulosa!' } },
+      { id: '0-1', date: 'SD-2024.05', galaxyIndex: 0, starIndex: 1, title: { cn: '勇者的誓言', en: 'Hero\'s Oath', se: 'Hjältens Ed' }, content: { cn: '我发誓要保护所有朋友，这是英雄的使命！', en: 'I swear to protect all my friends — a hero\'s duty!', se: 'Jag svär att skydda alla mina vänner — en hjältes plikt!' } },
     ],
+  };
+
+  /** 迁移旧数据：无 galaxyIndex/starIndex 时按顺序落到第 0 页前几颗星 */
+  const normalizeStories = (list: StoryEntry[]): StoryEntry[] => {
+    return list.map((s, i) => {
+      if (s.galaxyIndex != null && s.starIndex != null && typeof s.id === 'string') return s;
+      const galaxyIndex = 0;
+      const starIndex = i;
+      return { ...s, id: `${galaxyIndex}-${starIndex}`, galaxyIndex, starIndex };
+    });
   };
 
   // Load stories when selected passport changes
@@ -83,13 +73,17 @@ export const PassportBook: React.FC<PassportBookProps> = ({
     try {
       const raw = localStorage.getItem(storageKey);
       const parsed: StoryEntry[] = raw ? JSON.parse(raw) : [];
-      if (parsed.length > 0) {
-        setStories(parsed);
+      const normalized = normalizeStories(parsed);
+      if (normalized.length > 0) {
+        setStories(normalized);
+        if (storageKey && JSON.stringify(parsed) !== JSON.stringify(normalized)) {
+          localStorage.setItem(storageKey, JSON.stringify(normalized));
+        }
       } else {
         // Inject defaults for permanent residents if no saved stories
         const defaults = DEFAULT_STORIES[selectedId] || [];
         setStories(defaults);
-        if (defaults.length > 0) {
+        if (defaults.length > 0 && storageKey) {
           localStorage.setItem(storageKey, JSON.stringify(defaults));
         }
       }
@@ -709,6 +703,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                 lang={lang}
                 isFlipped={isFlipped}
                 onUpdateStories={handleUpdateStories}
+                selectedId={selectedId}
               />
             </div>
           )}

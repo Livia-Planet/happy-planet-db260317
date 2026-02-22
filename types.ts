@@ -47,8 +47,17 @@ export interface PassportData extends CharacterData {
 }
 
 export interface StoryEntry {
-  id: number;
+  /** 唯一键，建议格式 `${galaxyIndex}-${starIndex}`，用于定位与去重 */
+  id: string;
   date: string;
   title: Record<Language, string>;
   content: Record<Language, string>;
+  /** 所属星系 (0-8) */
+  galaxyIndex: number;
+  /** 该星系内的星位索引 */
+  starIndex: number;
+  /** 单篇独立锁：是否上锁 */
+  isLocked?: boolean;
+  /** 单篇密码（用户设置后存储，用于验证） */
+  password?: string;
 }
