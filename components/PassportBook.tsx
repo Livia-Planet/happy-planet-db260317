@@ -244,7 +244,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
 
   // === DETAIL VIEW (JOURNAL) ===
   return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-8 items-start justify-center min-h-[600px] animate-fade-in relative">
+    <div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-8 md:items-stretch justify-center min-h-[600px] animate-fade-in relative">
       {/* Theme Background Override (Detail View) */}
       <div className="fixed inset-0 -z-10 transition-colors duration-700" style={{ backgroundColor: currentTheme.bg }}></div>
 
@@ -271,8 +271,8 @@ export const PassportBook: React.FC<PassportBookProps> = ({
         </p>
       </div>
 
-      {/* RIGHT: The Journal Page (Tabbed) */}
-      <div className={`flex-1 w-full max-w-lg bg-[#FDFBF7] border-[4px] border-black rounded-3xl shadow-[8px_8px_0_rgba(0,0,0,0.2)] relative transition-colors duration-500 overflow-hidden flex flex-col ${isFlipped ? 'bg-[#1a1c29] border-gray-600' : 'bg-[#FDFBF7]'}`}>
+      {/* RIGHT: 大框底部与「点击查看背面」齐平（md 下 items-stretch 拉齐高度） */}
+      <div className={`flex-1 w-full max-w-lg min-h-0 bg-[#FDFBF7] border-[4px] border-black rounded-3xl shadow-[8px_8px_0_rgba(0,0,0,0.2)] relative transition-colors duration-500 overflow-hidden flex flex-col ${isFlipped ? 'bg-[#1a1c29] border-gray-600' : 'bg-[#FDFBF7]'}`}>
 
         {/* Header */}
         <div className="p-6 pb-0 flex justify-between items-start">
