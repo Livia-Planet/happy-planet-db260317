@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { PassportData, Language } from '../types';
+import React, { useState, useEffect, useCallback } from 'react';
+import { PassportData, Language, StoryEntry } from '../types';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
 import { calculateStats, generateFlavorText, getDominantStat, TRANSLATIONS, getStarDate, ALL_PRESETS, getMixedTraits } from '../utils/gameLogic';
 import { RadarChart } from './RadarChart';
+import { StoryTab } from './StoryTab';
 
 interface PassportBookProps {
   passports: PassportData[];
@@ -37,6 +38,68 @@ export const PassportBook: React.FC<PassportBookProps> = ({
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isJobPickerOpen, setIsJobPickerOpen] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(THEMES[0]);
+
+  // ── Story state per passport ──
+  const storageKey = selectedId ? `happyPlanet_stories_${selectedId}` : null;
+
+  const [stories, setStories] = useState<StoryEntry[]>([]);
+
+  // Default stories for permanent residents
+  const DEFAULT_STORIES: Record<string, StoryEntry[]> = {
+    'HP-00001-BOBU-B': [
+      {
+        id: 9001, date: 'SD-2024.01',
+        title: { cn: '初遇星海', en: 'First Flight', se: 'Första Flyget' },
+        content: { cn: '这是我们冒险的开始，星海无边无际…', en: 'The journey begins among infinite stars…', se: 'Resan börjar bland oändliga stjärnor…' }
+      },
+      {
+        id: 9002, date: 'SD-2024.03',
+        title: { cn: '兔子星球的秘密', en: 'Rabbit Planet Secret', se: 'Kaninplanetens Hemlighet' },
+        content: { cn: '在兔子星球的地下发现了古老的壁画！', en: 'Ancient murals found underground on Rabbit Planet!', se: 'Uråldriga målningar hittades under Kaninplaneten!' }
+      },
+      {
+        id: 9003, date: 'SD-2024.06',
+        title: { cn: '星际野餐', en: 'Space Picnic', se: 'Rymdpicknick' },
+        content: { cn: '和Duddu在小行星带上野餐，吃了三个星球的零食！', en: 'Had a picnic on the asteroid belt with Duddu!', se: 'Picknickade på asteroidbältet med Duddu!' }
+      },
+    ],
+    'HP-00002-DUDDU-A': [
+      {
+        id: 9101, date: 'SD-2024.02',
+        title: { cn: '滑板穿越星云', en: 'Skating Through Nebula', se: 'Skateboard Genom Nebulosan' },
+        content: { cn: '第一次用滑板穿过星云！速度超快！', en: 'First time skating through a nebula! So fast!', se: 'Första gången jag skateboardade genom en nebulosa!' }
+      },
+      {
+        id: 9102, date: 'SD-2024.05',
+        title: { cn: '勇者的誓言', en: 'Hero\'s Oath', se: 'Hjältens Ed' },
+        content: { cn: '我发誓要保护所有朋友，这是英雄的使命！', en: 'I swear to protect all my friends — a hero\'s duty!', se: 'Jag svär att skydda alla mina vänner — en hjältes plikt!' }
+      },
+    ],
+  };
+
+  // Load stories when selected passport changes
+  useEffect(() => {
+    if (!storageKey || !selectedId) { setStories([]); return; }
+    try {
+      const raw = localStorage.getItem(storageKey);
+      const parsed: StoryEntry[] = raw ? JSON.parse(raw) : [];
+      if (parsed.length > 0) {
+        setStories(parsed);
+      } else {
+        // Inject defaults for permanent residents if no saved stories
+        const defaults = DEFAULT_STORIES[selectedId] || [];
+        setStories(defaults);
+        if (defaults.length > 0) {
+          localStorage.setItem(storageKey, JSON.stringify(defaults));
+        }
+      }
+    } catch { setStories([]); }
+  }, [storageKey, selectedId]);
+
+  const handleUpdateStories = useCallback((next: StoryEntry[]) => {
+    setStories(next);
+    if (storageKey) localStorage.setItem(storageKey, JSON.stringify(next));
+  }, [storageKey]);
 
   // Find selected passport
   const activePassport = passports.find(p => p.id === selectedId);
@@ -287,7 +350,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                       value={activePassport.gender || 'unknown'}
                       onChange={(e) => onUpdatePassport(activePassport.id, 'gender', e.target.value)}
                       className={`
-                        w-full py-2 px-3 rounded-xl border-[3px] font-hand text-lg transition-all appearance-none cursor-pointer
+                        w-full h-9 px-3 rounded-xl border-[3px] font-hand text-lg transition-all appearance-none cursor-pointer
                         ${isFlipped
                           ? 'bg-gray-800 border-gray-600 text-white focus:border-livia-blue'
                           : 'bg-white border-black text-black focus:border-livia-yellow shadow-[4px_4px_0_rgba(0,0,0,0.1)]'}
@@ -313,7 +376,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                       value={activePassport.species || 'rabbit'}
                       onChange={(e) => onUpdatePassport(activePassport.id, 'species', e.target.value)}
                       className={`
-                        w-full py-2 px-3 rounded-xl border-[3px] font-hand text-lg transition-all appearance-none cursor-pointer
+                        w-full h-9 px-3 rounded-xl border-[3px] font-hand text-lg transition-all appearance-none cursor-pointer
                         ${isFlipped
                           ? 'bg-gray-800 border-gray-600 text-white focus:border-livia-blue'
                           : 'bg-white border-black text-black focus:border-livia-yellow shadow-[4px_4px_0_rgba(0,0,0,0.1)]'}
@@ -345,7 +408,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                       <div
                         key={key}
                         className={`
-                          px-3 py-1 rounded-full border-2 text-xs font-bold transition-all flex items-center gap-2
+                          px-3 py-1.5 rounded-full border-2 text-sm font-bold transition-all flex items-center gap-2
                           ${isFlipped ? 'bg-livia-blue border-white text-white' : 'bg-livia-blue border-black text-white shadow-[3px_3px_0_black]'}
                         `}
                       >
@@ -638,28 +701,14 @@ export const PassportBook: React.FC<PassportBookProps> = ({
             </div>
           )}
 
-          {/* TAB: STORY */}
+          {/* TAB: STORY (Starmap Constellation) */}
           {activeTab === 'story' && (
-            <div className="h-full flex flex-col animate-fade-in relative">
-              {/* Star Date Stamp */}
-              <div className="mb-4 self-start">
-                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-md border-2 font-mono text-xs font-bold ${isFlipped ? 'border-livia-blue text-livia-blue bg-livia-blue/10' : 'border-black text-black bg-yellow-100/50'}`}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                    <path fillRule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401z" clipRule="evenodd" />
-                  </svg>
-                  {getStarDate()}
-                </div>
-              </div>
-
-              <textarea
-                value={activePassport.bio}
-                onChange={(e) => onUpdatePassport(activePassport.id, 'bio', e.target.value)}
-                className={`w-full h-full bg-transparent resize-none font-hand text-xl leading-relaxed p-2 focus:outline-none border-l-4 pl-4 focus:border-opacity-100 transition-colors
-                    ${isFlipped
-                    ? 'text-gray-100 border-gray-600 focus:border-livia-blue drop-shadow-[0_0_2px_rgba(255,255,255,0.5)]'
-                    : 'text-gray-800 border-gray-300 focus:border-livia-yellow placeholder-gray-300'}
-                  `}
-                placeholder={lang === 'cn' ? '写下你的故事...' : 'Write your story here...'}
+            <div className="h-[420px] animate-fade-in">
+              <StoryTab
+                stories={stories}
+                lang={lang}
+                isFlipped={isFlipped}
+                onUpdateStories={handleUpdateStories}
               />
             </div>
           )}

@@ -45,3 +45,10 @@ export interface PassportData extends CharacterData {
   stats?: CharacterStats; // Optional: Override calculated stats
   traits?: string[]; // Personality tags
 }
+
+export interface StoryEntry {
+  id: number;
+  date: string;
+  title: Record<Language, string>;
+  content: Record<Language, string>;
+}
