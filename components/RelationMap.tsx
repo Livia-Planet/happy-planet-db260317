@@ -38,12 +38,24 @@ export const RelationMap: React.FC<RelationMapProps> = ({
   // Constants for layout
   const CENTER_X = 50; // percentage
   const CENTER_Y = 50; // percentage
-  const RADIUS = 32;   // percentage
+  const RADIUS = 40;   // percentage
   
   // Calculate positions
   const positions = validRelations.map((rel, index) => {
     const total = validRelations.length;
-    const angle = (index * (360 / total)) * (Math.PI / 180) - Math.PI / 2; // Start from top
+
+    // 动态起始角度
+    let startAngle = -Math.PI / 2; // 默认从正上方开始 (适合 1人, 3人)
+    if (total === 2) {
+      // 2人时：改为左右水平分布，彻底空出上下空间给名字标签
+      startAngle = Math.PI;
+    } else if (total === 4) {
+      // 4人时：呈 X 型对角线分布，避开正上正下
+      startAngle = -Math.PI / 4;
+    }
+
+    // 计算当前角度
+    const angle = (index * (360 / total)) * (Math.PI / 180) + startAngle;
     
     const x = CENTER_X + RADIUS * Math.cos(angle); 
     const y = CENTER_Y + RADIUS * Math.sin(angle);

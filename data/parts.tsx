@@ -32,7 +32,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
   'ears_amber': { id: 'ears_amber', category: 'ears', name: 'Amber', stats: stats(1, 1, 3), images: { main: '/parts/ears_amber.png' } },
   'ears_pastel': { id: 'ears_pastel', category: 'ears', name: 'Pastel Yellow', stats: stats(0, 3, 2), images: { main: '/parts/ears_pastel.png' } },
   'ears_camel': { id: 'ears_camel', category: 'ears', name: 'Camel', stats: stats(2, 0, 3), images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Duddu400x400-ears.png' } },
-  'ears_white': { id: 'ears_white', category: 'ears', name: 'White', stats: stats(1, 1, 1), images: { main: '/parts/ears_white.png' } },
+  'ears_white': { id: 'ears_white', category: 'ears', name: 'White', stats: stats(1, 1, 1), images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Polly400x400-ears.png' } },
   'ears_rose': { id: 'ears_rose', category: 'ears', name: 'Rose Red', stats: stats(3, 1, 1), images: { main: '/parts/ears_rose.png' } },
 
   // === BODY (Layer 3) ===
@@ -62,7 +62,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
   'body_amber': { id: 'body_amber', category: 'body', name: 'Amber', stats: stats(1, 1, 3), images: { main: '/parts/body_amber.png' } },
   'body_pastel': { id: 'body_pastel', category: 'body', name: 'Pastel Yellow', stats: stats(0, 3, 2), images: { main: '/parts/body_pastel.png' } },
   'body_camel': { id: 'body_camel', category: 'body', name: 'Camel', stats: stats(2, 0, 3), images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Duddu400x400-body.png' } },
-  'body_white': { id: 'body_white', category: 'body', name: 'White', stats: stats(1, 1, 1), images: { main: '/parts/body_white.png' } },
+  'body_white': { id: 'body_white', category: 'body', name: 'White', stats: stats(1, 1, 1), images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Polly400x400-body.png' } },
   'body_rose': { id: 'body_rose', category: 'body', name: 'Rose Red', stats: stats(3, 1, 1), images: { main: '/parts/body_rose.png' } },
 
   // === FACE (Layer 4) ===
@@ -92,7 +92,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     category: 'face',
     name: 'Smile',
     stats: stats(0, 0, 0),
-    images: { main: '/parts/mouth_smile.png' }
+    images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Polly400x400-face.png' }
   },
   'mouth_open': {
     id: 'mouth_open',
@@ -151,7 +151,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     stats: stats(1, 4, 4),
     offsetY: 0,
     images: {
-      front: '/parts/head_beret_front.png',
+      front: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Polly400x400-gear.png',
     }
   },
   'access_helmet': {

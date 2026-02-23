@@ -124,7 +124,9 @@ export const TRANSLATIONS = {
       engineer: { se: "Ingenjör", en: "Engineer", cn: "工程师" },
       inventor: { se: "Uppfinnare", en: "Inventor", cn: "发明家" },
       explorer: { se: "Upptäckare", en: "Explorer", cn: "探险家" },
-      skateboard_master: { se: "Skateboardmästare", en: "Skateboard Master", cn: "滑板大师" }
+      skateboard_master: { se: "Skateboardmästare", en: "Skateboard Master", cn: "滑板大师" },
+      painter: { se: "Målare", en: "Painter", cn: "画家" },
+      artist: { se: "Konstnär", en: "Artist", cn: "艺术家" }
     },
     species: {
       rabbit: { se: "Kanin", en: "Rabbit", cn: "小兔子" },
@@ -146,6 +148,7 @@ export const TRANSLATIONS = {
       couple: { se: "Par", en: "Couple", cn: "情侣" },
       partner: { se: "Partner", en: "Partner", cn: "恋人" },
       family: { se: "Släkting", en: "Family", cn: "亲属" },
+      good_friend: { se: "God Vän", en: "Good Friend", cn: "好朋友" },
       none: { se: "Ingen", en: "None", cn: "无关系" }
     }
   },
@@ -450,6 +453,11 @@ export const DEFAULT_BIOS = {
     en: "Duddu.A is a brave rabbit who loves skateboarding! Known for his cool tricks, he's a true adventurer who's always ready to be a hero for his friends.",
     cn: "Duddu.A 是一只勇敢的小兔子。他超级热爱滑板，能做出各种惊人的特技，是朋友们眼中无所畏惧的冒险家和英雄！"
   },
+  polly: {
+    se: "Polly är en superkreativ liten kanin, och hennes målningar är som magi från en annan planet! Hennes konst är alltid full av värme, drömmar och oändlig fantasi.",
+    en: "Polly is an incredibly creative little bunny, and her paintings are like magic from another planet! Her art is always filled with warmth, dreams, and endless imagination.",
+    cn: "Polly 是一只超级有创意的小兔子，她的画作仿佛来自外星的魔法！她的艺术总是充满了温暖、梦想和无尽的想象力。"
+  },
   general: {
     se: "En ny upptäcktsresande redo för att utforska galaxen.",
     en: "A new explorer ready to chart the galaxy.",
@@ -503,7 +511,10 @@ export const BOBU_PRESET: PassportData = {
   species: 'rabbit',
   occupations: ['student', 'explorer'],
   location: 'Kaninplaneten',
-  relationships: [{ targetId: 'HP-00002-DUDDU-A', relationType: 'best_friend' }],
+  relationships: [
+    { targetId: 'HP-00002-DUDDU-A', relationType: 'best_friend' },
+    { targetId: 'HP-00003-POLLYPLUTTEN-A-B', relationType: 'good_friend' }
+  ],
   stats: {
     mod: 9,
     bus: 9,
@@ -535,7 +546,10 @@ export const DUDDU_PRESET: PassportData = {
   species: 'rabbit',
   occupations: ['student', 'skateboard_master'],
   location: 'Kaninplaneten',
-  relationships: [{ targetId: 'HP-00001-BOBU-B', relationType: 'best_friend' }],
+  relationships: [
+    { targetId: 'HP-00001-BOBU-B', relationType: 'best_friend' },
+    { targetId: 'HP-00003-POLLYPLUTTEN-A-B', relationType: 'good_friend' }
+  ],
   stats: {
     mod: 8,
     bus: 7,
@@ -543,4 +557,39 @@ export const DUDDU_PRESET: PassportData = {
   }
 };
 
-export const ALL_PRESETS = [BOBU_PRESET, DUDDU_PRESET];
+export const POLLY_PRESET: PassportData = {
+  id: 'HP-00003-POLLYPLUTTEN-A-B',
+  name: 'Polly.A.B',
+  selectedParts: {
+    body: 'body_white',
+    ears: 'ears_white',
+    face: 'mouth_smile',
+    hair: 'hair_none',
+    access: 'access_beret'
+  },
+  selectedPlanetParts: {
+    base: 'planet_base_blue',
+    surface: 'planet_surf_craters',
+    atmosphere: 'planet_atmo_none',
+    companion: 'planet_comp_moon'
+  },
+  lastModified: 1700000000000,
+  savedAt: 1700000000000,
+  bio: DEFAULT_BIOS.polly.se,
+  age: '3',
+  gender: 'male',
+  species: 'rabbit',
+  occupations: ['student', 'painter', 'artist'],
+  location: 'Kaninplaneten',
+  relationships: [
+    { targetId: 'HP-00001-BOBU-B', relationType: 'good_friend' },
+    { targetId: 'HP-00002-DUDDU-A', relationType: 'good_friend' }
+  ],
+  stats: {
+    mod: 4,
+    bus: 7,
+    klurighet: 7
+  }
+};
+
+export const ALL_PRESETS = [BOBU_PRESET, DUDDU_PRESET, POLLY_PRESET];
