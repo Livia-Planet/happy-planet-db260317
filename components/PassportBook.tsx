@@ -5,6 +5,7 @@ import { Avatar } from './Avatar';
 import { calculateStats, generateFlavorText, getDominantStat, TRANSLATIONS, getStarDate, ALL_PRESETS, getMixedTraits } from '../utils/gameLogic';
 import { RadarChart } from './RadarChart';
 import { StoryTab } from './StoryTab';
+import { RelationMap } from './RelationMap';
 
 interface PassportBookProps {
   passports: PassportData[];
@@ -37,6 +38,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isJobPickerOpen, setIsJobPickerOpen] = useState(false);
+  const [isMapOpen, setIsMapOpen] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(THEMES[0]);
 
   // ── Story state per passport ──
@@ -605,6 +607,19 @@ export const PassportBook: React.FC<PassportBookProps> = ({
           {/* TAB: RELATIONS */}
           {activeTab === 'relations' && (
             <div className="space-y-4 animate-fade-in flex flex-col h-full">
+              
+              {/* View Star Relations Button */}
+              <button
+                onClick={() => setIsMapOpen(true)}
+                className="w-full bg-livia-blue text-white font-bold py-3 rounded-xl border-2 border-black shadow-[4px_4px_0_black] hover:translate-y-0.5 hover:shadow-[2px_2px_0_black] active:translate-y-1 active:shadow-none transition-all uppercase tracking-widest flex items-center justify-center gap-2"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                {TRANSLATIONS.ui.viewStarMap[lang]}
+              </button>
+
               <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
                 {activePassport.relationships?.map((rel, index) => {
                   const target = passports.find(p => p.id === rel.targetId);
@@ -687,9 +702,13 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                     const newRels = [...(activePassport.relationships || []), { targetId, relationType }];
                     onUpdatePassport(activePassport.id, 'relationships', newRels);
                   }}
-                  className="w-full bg-livia-yellow text-black font-bold py-2 rounded-lg border-2 border-black shadow-[2px_2px_0_black] hover:translate-y-0.5 hover:shadow-none active:bg-yellow-500 transition-all text-sm uppercase"
+                  className="w-full bg-livia-yellow text-black font-bold py-2 rounded-lg border-2 border-black shadow-[2px_2px_0_black] hover:translate-y-0.5 hover:shadow-none active:bg-yellow-500 transition-all text-sm uppercase flex items-center justify-center gap-2"
                 >
-                  {lang === 'cn' ? '+ 添加关系' : '+ Add Relation'}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  {lang === 'cn' ? '添加关系' : 'Add Relation'}
                 </button>
               </div>
             </div>
@@ -716,6 +735,16 @@ export const PassportBook: React.FC<PassportBookProps> = ({
           </div>
         </div>
       </div >
+
+      {/* Star Map Portal */}
+      {isMapOpen && activePassport && (
+        <RelationMap
+          currentUser={activePassport}
+          passports={passports}
+          onClose={() => setIsMapOpen(false)}
+          lang={lang}
+        />
+      )}
 
     </div >
   );

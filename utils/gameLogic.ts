@@ -84,6 +84,10 @@ export const TRANSLATIONS = {
 
     // New UI Elements
     delete: { se: "Ta bort", en: "Delete", cn: "删除" },
+    close: { se: "Stäng", en: "Close", cn: "关闭" },
+    viewStarMap: { se: "Visa relationskarta", en: "View Star Relations", cn: "查看星际关系图" },
+    starMapTitle: { se: "Relationer", en: "Relations", cn: "星际关系图" },
+    starMapEmpty: { se: "Inga stjärnkopplingar än...", en: "No star connections yet...", cn: "暂无星际连线..." },
     confirmDelete: {
       se: "Är du säker på att du vill ta bort denna invånare från stjärnarkivet? Detta kan inte ångras.",
       en: "Are you sure you want to remove this resident from the interstellar archives? This action cannot be undone.",
@@ -135,11 +139,14 @@ export const TRANSLATIONS = {
     relationTypes: {
       bestFriend: { se: "Bästis", en: "Besties", cn: "死党" },
       best_friend: { se: "Bästis", en: "Bestie", cn: "死党" },
+      friend: { se: "Vän", en: "Friend", cn: "朋友" },
       foodie: { se: "Matkompis", en: "Foodie Pals", cn: "饭搭子" },
-      rival: { se: "Rival", en: "Arch-rival", cn: "死对头" },
+      rival: { se: "Rival", en: "Arch-rival", cn: "宿敌" },
       teacher: { se: "Lärare/Elev", en: "Teacher/Student", cn: "师生" },
       couple: { se: "Par", en: "Couple", cn: "情侣" },
-      family: { se: "Släkting", en: "Family", cn: "亲属" }
+      partner: { se: "Partner", en: "Partner", cn: "恋人" },
+      family: { se: "Släkting", en: "Family", cn: "亲属" },
+      none: { se: "Ingen", en: "None", cn: "无关系" }
     }
   },
   parts: {
