@@ -187,6 +187,7 @@ export const TRANSLATIONS = {
     // HAIR
     'hair_none': { en: 'None', se: 'Inget', cn: '无' },
     'hair_yellow': { en: 'Yellow Hair', se: 'Gult hår', cn: '黄头发' },
+    'hair_black': { en: 'Black Hair', se: 'Svart hår', cn: '黑发' },
 
     // ACCESSORIES
     'access_none': { en: 'None', se: 'Inget', cn: '无' },

@@ -29,7 +29,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
   },
   // --- Ear Colors (Matching Body) ---
   'ears_mimosa': { id: 'ears_mimosa', category: 'ears', name: 'Mimosa Yellow', stats: stats(1, 3, 1), images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-07-ears.png' } },
-  'ears_amber': { id: 'ears_amber', category: 'ears', name: 'Amber', stats: stats(1, 1, 3), images: { main: '/parts/ears_amber.png' } },
+  'ears_amber': { id: 'ears_amber', category: 'ears', name: 'Amber', stats: stats(1, 1, 3), images: { main: '/https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Plott400x400-ears.png' } },
   'ears_pastel': { id: 'ears_pastel', category: 'ears', name: 'Pastel Yellow', stats: stats(0, 3, 2), images: { main: '/parts/ears_pastel.png' } },
   'ears_camel': { id: 'ears_camel', category: 'ears', name: 'Camel', stats: stats(2, 0, 3), images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Duddu400x400-ears.png' } },
   'ears_white': { id: 'ears_white', category: 'ears', name: 'White', stats: stats(1, 1, 1), images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Polly400x400-ears.png' } },
@@ -59,7 +59,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
   },
   // --- Colors ---
   'body_mimosa': { id: 'body_mimosa', category: 'body', name: 'Mimosa Yellow', stats: stats(1, 3, 1), images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-05-body.png' } },
-  'body_amber': { id: 'body_amber', category: 'body', name: 'Amber', stats: stats(1, 1, 3), images: { main: '/parts/body_amber.png' } },
+  'body_amber': { id: 'body_amber', category: 'body', name: 'Amber', stats: stats(1, 1, 3), images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Plott400x400-body.png' } },
   'body_pastel': { id: 'body_pastel', category: 'body', name: 'Pastel Yellow', stats: stats(0, 3, 2), images: { main: '/parts/body_pastel.png' } },
   'body_camel': { id: 'body_camel', category: 'body', name: 'Camel', stats: stats(2, 0, 3), images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Duddu400x400-body.png' } },
   'body_white': { id: 'body_white', category: 'body', name: 'White', stats: stats(1, 1, 1), images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Polly400x400-body.png' } },
@@ -78,7 +78,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     category: 'face',
     name: 'Smart Specs',
     stats: stats(0, 0, 1),
-    images: { main: '/parts/eyes_glasses.png' }
+    images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Plott400x400-face.png' }
   },
   'eyes_angry': {
     id: 'eyes_angry',
@@ -122,6 +122,15 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     category: 'hair',
     name: 'Yellow Hair',
     stats: stats(2, 2, 4),
+    images: {
+      front: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-03-hair1.png'
+    }
+  },
+  'hair_black': {
+    id: 'hair_black',
+    category: 'hair',
+    name: 'Black Hair',
+    stats: stats(0, 0, 1),
     images: {
       front: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-03-hair1.png'
     }
