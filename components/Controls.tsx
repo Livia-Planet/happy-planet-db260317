@@ -37,9 +37,30 @@ export const Controls: React.FC<ControlsProps> = ({
   updatePlanetPart,
   lang
 }) => {
+  // === STAT ICONS (SVG LINE ART) ===
+  const ModIcon = ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+
+  const BusIcon = ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  );
+
+  const KlurighetIcon = ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5" />
+      <line x1="9" y1="18" x2="15" y2="18" />
+      <line x1="10" y1="22" x2="14" y2="22" />
+    </svg>
+  );
+
   // === PAGINATION STATE ===
   const [currentPage, setCurrentPage] = useState(0);
-  const ITEMS_PER_PAGE = 6;
+  const ITEMS_PER_PAGE = 4;
 
   // Reset pagination when switching tabs or flipping the card
   useEffect(() => {
@@ -88,11 +109,11 @@ export const Controls: React.FC<ControlsProps> = ({
       </div>
 
       {/* --- MAIN PANEL --- */}
-      <div className="flex-1 bg-white border-[6px] border-black rounded-xl rounded-tl-none shadow-comic p-5 flex flex-col relative z-20 overflow-hidden">
+      <div className="flex-1 bg-white border-[6px] border-black rounded-xl rounded-tl-none shadow-comic p-4 flex flex-col relative z-20 overflow-hidden">
 
         {/* Name Input Section (Always Visible) */}
         <div className="mb-4 border-b-[3px] border-gray-200 pb-3 shrink-0">
-          <label className="block font-hand font-bold text-lg mb-1 text-gray-500">
+          <label className="block font-hand font-bold text-lg mb-1 text-gray-500 leading-none">
             {TRANSLATIONS.ui.residentName[lang]}
           </label>
           <input
@@ -106,73 +127,100 @@ export const Controls: React.FC<ControlsProps> = ({
         </div>
 
         {/* --- PAGINATED GRID AREA --- */}
-        <div className="flex-1 flex flex-col relative min-h-0">
+        <div className="flex-1 flex flex-col relative min-h-0 h-full">
 
-          {/* Grid Container with fixed layout properties to prevent jumping */}
-          <div className="flex-1 overflow-y-auto scrollbar-hide">
+          {/* Grid Container - Locked height with safe area */}
+          <div className="flex-1 overflow-hidden px-1 pt-1 pb-2">
             <div
               key={`${activeTab}-${currentPage}`} // Trigger animation on change
-              className="grid grid-cols-2 gap-3 animate-slideFade content-start pb-2"
+              className={`grid grid-cols-2 grid-rows-2 animate-slideFade h-full w-full ${isBackView ? 'gap-3' : 'gap-x-4 gap-y-6'}`}
             >
-              {currentParts.map(part => (
-                <button
-                  key={part.id}
-                  onClick={() => {
-                    if (isBackView) {
-                      updatePlanetPart(activeTab as PlanetCategory, part.id);
-                    } else {
-                      updatePart(activeTab as PartCategory, part.id);
-                    }
-                  }}
-                  className={`
-                    relative flex flex-col items-center p-2 rounded-lg border-[3px] transition-all transform duration-150
-                    active:scale-95 hover:scale-[1.02] h-24 justify-between
-                    ${(isBackView ? data.selectedPlanetParts[activeTab as PlanetCategory] : data.selectedParts[activeTab as PartCategory]) === part.id
-                      ? (isBackView ? 'bg-livia-blue border-black text-white shadow-[3px_3px_0_black] -translate-y-1' : 'bg-livia-yellow border-black text-black shadow-[3px_3px_0_black] -translate-y-1')
-                      : 'bg-white border-black text-gray-700 hover:bg-gray-50'}
-                  `}
-                >
-                  {/* Visual Preview for Planet Parts (Simple Dots/Icons) */}
-                  {isBackView && (
-                    <div className={`w-5 h-5 rounded-full border border-black 
-                      ${part.id.includes('red') ? 'bg-red-500' : ''}
-                      ${part.id.includes('blue') ? 'bg-blue-500' : ''}
-                      ${part.id.includes('green') ? 'bg-emerald-500' : ''}
-                      ${part.id.includes('yellow') ? 'bg-amber-500' : ''}
-                      ${part.id.includes('none') ? 'bg-gray-100' : ''}
-                      ${part.id.includes('craters') ? 'bg-gray-400' : ''}
-                      ${part.id.includes('swirls') ? 'bg-gray-400' : ''}
-                      ${part.id.includes('rings') ? 'bg-indigo-200' : ''}
-                      ${part.id.includes('glow') ? 'bg-purple-200' : ''}
-                      ${part.id.includes('moon') ? 'bg-gray-300' : ''}
-                      ${part.id.includes('ufo') ? 'bg-green-300' : ''}
-                    `} />
-                  )}
+              {currentParts.map(part => {
+                const partName = getPartName(part.id, lang);
+                // Force micro font size for character parts
+                const nameFontSize = isBackView ? 'text-xs' : 'text-[10px]';
+                const isSelected = (isBackView ? data.selectedPlanetParts[activeTab as PlanetCategory] : data.selectedParts[activeTab as PartCategory]) === part.id;
 
-                  <span className="text-xs font-bold font-rounded text-center leading-tight line-clamp-2">{getPartName(part.id, lang)}</span>
+                return (
+                  <button
+                    key={part.id}
+                    onClick={() => {
+                      if (isBackView) {
+                        updatePlanetPart(activeTab as PlanetCategory, part.id);
+                      } else {
+                        updatePart(activeTab as PartCategory, part.id);
+                      }
+                    }}
+                    className={`
+                      relative flex flex-col items-center justify-center p-2 rounded-lg transition-all transform duration-150
+                      active:scale-95 hover:scale-[1.02] w-full h-full
+                      ${isBackView ? 'aspect-[1.5/1] border-[3px] border-black' : 'max-h-[80px] border-black'}
+                      ${isSelected
+                        ? (isBackView ? 'bg-livia-blue text-white shadow-[4px_4px_0_black] -translate-y-1' : 'bg-livia-yellow border-[3px] text-black shadow-[4px_4px_0_black] -translate-y-1 z-10')
+                        : (isBackView ? 'bg-white text-gray-700 hover:bg-gray-50 shadow-[2px_2px_0_rgba(0,0,0,0.1)]' : 'bg-white border-[1px] border-black/10 text-gray-700 hover:bg-gray-50')}
+                    `}
+                  >
+                    {/* Visual Preview for Planet Parts (Simple Dots/Icons) */}
+                    {isBackView && (
+                      <div className={`w-5 h-5 rounded-full border border-black mb-1
+                        ${part.id.includes('red') ? 'bg-red-500' : ''}
+                        ${part.id.includes('blue') ? 'bg-blue-500' : ''}
+                        ${part.id.includes('green') ? 'bg-emerald-500' : ''}
+                        ${part.id.includes('yellow') ? 'bg-amber-500' : ''}
+                        ${part.id.includes('none') ? 'bg-gray-100' : ''}
+                        ${part.id.includes('craters') ? 'bg-gray-400' : ''}
+                        ${part.id.includes('swirls') ? 'bg-gray-400' : ''}
+                        ${part.id.includes('rings') ? 'bg-indigo-200' : ''}
+                        ${part.id.includes('glow') ? 'bg-purple-200' : ''}
+                        ${part.id.includes('moon') ? 'bg-gray-300' : ''}
+                        ${part.id.includes('ufo') ? 'bg-green-300' : ''}
+                      `} />
+                    )}
 
-                  {/* Stats Dots (Only for Front View) */}
-                  {!isBackView && (
-                    <div className="flex gap-1 mt-1">
-                      {part.stats.mod > 0 && <div className="w-2 h-2 rounded-full bg-livia-red border border-black" />}
-                      {part.stats.bus > 0 && <div className="w-2 h-2 rounded-full bg-livia-yellow border border-black" />}
-                      {part.stats.klurighet > 0 && <div className="w-2 h-2 rounded-full bg-livia-blue border border-black" />}
+                    <div className="flex flex-col items-center justify-center w-full gap-1">
+                      <span className={`${nameFontSize} font-bold font-rounded text-center leading-none line-clamp-1 px-1 w-full`}>
+                        {partName}
+                      </span>
+
+                      {/* Stats Icons (Only for Front View) - Micro arrangement */}
+                      {!isBackView && (
+                        <div className="flex justify-center gap-1.5 w-full scale-90">
+                          {part.stats.mod > 0 && (
+                            <div className="flex items-center gap-0.5">
+                              <ModIcon className="w-2.5 h-2.5 text-livia-red" />
+                              <span className="text-[10px] font-black font-rounded text-livia-red">{part.stats.mod}</span>
+                            </div>
+                          )}
+                          {part.stats.bus > 0 && (
+                            <div className="flex items-center gap-0.5">
+                              <BusIcon className="w-2.5 h-2.5 text-yellow-600" />
+                              <span className="text-[10px] font-black font-rounded text-yellow-600">{part.stats.bus}</span>
+                            </div>
+                          )}
+                          {part.stats.klurighet > 0 && (
+                            <div className="flex items-center gap-0.5">
+                              <KlurighetIcon className="w-2.5 h-2.5 text-livia-blue" />
+                              <span className="text-[10px] font-black font-rounded text-livia-blue">{part.stats.klurighet}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* --- PAGINATION DOTS (Fixed at Bottom) --- */}
+          {/* --- PAGINATION DOTS (Isolated and Non-shrinking) --- */}
           {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 pt-3 pb-1 shrink-0">
+            <div className="flex justify-center items-center gap-2 mt-2 mb-1 shrink-0">
               {Array.from({ length: totalPages }).map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setCurrentPage(idx)}
-                  className={`transition-all duration-300 rounded-full ${currentPage === idx
-                      ? 'w-8 h-3 bg-livia-yellow border border-black' // Active: Capsule
+                  className={`transition-all duration-300 rounded-full border border-black ${currentPage === idx
+                      ? 'w-7 h-2.5 bg-livia-yellow' // Active: Capsule
                       : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'      // Inactive: Dot
                     }`}
                   aria-label={`Go to page ${idx + 1}`}
@@ -184,7 +232,7 @@ export const Controls: React.FC<ControlsProps> = ({
 
         {/* Stats Visualization (Mini) - Only show on Front View */}
         {!isBackView && (
-          <div className="border-t-[3px] border-gray-200 pt-3 mt-2 space-y-1.5 opacity-80 pointer-events-none shrink-0">
+          <div className="border-t-[3px] border-gray-200 pt-3 mt-1 space-y-1.5 opacity-80 pointer-events-none shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-8 font-bold text-xs font-rounded text-livia-red">{TRANSLATIONS.statLabels.mod[lang]}</div>
               <div className="flex-1 h-2 bg-gray-200 rounded-full border border-black overflow-hidden">
