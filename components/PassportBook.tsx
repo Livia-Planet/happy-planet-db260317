@@ -240,9 +240,11 @@ export const PassportBook: React.FC<PassportBookProps> = ({
 
   // === DETAIL VIEW (JOURNAL) ===
   return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-8 md:items-stretch justify-center min-h-[600px] animate-fade-in relative">
-      {/* Theme Background Override (Detail View) */}
+    <>
+      {/* Theme Background Override (Detail View) - Moved outside animated container to fix viewport bug */}
       <div className="fixed inset-0 -z-10 transition-colors duration-700" style={{ backgroundColor: currentTheme.bg }}></div>
+
+      <div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-8 md:items-stretch justify-center min-h-[600px] animate-fade-in relative">
 
       {/* Back Button (Mobile) */}
       <button
@@ -746,6 +748,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
         />
       )}
 
-    </div >
+    </div>
+    </>
   );
 };
