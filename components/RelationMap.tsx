@@ -87,7 +87,7 @@ export const RelationMap: React.FC<RelationMapProps> = ({
           ×
         </button>
 
-        <h2 className="text-center mt-6 text-2xl font-black uppercase tracking-widest relative z-10 pointer-events-none">
+        <h2 className="text-left ml-10 mt-6 text-2xl font-black uppercase tracking-widest relative z-10 pointer-events-none">
           {TRANSLATIONS.ui.starMapTitle[lang]}
         </h2>
 

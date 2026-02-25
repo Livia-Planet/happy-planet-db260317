@@ -126,7 +126,8 @@ export const TRANSLATIONS = {
       explorer: { se: "Upptäckare", en: "Explorer", cn: "探险家" },
       skateboard_master: { se: "Skateboardmästare", en: "Skateboard Master", cn: "滑板大师" },
       painter: { se: "Målare", en: "Painter", cn: "画家" },
-      artist: { se: "Konstnär", en: "Artist", cn: "艺术家" }
+      artist: { se: "Konstnär", en: "Artist", cn: "艺术家" },
+      scientist: { se: "Forskare", en: "Scientist", cn: "科学家" }
     },
     species: {
       rabbit: { se: "Kanin", en: "Rabbit", cn: "小兔子" },
@@ -140,7 +141,6 @@ export const TRANSLATIONS = {
     },
     relationTypes: {
       bestFriend: { se: "Bästis", en: "Besties", cn: "死党" },
-      best_friend: { se: "Bästis", en: "Bestie", cn: "死党" },
       friend: { se: "Vän", en: "Friend", cn: "朋友" },
       foodie: { se: "Matkompis", en: "Foodie Pals", cn: "饭搭子" },
       rival: { se: "Rival", en: "Arch-rival", cn: "宿敌" },
@@ -459,6 +459,11 @@ export const DEFAULT_BIOS = {
     en: "Polly is an incredibly creative little bunny, and her paintings are like magic from another planet! Her art is always filled with warmth, dreams, and endless imagination.",
     cn: "Polly 是一只超级有创意的小兔子，她的画作仿佛来自外星的魔法！她的艺术总是充满了温暖、梦想和无尽的想象力。"
   },
+  pluttenplott: {
+    se: "Pluttenplott är en liten vetenskapsman och ingenjör som älskar att utforska universums mysterier. Med sin logik och sina fantastiska uppfinningar drömmer han om att en dag bygga en bro till stjärnorna.",
+    cn: "Pluttenplott 是一位热爱探索宇宙奥秘的小科学家和工程师。凭借着缜密的逻辑和神奇的发明，他梦想着有一天能修筑一座通往星辰的桥梁。",
+    en: "Pluttenplott is a little scientist and engineer who loves exploring the mysteries of the universe. With his logic and amazing inventions, he dreams of one day building a bridge to the stars."
+  },
   general: {
     se: "En ny upptäcktsresande redo för att utforska galaxen.",
     en: "A new explorer ready to chart the galaxy.",
@@ -513,8 +518,9 @@ export const BOBU_PRESET: PassportData = {
   occupations: ['student', 'explorer'],
   location: 'Kaninplaneten',
   relationships: [
-    { targetId: 'HP-00002-DUDDU-A', relationType: 'best_friend' },
-    { targetId: 'HP-00003-POLLYPLUTTEN-A-B', relationType: 'good_friend' }
+    { targetId: 'HP-00002-DUDDU-A', relationType: 'bestFriend' },
+    { targetId: 'HP-00003-POLLYPLUTTEN-A-B', relationType: 'friend' },
+    { targetId: 'HP-00004-PLUTTENPLOTT-E-F', relationType: 'friend' }
   ],
   stats: {
     mod: 9,
@@ -548,8 +554,9 @@ export const DUDDU_PRESET: PassportData = {
   occupations: ['student', 'skateboard_master'],
   location: 'Kaninplaneten',
   relationships: [
-    { targetId: 'HP-00001-BOBU-B', relationType: 'best_friend' },
-    { targetId: 'HP-00003-POLLYPLUTTEN-A-B', relationType: 'good_friend' }
+    { targetId: 'HP-00001-BOBU-B', relationType: 'bestFriend' },
+    { targetId: 'HP-00003-POLLYPLUTTEN-A-B', relationType: 'friend' },
+    { targetId: 'HP-00004-PLUTTENPLOTT-E-F', relationType: 'friend' }
   ],
   stats: {
     mod: 8,
@@ -583,8 +590,9 @@ export const POLLY_PRESET: PassportData = {
   occupations: ['student', 'painter', 'artist'],
   location: 'Kaninplaneten',
   relationships: [
-    { targetId: 'HP-00001-BOBU-B', relationType: 'good_friend' },
-    { targetId: 'HP-00002-DUDDU-A', relationType: 'good_friend' }
+    { targetId: 'HP-00001-BOBU-B', relationType: 'friend' },
+    { targetId: 'HP-00002-DUDDU-A', relationType: 'friend' },
+    { targetId: 'HP-00004-PLUTTENPLOTT-E-F', relationType: 'family' }
   ],
   stats: {
     mod: 4,
@@ -593,4 +601,40 @@ export const POLLY_PRESET: PassportData = {
   }
 };
 
-export const ALL_PRESETS = [BOBU_PRESET, DUDDU_PRESET, POLLY_PRESET];
+export const PLUTTENPLOTT_PRESET: PassportData = {
+  id: 'HP-00004-PLUTTENPLOTT-E-F',
+  name: 'Pluttenplott.E.F',
+  selectedParts: {
+    body: 'body_amber',
+    ears: 'ears_amber',
+    face: 'eyes_glasses',
+    hair: 'hair_black',
+    access: 'access_none'
+  },
+  selectedPlanetParts: {
+    base: 'planet_base_yellow',
+    surface: 'planet_surf_none',
+    atmosphere: 'planet_atmo_none',
+    companion: 'planet_comp_none'
+  },
+  lastModified: 1700000000000,
+  savedAt: 1700000000000,
+  bio: DEFAULT_BIOS.pluttenplott.se,
+  age: '6',
+  gender: 'male',
+  species: 'rabbit',
+  occupations: ['engineer', 'scientist', 'inventor'],
+  location: 'Kaninplaneten',
+  relationships: [
+    { targetId: 'HP-00001-BOBU-B', relationType: 'friend' },
+    { targetId: 'HP-00002-DUDDU-A', relationType: 'friend' },
+    { targetId: 'HP-00003-POLLYPLUTTEN-A-B', relationType: 'family' }
+  ],
+  stats: {
+    mod: 4,
+    bus: 5,
+    klurighet: 9
+  }
+};
+
+export const ALL_PRESETS = [BOBU_PRESET, DUDDU_PRESET, POLLY_PRESET, PLUTTENPLOTT_PRESET];

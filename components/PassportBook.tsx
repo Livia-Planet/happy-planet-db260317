@@ -659,13 +659,13 @@ export const PassportBook: React.FC<PassportBookProps> = ({
               {/* JOB PICKER MODAL (Simple Grid) */}
               {isJobPickerOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                  <div className={`w-full max-w-md p-6 rounded-2xl border-[4px] border-black shadow-[8px_8px_0_black] animate-scale-in ${isFlipped ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
+                  <div className={`w-full max-w-md p-6 rounded-2xl border-[4px] border-black shadow-[8px_8px_0_black] animate-scale-in -translate-y-12 ${isFlipped ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
                     <div className="flex justify-between items-center mb-6">
                       <h3 className="text-xl font-black uppercase tracking-tight">{TRANSLATIONS.ui.labels.occupationLabel[lang]}</h3>
                       <button onClick={() => setIsJobPickerOpen(false)} className="text-2xl font-black hover:scale-110 transition-transform">&times;</button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="grid grid-cols-2 gap-3 max-h-[240px] overflow-y-auto pr-2 custom-scrollbar">
                       {Object.entries(TRANSLATIONS.ui.occupations).map(([key, val]) => {
                         const isSelected = activePassport.occupations?.includes(key);
                         return (
@@ -827,7 +827,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
 
           {/* TAB: RELATIONS */}
           {activeTab === 'relations' && (
-            <div className="space-y-4 animate-fade-in flex flex-col h-full">
+            <div className="space-y-4 animate-fade-in flex flex-col h-[380px]">
               
               {/* View Star Relations Button */}
               <button
@@ -841,7 +841,22 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                 {TRANSLATIONS.ui.viewStarMap[lang]}
               </button>
 
-              <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+              <div className="max-h-[220px] overflow-y-auto pr-2 space-y-3 custom-relation-scroll">
+                <style>{`
+                  .custom-relation-scroll::-webkit-scrollbar {
+                    width: 6px;
+                  }
+                  .custom-relation-scroll::-webkit-scrollbar-track {
+                    background: transparent;
+                  }
+                  .custom-relation-scroll::-webkit-scrollbar-thumb {
+                    background-color: rgba(0, 0, 0, 0.15);
+                    border-radius: 10px;
+                  }
+                  .custom-relation-scroll::-webkit-scrollbar-thumb:hover {
+                    background-color: rgba(0, 0, 0, 0.3);
+                  }
+                `}</style>
                 {activePassport.relationships?.map((rel, index) => {
                   const target = passports.find(p => p.id === rel.targetId);
                   const relationTypeLabel = (TRANSLATIONS.ui.relationTypes as any)[rel.relationType]?.[lang] || rel.relationType;
