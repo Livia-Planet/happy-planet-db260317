@@ -5,9 +5,11 @@ import { PARTS_DB } from '../data/parts';
 interface AvatarProps {
   selectedParts: Record<PartCategory, string>;
   dominantStat: 'mod' | 'bus' | 'klurighet';
+  className?: string;
+  transparent?: boolean;
 }
 
-export const Avatar: React.FC<AvatarProps> = ({ selectedParts, dominantStat }) => {
+export const Avatar: React.FC<AvatarProps> = ({ selectedParts, dominantStat, className = "", transparent = false }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Background color mapping
@@ -114,7 +116,7 @@ export const Avatar: React.FC<AvatarProps> = ({ selectedParts, dominantStat }) =
   }, [selectedParts]);
 
   return (
-    <div className={`w-40 h-40 border-4 border-black rounded-[80px_80px_20px_20px] flex items-center justify-center relative overflow-hidden shadow-[inset_0_10px_20px_rgba(255,255,255,0.5),inset_0_-5px_15px_rgba(0,0,0,0.05)] transition-colors duration-500 ${bgColors[dominantStat]} [mask-image:linear-gradient(to_bottom,black_85%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_85%,transparent_100%)]`}>
+    <div className={`w-40 h-40 border-4 border-black rounded-[80px_80px_20px_20px] flex items-center justify-center relative overflow-hidden shadow-[inset_0_10px_20px_rgba(255,255,255,0.5),inset_0_-5px_15px_rgba(0,0,0,0.05)] transition-colors duration-500 ${transparent ? 'bg-transparent' : bgColors[dominantStat]} [mask-image:linear-gradient(to_bottom,black_85%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_85%,transparent_100%)] ${className}`}>
 
       {/* The HTML5 Canvas Element */}
       <canvas

@@ -18,6 +18,8 @@ export const RelationMap: React.FC<RelationMapProps> = ({
   lang
 }) => {
   const [mounted, setMounted] = useState(false);
+  const [selectedEdge, setSelectedEdge] = useState<{ i: number, type: string } | null>(null);
+  const [typePage, setTypePage] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -193,17 +195,73 @@ export const RelationMap: React.FC<RelationMapProps> = ({
              return (
                <div
                   key={`label-${i}`}
-                  className="absolute z-[60] bg-white border-2 border-black rounded-full px-2 py-0.5 text-[10px] font-bold text-gray-800 shadow-[1px_1px_0_black] whitespace-nowrap flex items-center justify-center"
+                  className="absolute z-[60] flex items-center justify-center pointer-events-auto cursor-pointer group"
                   style={{
                     left: `${labelX}%`,
                     top: `${labelY}%`,
                     transform: 'translate(-50%, -50%)'
                   }}
+                  onClick={() => {
+                    setSelectedEdge({ i, type: pos.relationType });
+                    setTypePage(0);
+                  }}
                 >
-                  {relationLabel}
+                  <div className="bg-white border-2 border-black rounded-full px-3 py-1 text-[10px] font-bold text-gray-800 shadow-[2px_2px_0_black] whitespace-nowrap transition-transform hover:scale-110 active:scale-95 group-hover:bg-livia-yellow">
+                    {relationLabel}
+                  </div>
                 </div>
              );
           })}
+
+          {/* Relation Type Picker Modal (Paginated) */}
+          {selectedEdge && (
+            <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] animate-fade-in pointer-events-auto">
+              <div className="bg-white border-[3px] border-black rounded-2xl p-5 w-full max-w-[260px] shadow-[8px_8px_0_black] animate-scale-in">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-[10px] font-black uppercase tracking-widest">{lang === 'cn' ? '修改关系' : 'EDIT RELATION'}</h3>
+                  <button onClick={() => { setSelectedEdge(null); setTypePage(0); }} className="text-xl font-black">&times;</button>
+                </div>
+
+                <div className="flex flex-col min-h-[140px] justify-between">
+                  <div className="grid grid-cols-2 grid-rows-2 gap-2">
+                    {Object.entries(TRANSLATIONS.ui.relationTypes)
+                      .slice(typePage * 4, (typePage + 1) * 4)
+                      .map(([key, val]) => {
+                        const isCurrent = selectedEdge.type === key;
+                        return (
+                          <button
+                            key={key}
+                            onClick={() => {
+                              // In a full implementation, this would trigger an update callback
+                              setSelectedEdge(null);
+                              setTypePage(0);
+                            }}
+                            className={`
+                              p-2 rounded-lg font-bold transition-all text-[11px] h-[42px] flex items-center justify-center
+                              ${isCurrent
+                                ? 'bg-livia-yellow border-[3px] border-black shadow-[3px_3px_0_black] -translate-y-1 z-10'
+                                : 'bg-white border-[1px] border-black/10 text-gray-500 hover:border-black/30'}
+                            `}
+                          >
+                            <span className="truncate">{(val as any)[lang]}</span>
+                          </button>
+                        );
+                      })
+                    }
+                  </div>
+
+                  {/* Dots */}
+                  {Object.keys(TRANSLATIONS.ui.relationTypes).length > 4 && (
+                    <div className="flex justify-center gap-1.5 mt-4">
+                      {Array.from({ length: Math.ceil(Object.keys(TRANSLATIONS.ui.relationTypes).length / 4) }).map((_, i) => (
+                        <button key={i} onClick={() => setTypePage(i)} className={`transition-all duration-300 rounded-full ${typePage === i ? 'w-10 h-2.5 bg-black' : 'w-2.5 h-2.5 bg-gray-200'}`} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Empty State */}
           {validRelations.length === 0 && (

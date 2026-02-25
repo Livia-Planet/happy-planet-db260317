@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PassportData, Language, StoryEntry } from '../types';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
@@ -26,6 +26,139 @@ const THEMES = [
   { id: 'green', bg: '#A3B18A', text: 'text-[#1B5E20]', isLight: true }, // Deep Green
 ];
 
+// --- STAT ICONS FOR BACKGROUND DECORATION ---
+const ModIcon = ({ className, style, mode = 'solid' }: { className?: string; style?: React.CSSProperties; mode?: 'solid' | 'line' | 'mixed' }) => (
+  <svg className={className} style={style} viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polygon 
+      points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" 
+      fill={mode === 'line' ? 'none' : 'currentColor'}
+      fillOpacity={mode === 'mixed' ? 0.2 : 1}
+    />
+  </svg>
+);
+
+const BusIcon = ({ className, style, mode = 'solid' }: { className?: string; style?: React.CSSProperties; mode?: 'solid' | 'line' | 'mixed' }) => (
+  <svg className={className} style={style} viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline 
+      points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" 
+      fill={mode === 'line' ? 'none' : 'currentColor'}
+      fillOpacity={mode === 'mixed' ? 0.2 : 1}
+    />
+  </svg>
+);
+
+const KlurighetIcon = ({ className, style, mode = 'solid' }: { className?: string; style?: React.CSSProperties; mode?: 'solid' | 'line' | 'mixed' }) => (
+  <svg className={className} style={style} viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path 
+      d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5" 
+      fill={mode === 'line' ? 'none' : 'currentColor'}
+      fillOpacity={mode === 'mixed' ? 0.2 : 1}
+    />
+    <line x1="9" y1="18" x2="15" y2="18" fill="none" />
+    <line x1="10" y1="22" x2="14" y2="22" fill="none" />
+  </svg>
+);
+
+// --- POP-ART DECORATIVE BACKGROUND COMPONENT ---
+const ArtBackground = ({ dominantStat, seed }: { dominantStat: 'mod' | 'bus' | 'klurighet'; seed: string }) => {
+  const bgClass = dominantStat === 'mod' ? 'bg-red-50' : dominantStat === 'bus' ? 'bg-yellow-50' : 'bg-blue-50';
+  
+  // Richer color sets (4+ colors per stat)
+  const colorSets = {
+    mod: ['text-red-400', 'text-red-200', 'text-pink-300', 'text-orange-300', 'text-rose-400', 'text-red-100'],
+    bus: ['text-yellow-500', 'text-yellow-300', 'text-lime-400', 'text-amber-400', 'text-orange-400', 'text-emerald-300'],
+    klurighet: ['text-blue-500', 'text-blue-300', 'text-cyan-400', 'text-indigo-400', 'text-sky-400', 'text-teal-300']
+  };
+
+  const icons = [ModIcon, BusIcon, KlurighetIcon];
+  const currentColors = colorSets[dominantStat];
+
+  // Pseudo-random generator based on seed
+  const getPseudoRandom = (index: number) => {
+    let hash = 0;
+    const str = seed + index + "v4-grid";
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return Math.abs(hash);
+  };
+
+  const items = useMemo(() => {
+    const GRID_SIZE = 6;
+    const TOTAL_CELLS = GRID_SIZE * GRID_SIZE; // 36 cells
+    
+    return Array.from({ length: TOTAL_CELLS }).map((_, i) => {
+      const rnd = getPseudoRandom(i);
+      const rnd2 = getPseudoRandom(i + 100);
+      const rnd3 = getPseudoRandom(i + 200);
+
+      const row = Math.floor(i / GRID_SIZE);
+      const col = i % GRID_SIZE;
+      
+      // 1. Grid-Based Jitter: Base position in center of 6x6 grid cell
+      let topPercent = (row / GRID_SIZE) * 100 + (100 / GRID_SIZE / 2);
+      let leftPercent = (col / GRID_SIZE) * 100 + (100 / GRID_SIZE / 2);
+      
+      // Jitter (max 30% of cell width/height)
+      const jitterMax = (100 / GRID_SIZE) * 0.3;
+      topPercent += ((rnd % 100) / 50 - 1) * jitterMax;
+      leftPercent += ((rnd2 % 100) / 50 - 1) * jitterMax;
+
+      // 2. Weighted Size Distribution
+      let sizeScale = 0;
+      if (i < 4) { // Top 10% Giant
+        sizeScale = 16;
+      } else if (i >= 21) { // Bottom 40% Tiny
+        sizeScale = (rnd3 % 3) + 2; // 2 to 4
+      } else { // Rest Medium
+        sizeScale = (rnd3 % 5) + 6; // 6 to 10
+      }
+
+      // 3. Style Rhythm (1:1 Fill vs Line)
+      const mode: 'line' | 'solid' = (rnd % 10) < 5 ? 'line' : 'solid';
+      let opacity = mode === 'solid' ? 0.05 : 0.15;
+
+      // 4. Center Protection (Avatar area: top 40-60%, left 40-60%)
+      const distFromCenter = Math.sqrt(Math.pow(topPercent - 50, 2) + Math.pow(leftPercent - 50, 2));
+      if (distFromCenter < 20) {
+        sizeScale = Math.min(sizeScale, 4); // Force to small
+        opacity = 0.03; // Extremely faint
+      }
+
+      return {
+        Icon: icons[rnd3 % icons.length],
+        color: currentColors[rnd % currentColors.length],
+        size: sizeScale * 4, // pixels
+        top: topPercent + '%',
+        left: leftPercent + '%',
+        rotate: (rnd2 % 360) + 'deg',
+        opacity,
+        mode
+      };
+    });
+  }, [seed, dominantStat]);
+
+  return (
+    <div className={`absolute inset-0 overflow-hidden pointer-events-none ${bgClass}`}>
+      {items.map((item, i) => (
+        <item.Icon 
+          key={i} 
+          mode={item.mode}
+          className={`absolute ${item.color}`} 
+          style={{ 
+            width: `${item.size}px`,
+            height: `${item.size}px`,
+            top: item.top, 
+            left: item.left, 
+            transform: `translate(-50%, -50%) rotate(${item.rotate})`,
+            opacity: item.opacity
+          }} 
+        />
+      ))}
+    </div>
+  );
+};
+
 export const PassportBook: React.FC<PassportBookProps> = ({
   passports,
   onBack,
@@ -40,6 +173,14 @@ export const PassportBook: React.FC<PassportBookProps> = ({
   const [isJobPickerOpen, setIsJobPickerOpen] = useState(false);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(THEMES[0]);
+
+  // Dropdown states
+  const [openDropdown, setOpenDropdown] = useState<'gender' | 'species' | 'rel-target' | 'rel-type' | null>(null);
+  const [dropdownPage, setDropdownPage] = useState(0);
+
+  // Form states for Add Relation
+  const [pendingRelTarget, setPendingRelTarget] = useState<string | null>(null);
+  const [pendingRelType, setPendingRelType] = useState<string>('friend');
 
   // ── Story state per passport ──
   const storageKey = selectedId ? `happyPlanet_stories_${selectedId}` : null;
@@ -207,10 +348,14 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                 {/* Tape Effect */}
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 bg-yellow-200/80 rotate-1 shadow-sm border-l border-r border-white/50"></div>
 
-                {/* Thumbnail */}
-                <div className="aspect-square bg-gray-100 rounded-lg border-2 border-gray-200 overflow-hidden mb-3 relative">
-                  <div className="transform scale-75 origin-center">
-                    <Avatar selectedParts={p.selectedParts} dominantStat={domStat} />
+                {/* Thumbnail (Polaroid Style) */}
+                <div className="aspect-square border-2 border-black rounded-lg overflow-hidden mb-3 relative bg-white">
+                  <ArtBackground dominantStat={domStat} seed={p.id} />
+                  
+                  <div className="absolute inset-0 z-10 flex justify-center items-end">
+                    <div className="transform scale-[0.85] translate-y-[15px] origin-bottom transition-transform group-hover:scale-[0.9]">
+                      <Avatar selectedParts={p.selectedParts} dominantStat={domStat} transparent={true} className="border-none shadow-none" />
+                    </div>
                   </div>
                 </div>
 
@@ -310,93 +455,167 @@ export const PassportBook: React.FC<PassportBookProps> = ({
         </div>
 
         {/* Content Area */}
-        <div className="p-6 flex-1 min-h-[300px]">
+        <div className="p-8 flex-1 min-h-[400px]">
 
           {/* TAB: PROFILE (formerly BIO) */}
           {activeTab === 'profile' && (
-            <div className="space-y-4 animate-fade-in">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-8 animate-fade-in py-2">
+              <div className="grid grid-cols-2 gap-8">
                 <div>
-                  <label className={`block font-hand font-bold text-sm mb-1 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <label className={`block font-hand font-bold text-sm mb-2 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
                     {TRANSLATIONS.ui.labels.age[lang]}
                   </label>
                   <input
                     type="text"
                     value={activePassport.age || ''}
                     onChange={(e) => onUpdatePassport(activePassport.id, 'age', e.target.value)}
-                    className={`w-full bg-transparent border-b-2 font-hand text-xl focus:outline-none ${isFlipped ? 'text-white border-gray-600 focus:border-livia-blue' : 'text-black border-gray-300 focus:border-livia-yellow'}`}
+                    className={`w-full bg-transparent border-b-2 font-hand text-2xl focus:outline-none transition-all ${isFlipped ? 'text-white border-gray-600 focus:border-livia-blue' : 'text-black border-gray-300 focus:border-livia-yellow'}`}
                     placeholder="?"
                   />
                 </div>
                 <div>
-                  <label className={`block font-hand font-bold text-sm mb-1 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <label className={`block font-hand font-bold text-sm mb-2 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
                     {TRANSLATIONS.ui.labels.date[lang]}
                   </label>
-                  <div className={`font-mono text-sm pt-1 ${isFlipped ? 'text-gray-300' : 'text-gray-800'}`}>
+                  <div className={`font-mono text-base pt-1 ${isFlipped ? 'text-gray-300' : 'text-gray-800'}`}>
                     {new Date(activePassport.savedAt).toLocaleDateString()}
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-8">
                 {/* GENDER */}
-                <div>
-                  <label className={`block font-hand font-bold text-sm mb-1 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
+                <div className="relative">
+                  <label className={`block font-hand font-bold text-sm mb-2 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
                     {TRANSLATIONS.ui.labels.genderLabel[lang]}
                   </label>
-                  <div className="relative">
-                    <select
-                      value={activePassport.gender || 'unknown'}
-                      onChange={(e) => onUpdatePassport(activePassport.id, 'gender', e.target.value)}
-                      className={`
-                        w-full h-9 px-3 rounded-xl border-[3px] font-hand text-lg transition-all appearance-none cursor-pointer
-                        ${isFlipped
-                          ? 'bg-gray-800 border-gray-600 text-white focus:border-livia-blue'
-                          : 'bg-white border-black text-black focus:border-livia-yellow shadow-[4px_4px_0_rgba(0,0,0,0.1)]'}
-                      `}
-                    >
-                      {Object.entries(TRANSLATIONS.ui.genders).map(([key, val]) => (
-                        <option key={key} value={key}>{(val as any)[lang]}</option>
-                      ))}
-                    </select>
-                    <div className={`absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
-                      ▼
+                  <button
+                    onClick={() => {
+                      setOpenDropdown(openDropdown === 'gender' ? null : 'gender');
+                      setDropdownPage(0);
+                    }}
+                    className={`
+                      w-full h-11 px-4 rounded-xl border-[3px] font-hand text-xl transition-all flex items-center justify-between
+                      ${isFlipped
+                        ? 'bg-gray-800 border-gray-600 text-white'
+                        : 'bg-white border-black text-black shadow-[4px_4px_0_rgba(0,0,0,0.1)] hover:shadow-[6px_6px_0_rgba(0,0,0,0.1)]'}
+                    `}
+                  >
+                    <span>{(TRANSLATIONS.ui.genders as any)[activePassport.gender || 'unknown']?.[lang]}</span>
+                    <span className="text-xs">▼</span>
+                  </button>
+
+                  {openDropdown === 'gender' && (
+                    <div className="absolute top-full left-0 w-full mt-2 z-[70] bg-white border-[3px] border-black rounded-xl p-2 shadow-[6px_6px_0_black] animate-scale-in">
+                      <div className="grid grid-cols-2 gap-2">
+                        {Object.entries(TRANSLATIONS.ui.genders)
+                          .slice(dropdownPage * 4, (dropdownPage + 1) * 4)
+                          .map(([key, val]) => {
+                            const isSelected = (activePassport.gender || 'unknown') === key;
+                            return (
+                              <button
+                                key={key}
+                                onClick={() => {
+                                  onUpdatePassport(activePassport.id, 'gender', key);
+                                  setOpenDropdown(null);
+                                }}
+                                className={`
+                                  p-2 rounded-lg text-[11px] font-bold transition-all text-center truncate
+                                  ${isSelected
+                                    ? 'bg-livia-yellow border-[3px] border-black shadow-[3px_3px_0_black] -translate-y-[2px]'
+                                    : 'bg-white border-[1px] border-black/10 text-gray-600 hover:border-black/30'}
+                                `}
+                              >
+                                {(val as any)[lang]}
+                              </button>
+                            );
+                          })}
+                      </div>
+                      {/* Pagination Dots */}
+                      {Object.keys(TRANSLATIONS.ui.genders).length > 4 && (
+                        <div className="flex justify-center gap-1.5 mt-3 mb-1">
+                          {Array.from({ length: Math.ceil(Object.keys(TRANSLATIONS.ui.genders).length / 4) }).map((_, i) => (
+                            <button
+                              key={i}
+                              onClick={(e) => { e.stopPropagation(); setDropdownPage(i); }}
+                              className={`transition-all duration-300 rounded-full ${dropdownPage === i ? 'w-10 h-2.5 bg-black' : 'w-2.5 h-2.5 bg-gray-200'}`}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* SPECIES */}
-                <div>
-                  <label className={`block font-hand font-bold text-sm mb-1 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
+                <div className="relative">
+                  <label className={`block font-hand font-bold text-sm mb-2 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
                     {TRANSLATIONS.ui.labels.speciesLabel[lang]}
                   </label>
-                  <div className="relative">
-                    <select
-                      value={activePassport.species || 'rabbit'}
-                      onChange={(e) => onUpdatePassport(activePassport.id, 'species', e.target.value)}
-                      className={`
-                        w-full h-9 px-3 rounded-xl border-[3px] font-hand text-lg transition-all appearance-none cursor-pointer
-                        ${isFlipped
-                          ? 'bg-gray-800 border-gray-600 text-white focus:border-livia-blue'
-                          : 'bg-white border-black text-black focus:border-livia-yellow shadow-[4px_4px_0_rgba(0,0,0,0.1)]'}
-                      `}
-                    >
-                      {Object.entries(TRANSLATIONS.ui.species).map(([key, val]) => (
-                        <option key={key} value={key}>{(val as any)[lang]}</option>
-                      ))}
-                    </select>
-                    <div className={`absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
-                      ▼
+                  <button
+                    onClick={() => {
+                      setOpenDropdown(openDropdown === 'species' ? null : 'species');
+                      setDropdownPage(0);
+                    }}
+                    className={`
+                      w-full h-11 px-4 rounded-xl border-[3px] font-hand text-xl transition-all flex items-center justify-between
+                      ${isFlipped
+                        ? 'bg-gray-800 border-gray-600 text-white'
+                        : 'bg-white border-black text-black shadow-[4px_4px_0_rgba(0,0,0,0.1)] hover:shadow-[6px_6px_0_rgba(0,0,0,0.1)]'}
+                    `}
+                  >
+                    <span>{(TRANSLATIONS.ui.species as any)[activePassport.species || 'rabbit']?.[lang]}</span>
+                    <span className="text-xs">▼</span>
+                  </button>
+
+                  {openDropdown === 'species' && (
+                    <div className="absolute top-full left-0 w-full mt-2 z-[70] bg-white border-[3px] border-black rounded-xl p-2 shadow-[6px_6px_0_black] animate-scale-in">
+                      <div className="grid grid-cols-2 gap-2">
+                        {Object.entries(TRANSLATIONS.ui.species)
+                          .slice(dropdownPage * 4, (dropdownPage + 1) * 4)
+                          .map(([key, val]) => {
+                            const isSelected = (activePassport.species || 'rabbit') === key;
+                            return (
+                              <button
+                                key={key}
+                                onClick={() => {
+                                  onUpdatePassport(activePassport.id, 'species', key);
+                                  setOpenDropdown(null);
+                                }}
+                                className={`
+                                  p-2 rounded-lg text-[11px] font-bold transition-all text-center truncate
+                                  ${isSelected
+                                    ? 'bg-livia-yellow border-[3px] border-black shadow-[3px_3px_0_black] -translate-y-[2px]'
+                                    : 'bg-white border-[1px] border-black/10 text-gray-600 hover:border-black/30'}
+                                `}
+                              >
+                                {(val as any)[lang]}
+                              </button>
+                            );
+                          })}
+                      </div>
+                      {/* Pagination Dots */}
+                      {Object.keys(TRANSLATIONS.ui.species).length > 4 && (
+                        <div className="flex justify-center gap-1.5 mt-3 mb-1">
+                          {Array.from({ length: Math.ceil(Object.keys(TRANSLATIONS.ui.species).length / 4) }).map((_, i) => (
+                            <button
+                              key={i}
+                              onClick={(e) => { e.stopPropagation(); setDropdownPage(i); }}
+                              className={`transition-all duration-300 rounded-full ${dropdownPage === i ? 'w-10 h-2.5 bg-black' : 'w-2.5 h-2.5 bg-gray-200'}`}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
               {/* OCCUPATIONS (UPGRADED) */}
-              <div className="mt-4">
-                <label className={`block font-hand font-bold text-sm mb-2 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
+              <div className="mt-6">
+                <label className={`block font-hand font-bold text-sm mb-3 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
                   {TRANSLATIONS.ui.labels.occupationLabel[lang]}
                 </label>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-3">
                   {/* Selected Labels Only */}
                   {(activePassport.occupations || []).map((key) => {
                     const presetVal = (TRANSLATIONS.ui.occupations as any)[key];
@@ -406,7 +625,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                       <div
                         key={key}
                         className={`
-                          px-3 py-1.5 rounded-full border-2 text-sm font-bold transition-all flex items-center gap-2
+                          px-4 py-2 rounded-full border-2 text-sm font-bold transition-all flex items-center gap-2
                           ${isFlipped ? 'bg-livia-blue border-white text-white' : 'bg-livia-blue border-black text-white shadow-[3px_3px_0_black]'}
                         `}
                       >
@@ -428,7 +647,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                   <button
                     onClick={() => setIsJobPickerOpen(true)}
                     className={`
-                      px-3 py-1 rounded-full border-2 border-dashed flex items-center justify-center font-bold text-sm transition-all
+                      px-4 py-1.5 rounded-full border-2 border-dashed flex items-center justify-center font-bold text-sm transition-all
                       ${isFlipped ? 'border-gray-600 text-gray-500 hover:text-white' : 'border-gray-300 text-gray-400 hover:border-black hover:text-black'}
                     `}
                   >
@@ -482,22 +701,22 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                 </div>
               )}
 
-              <div className="mt-4">
-                <label className={`block font-hand font-bold text-sm mb-1 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
+              <div className="mt-8">
+                <label className={`block font-hand font-bold text-sm mb-2 ${isFlipped ? 'text-gray-400' : 'text-gray-500'}`}>
                   {TRANSLATIONS.ui.labels.location[lang]}
                 </label>
                 <input
                   type="text"
                   value={activePassport.location || ''}
                   onChange={(e) => onUpdatePassport(activePassport.id, 'location', e.target.value)}
-                  className={`w-full bg-transparent border-b-2 font-hand text-xl focus:outline-none ${isFlipped ? 'text-white border-gray-600 focus:border-livia-blue' : 'text-black border-gray-300 focus:border-livia-yellow'}`}
+                  className={`w-full bg-transparent border-b-2 font-hand text-2xl focus:outline-none transition-all ${isFlipped ? 'text-white border-gray-600 focus:border-livia-blue' : 'text-black border-gray-300 focus:border-livia-yellow'}`}
                   placeholder={lang === 'cn' ? '未知星球' : 'Unknown Planet'}
                 />
               </div>
 
               {/* Delete Button Detail (Hidden for permanent residents) */}
               {!ALL_PRESETS.some(preset => preset.id.toUpperCase() === activePassport.id.toUpperCase()) && (
-                <div className="pt-6 border-t border-dashed border-gray-200">
+                <div className="pt-8 border-t border-dashed border-gray-200">
                   <button
                     onClick={() => setDeleteId(activePassport.id)}
                     className="flex items-center gap-2 text-red-500 font-bold hover:underline py-2"
@@ -514,16 +733,16 @@ export const PassportBook: React.FC<PassportBookProps> = ({
 
           {/* TAB: PERSONALITY (formerly STATS) */}
           {activeTab === 'personality' && (
-            <div className="animate-fade-in pt-2">
-              <div className="flex flex-col md:flex-row gap-6 items-center">
+            <div className="animate-fade-in pt-4 flex flex-col h-full justify-between">
+              <div className="flex flex-col md:flex-row gap-10 items-center">
                 {/* Left: Traits & Bars */}
-                <div className="flex-1 space-y-6 w-full">
+                <div className="flex-1 space-y-10 w-full">
                   {/* Traits bubble Display */}
-                  <div className="flex flex-wrap justify-start gap-2 py-2">
+                  <div className="flex flex-wrap justify-start gap-3 py-2">
                     {getMixedTraits(activePassport.id, activeStats).map((trait, idx) => (
                       <div
                         key={idx}
-                        className="px-3 py-1.5 rounded-xl border-[2.5px] border-black flex items-center justify-center shadow-[3px_3px_0_rgba(0,0,0,0.1)] transition-all"
+                        className="px-4 py-2 rounded-xl border-[2.5px] border-black flex items-center justify-center shadow-[4px_4px_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-0.5"
                         style={{
                           backgroundColor: trait.type === 'mod' ? '#FFDADA' : trait.type === 'klurighet' ? '#D1E9FF' : '#FFF4D1',
                           color: '#000'
@@ -537,18 +756,18 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                   </div>
 
                   {/* Stat Bars Detail */}
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {/* Courage */}
-                    <div className="flex items-center gap-3">
-                      <span className={`w-16 font-bold font-hand text-lg ${isFlipped ? 'text-red-400' : 'text-gray-800'}`}>
+                    <div className="flex items-center gap-4">
+                      <span className={`w-20 font-bold font-hand text-xl ${isFlipped ? 'text-red-400' : 'text-gray-800'}`}>
                         {TRANSLATIONS.stats.mod[lang]}
                       </span>
-                      <div className="flex gap-1.5">
+                      <div className="flex gap-2">
                         {Array.from({ length: 9 }).map((_, i) => (
                           <div
                             key={i}
-                            className={`w-2.5 h-2.5 rounded-full border-[1.5px] ${i < activeStats.mod
-                              ? (isFlipped ? 'bg-red-500 border-red-400 shadow-[0_0_5px_red]' : 'bg-livia-red border-black')
+                            className={`w-3 h-3 rounded-full border-[2px] transition-all duration-500 ${i < activeStats.mod
+                              ? (isFlipped ? 'bg-red-500 border-red-400 shadow-[0_0_8px_red]' : 'bg-livia-red border-black')
                               : (isFlipped ? 'border-gray-700 bg-transparent' : 'border-gray-300 bg-transparent')
                               }`}
                           />
@@ -556,16 +775,16 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                       </div>
                     </div>
                     {/* Mischief */}
-                    <div className="flex items-center gap-3">
-                      <span className={`w-16 font-bold font-hand text-lg ${isFlipped ? 'text-yellow-400' : 'text-gray-800'}`}>
+                    <div className="flex items-center gap-4">
+                      <span className={`w-20 font-bold font-hand text-xl ${isFlipped ? 'text-yellow-400' : 'text-gray-800'}`}>
                         {TRANSLATIONS.stats.bus[lang]}
                       </span>
-                      <div className="flex gap-1.5">
+                      <div className="flex gap-2">
                         {Array.from({ length: 9 }).map((_, i) => (
                           <div
                             key={i}
-                            className={`w-2.5 h-2.5 rounded-full border-[1.5px] ${i < activeStats.bus
-                              ? (isFlipped ? 'bg-yellow-400 border-yellow-300 shadow-[0_0_5px_yellow]' : 'bg-livia-yellow border-black')
+                            className={`w-3 h-3 rounded-full border-[2px] transition-all duration-500 ${i < activeStats.bus
+                              ? (isFlipped ? 'bg-yellow-400 border-yellow-300 shadow-[0_0_8px_yellow]' : 'bg-livia-yellow border-black')
                               : (isFlipped ? 'border-gray-700 bg-transparent' : 'border-gray-300 bg-transparent')
                               }`}
                           />
@@ -573,16 +792,16 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                       </div>
                     </div>
                     {/* Wisdom */}
-                    <div className="flex items-center gap-3">
-                      <span className={`w-16 font-bold font-hand text-lg ${isFlipped ? 'text-blue-400' : 'text-gray-800'}`}>
+                    <div className="flex items-center gap-4">
+                      <span className={`w-20 font-bold font-hand text-xl ${isFlipped ? 'text-blue-400' : 'text-gray-800'}`}>
                         {TRANSLATIONS.stats.klurighet[lang]}
                       </span>
-                      <div className="flex gap-1.5">
+                      <div className="flex gap-2">
                         {Array.from({ length: 9 }).map((_, i) => (
                           <div
                             key={i}
-                            className={`w-2.5 h-2.5 rounded-full border-[1.5px] ${i < activeStats.klurighet
-                              ? (isFlipped ? 'bg-blue-400 border-blue-300 shadow-[0_0_5px_cyan]' : 'bg-livia-blue border-black')
+                            className={`w-3 h-3 rounded-full border-[2px] transition-all duration-500 ${i < activeStats.klurighet
+                              ? (isFlipped ? 'bg-blue-400 border-blue-300 shadow-[0_0_8px_cyan]' : 'bg-livia-blue border-black')
                               : (isFlipped ? 'border-gray-700 bg-transparent' : 'border-gray-300 bg-transparent')
                               }`}
                           />
@@ -593,13 +812,13 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                 </div>
 
                 {/* Right: Radar Chart */}
-                <div className="flex-1 flex justify-center items-center py-2 min-h-[200px]">
+                <div className="flex-1 flex justify-center items-center py-4 min-h-[250px]">
                   <RadarChart stats={activeStats} lang={lang} isDark={isFlipped} />
                 </div>
               </div>
 
-              <div className={`mt-6 p-4 rounded-xl border-2 border-dashed ${isFlipped ? 'border-gray-600 bg-white/5' : 'border-gray-300 bg-gray-50'}`}>
-                <p className={`font-hand text-lg italic text-center ${isFlipped ? 'text-gray-300' : 'text-gray-600'}`}>
+              <div className={`mt-10 p-6 rounded-2xl border-2 border-dashed transition-colors ${isFlipped ? 'border-gray-600 bg-white/5' : 'border-gray-300 bg-gray-50'}`}>
+                <p className={`font-hand text-xl italic text-center leading-relaxed ${isFlipped ? 'text-gray-300' : 'text-gray-600'}`}>
                   "{activeFlavor}"
                 </p>
               </div>
@@ -674,35 +893,129 @@ export const PassportBook: React.FC<PassportBookProps> = ({
               {/* Add Relation Form */}
               <div className={`mt-auto p-4 rounded-2xl border-2 ${isFlipped ? 'bg-white/5 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
                 <div className="grid grid-cols-2 gap-2 mb-2">
-                  <select
-                    id="rel-target"
-                    className={`text-sm rounded-lg p-2 focus:outline-none border-2 ${isFlipped ? 'bg-gray-800 text-white border-gray-700' : 'bg-white border-gray-200'}`}
-                  >
-                    <option value="">{lang === 'cn' ? '选择居民' : 'Select'}</option>
-                    {passports
-                      .filter(p => p.id !== activePassport.id)
-                      .map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))
-                    }
-                  </select>
-                  <select
-                    id="rel-type"
-                    className={`text-sm rounded-lg p-2 focus:outline-none border-2 ${isFlipped ? 'bg-gray-800 text-white border-gray-700' : 'bg-white border-gray-200'}`}
-                  >
-                    {Object.entries(TRANSLATIONS.ui.relationTypes).map(([key, val]) => (
-                      <option key={key} value={key}>{(val as any)[lang]}</option>
-                    ))}
-                  </select>
+                  {/* TARGET SELECTOR */}
+                  <div className="relative">
+                    <button
+                      onClick={() => {
+                        setOpenDropdown(openDropdown === 'rel-target' ? null : 'rel-target');
+                        setDropdownPage(0);
+                      }}
+                      className={`
+                        w-full h-9 px-2 rounded-lg border-2 font-bold text-xs flex items-center justify-between transition-all
+                        ${isFlipped ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-700'}
+                      `}
+                    >
+                      <span className="truncate">
+                        {pendingRelTarget 
+                          ? passports.find(p => p.id === pendingRelTarget)?.name 
+                          : (lang === 'cn' ? '选择居民' : 'Select')}
+                      </span>
+                      <span className="text-[10px] opacity-50">▼</span>
+                    </button>
+
+                    {openDropdown === 'rel-target' && (
+                      <div className="absolute bottom-full left-0 w-full mb-2 z-[70] bg-white border-[3px] border-black rounded-xl p-2 shadow-[6px_6px_0_black] animate-scale-in">
+                        <div className="grid grid-cols-2 gap-2">
+                          {passports
+                            .filter(p => p.id !== activePassport.id)
+                            .slice(dropdownPage * 4, (dropdownPage + 1) * 4)
+                            .map(p => (
+                              <button
+                                key={p.id}
+                                onClick={() => {
+                                  setPendingRelTarget(p.id);
+                                  setOpenDropdown(null);
+                                }}
+                                className={`
+                                  p-2 rounded-lg text-[10px] font-bold transition-all text-center truncate h-9
+                                  ${pendingRelTarget === p.id
+                                    ? 'bg-livia-yellow border-[3px] border-black shadow-[3px_3px_0_black] -translate-y-0.5'
+                                    : 'bg-white border-[1px] border-black/10 text-gray-600 hover:border-black/30'}
+                                `}
+                              >
+                                {p.name}
+                              </button>
+                            ))}
+                        </div>
+                        {/* Pagination */}
+                        {passports.filter(p => p.id !== activePassport.id).length > 4 && (
+                          <div className="flex justify-center gap-1 mt-3">
+                            {Array.from({ length: Math.ceil(passports.filter(p => p.id !== activePassport.id).length / 4) }).map((_, i) => (
+                              <button
+                                key={i}
+                                onClick={(e) => { e.stopPropagation(); setDropdownPage(i); }}
+                                className={`transition-all duration-300 rounded-full ${dropdownPage === i ? 'w-6 h-2 bg-black' : 'w-2 h-2 bg-gray-200'}`}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* TYPE SELECTOR */}
+                  <div className="relative">
+                    <button
+                      onClick={() => {
+                        setOpenDropdown(openDropdown === 'rel-type' ? null : 'rel-type');
+                        setDropdownPage(0);
+                      }}
+                      className={`
+                        w-full h-9 px-2 rounded-lg border-2 font-bold text-xs flex items-center justify-between transition-all
+                        ${isFlipped ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-700'}
+                      `}
+                    >
+                      <span className="truncate">
+                        {(TRANSLATIONS.ui.relationTypes as any)[pendingRelType]?.[lang]}
+                      </span>
+                      <span className="text-[10px] opacity-50">▼</span>
+                    </button>
+
+                    {openDropdown === 'rel-type' && (
+                      <div className="absolute bottom-full left-0 w-full mb-2 z-[70] bg-white border-[3px] border-black rounded-xl p-2 shadow-[6px_6px_0_black] animate-scale-in">
+                        <div className="grid grid-cols-2 gap-2">
+                          {Object.entries(TRANSLATIONS.ui.relationTypes)
+                            .slice(dropdownPage * 4, (dropdownPage + 1) * 4)
+                            .map(([key, val]) => (
+                              <button
+                                key={key}
+                                onClick={() => {
+                                  setPendingRelType(key);
+                                  setOpenDropdown(null);
+                                }}
+                                className={`
+                                  p-2 rounded-lg text-[10px] font-bold transition-all text-center truncate h-9
+                                  ${pendingRelType === key
+                                    ? 'bg-livia-yellow border-[3px] border-black shadow-[3px_3px_0_black] -translate-y-0.5'
+                                    : 'bg-white border-[1px] border-black/10 text-gray-600 hover:border-black/30'}
+                                `}
+                              >
+                                {(val as any)[lang]}
+                              </button>
+                            ))}
+                        </div>
+                        {/* Pagination */}
+                        {Object.keys(TRANSLATIONS.ui.relationTypes).length > 4 && (
+                          <div className="flex justify-center gap-1 mt-3">
+                            {Array.from({ length: Math.ceil(Object.keys(TRANSLATIONS.ui.relationTypes).length / 4) }).map((_, i) => (
+                              <button
+                                key={i}
+                                onClick={(e) => { e.stopPropagation(); setDropdownPage(i); }}
+                                className={`transition-all duration-300 rounded-full ${dropdownPage === i ? 'w-6 h-2 bg-black' : 'w-2 h-2 bg-gray-200'}`}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <button
                   onClick={() => {
-                    const targetId = (document.getElementById('rel-target') as HTMLSelectElement).value;
-                    const relationType = (document.getElementById('rel-type') as HTMLSelectElement).value;
-                    if (!targetId) return;
-
-                    const newRels = [...(activePassport.relationships || []), { targetId, relationType }];
+                    if (!pendingRelTarget) return;
+                    const newRels = [...(activePassport.relationships || []), { targetId: pendingRelTarget, relationType: pendingRelType }];
                     onUpdatePassport(activePassport.id, 'relationships', newRels);
+                    setPendingRelTarget(null);
                   }}
                   className="w-full bg-livia-yellow text-black font-bold py-2 rounded-lg border-2 border-black shadow-[2px_2px_0_black] hover:translate-y-0.5 hover:shadow-none active:bg-yellow-500 transition-all text-sm uppercase flex items-center justify-center gap-2"
                 >
