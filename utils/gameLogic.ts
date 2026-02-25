@@ -603,7 +603,7 @@ export const POLLY_PRESET: PassportData = {
 
 export const PLUTTENPLOTT_PRESET: PassportData = {
   id: 'HP-00004-PLUTTENPLOTT-E-F',
-  name: 'Pluttenplott.E.F',
+  name: 'Plott.E.F',
   selectedParts: {
     body: 'body_amber',
     ears: 'ears_amber',
