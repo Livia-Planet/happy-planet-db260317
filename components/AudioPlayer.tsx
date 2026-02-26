@@ -1,118 +1,148 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Language } from '../types';
 
-export const AudioPlayer: React.FC = () => {
+// 1. 定义多歌曲清单
+const PLAYLIST = [
+  { id: 'happy', name: { cn: '快乐星球', se: 'Lycklig Planet', en: 'Happy Planet' }, file: '/The Happy Planet.mp3' },
+  { id: 'snack', name: { cn: '星光小吃店', se: 'Stjärn -ljus -snack', en: 'Starlight Snack' }, file: '/Starlight Snack Bar.mp3' },
+  { id: 'orbit', name: { cn: '极光轨道', se: 'Norrsken -ets Bana', en: 'Aurora Orbit' }, file: '/Aurora Orbit.mp3' },
+];
+
+interface AudioPlayerProps {
+  lang: Language; // 传入语言以同步显示
+}
+
+export const AudioPlayer: React.FC<AudioPlayerProps> = ({ lang }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [volume, setVolume] = useState(0.3);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [showHint, setShowHint] = useState(false);
+  const [trackIndex, setTrackIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  const currentTrack = PLAYLIST[trackIndex];
+
+  // 初始化与切歌逻辑
   useEffect(() => {
-    // Initialize audio
-    audioRef.current = new Audio('/bgm.mp3');
+    // 如果没有实例则创建，有则只改 src
+    if (!audioRef.current) {
+      audioRef.current = new Audio(currentTrack.file);
+    } else {
+      audioRef.current.src = currentTrack.file;
+    }
+    
     audioRef.current.loop = true;
     audioRef.current.volume = volume;
 
-    // Auto-play attempt on mount (may be blocked by browser)
-    const playAttempt = () => {
-      if (audioRef.current) {
-        audioRef.current.play()
-          .then(() => setIsPlaying(true))
-          .catch(e => {
-            console.log("Audio autoplay blocked, waiting for user interaction", e);
-            // We don't show hint here to avoid annoying users on mount
-          });
+    // 关键点：切歌时，如果当前是播放状态，才自动播放
+    if (isPlaying) {
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.warn("BGM Playback auto-start blocked:", error);
+          setIsPlaying(false); // 如果被浏览器拦截，同步状态
+        });
       }
-    };
-
-    playAttempt();
-
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
     }
+
+    // 【重要修复】删除之前的 return 里的暂停逻辑
+    // 只有在组件彻底从页面消失时才销毁音频
+    return () => {
+      // 这里留空，或者只在卸载时执行
+    };
+  }, [trackIndex]); // 当 trackIndex 改变时触发
+
+  // 音量同步
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume;
   }, [volume]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
-
-    // Fix for some browser environments
-    audioRef.current.currentTime = audioRef.current.currentTime;
-
     if (isPlaying) {
       audioRef.current.pause();
-      setIsPlaying(false);
     } else {
-      audioRef.current.play()
-        .then(() => {
-          setIsPlaying(true);
-          setShowHint(false);
-        })
-        .catch(e => {
-          console.log("Audio play blocked", e);
-          setShowHint(true);
-          // Auto-hide hint after 3 seconds
-          setTimeout(() => setShowHint(false), 3000);
-        });
+      audioRef.current.play().catch(e => console.log(e));
     }
+    setIsPlaying(!isPlaying);
+  };
+
+  const nextTrack = () => {
+    setTrackIndex((prev) => (prev + 1) % PLAYLIST.length);
   };
 
   return (
-    <div className="relative font-rounded z-50">
-      {/* Autoplay Hint */}
-      {showHint && (
-        <div className="absolute top-14 right-0 bg-black/80 text-white text-[10px] px-3 py-1.5 rounded-lg whitespace-nowrap animate-bounce shadow-lg border border-white/20">
-          请先点击页面任意处以激活音频 🎵
-        </div>
-      )}
+    <div className="flex gap-2 items-start z-50">
+      {/* 切歌按钮 - 延续 SVG 线条画风格 */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-12 h-12 bg-white border-[3px] border-black rounded-lg shadow-[3px_3px_0_black] flex items-center justify-center hover:translate-y-[1px] hover:shadow-[2px_2px_0_black] active:translate-y-[3px] active:shadow-none transition-all"
+        onClick={nextTrack}
+        className="w-12 h-12 bg-white border-[3px] border-black rounded-lg shadow-[3px_3px_0_black] flex flex-col items-center justify-center hover:translate-y-[1px] hover:shadow-[2px_2px_0_black] active:translate-y-[3px] active:shadow-none transition-all group"
       >
-        {/* Simple Speaker Icon */}
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+        <svg viewBox="0 0 24 24" className="w-6 h-6 group-active:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M15 5v14" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
 
-      {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-12 h-40 bg-white border-[3px] border-black rounded-lg shadow-[4px_4px_0_black] flex flex-col items-center py-3 justify-between">
-          
-          {/* Play/Pause Toggle inside the slider area */}
-          <button onClick={togglePlay} className="mb-2">
-            {isPlaying ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-livia-red" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-            ) : (
-               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-livia-blue" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-              </svg>
-            )}
-          </button>
+      {/* 音量控制主按钮 */}
+      <div className="relative">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-12 h-12 bg-white border-[3px] border-black rounded-lg shadow-[3px_3px_0_black] flex items-center justify-center hover:translate-y-[1px] hover:shadow-[2px_2px_0_black] active:translate-y-[3px] active:shadow-none transition-all"
+        >
+          {/* 喇叭图标 */}
+          <svg viewBox="0 0 24 24" className={`w-6 h-6 ${isPlaying ? 'text-black' : 'text-gray-300'}`} fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M11 5L6 9H2V15H6L11 19V5Z" strokeLinecap="round" strokeLinejoin="round"/>
+            {isPlaying && <path d="M15.54 8.46a5 5 0 0 1 0 7.07" strokeLinecap="round" strokeLinejoin="round"/>}
+          </svg>
+        </button>
 
-          {/* Volume Slider */}
-          <div className="h-24 relative flex items-center justify-center">
-             <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={volume}
-              onChange={(e) => setVolume(parseFloat(e.target.value))}
-              className="absolute -rotate-90 w-24 h-4 appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-runnable-track]:w-full [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:bg-gray-200 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:border-2 [&::-webkit-slider-runnable-track]:border-black"
-            />
+        {/* 下拉面板 - 保持与语言切换器的视觉统一 */}
+        {isOpen && (
+          <div className="absolute top-full right-0 mt-3 w-14 py-4 bg-white border-[3px] border-black rounded-xl shadow-[4px_4px_0_black] flex flex-col items-center gap-4 animate-in fade-in slide-in-from-top-2">
+            
+            {/* 播放/暂停 */}
+            <button onClick={togglePlay} className={`w-8 h-8 rounded-full border-2 border-black flex items-center justify-center ${isPlaying ? 'bg-red-400' : 'bg-green-400'}`}>
+               {isPlaying ? <div className="w-2 h-4 border-l-2 border-r-2 border-black" /> : <div className="ml-1 w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-black border-b-[6px] border-b-transparent" />}
+            </button>
+
+            {/* 音量条 */}
+            <div className="h-24 flex items-center">
+              <input
+                type="range" min="0" max="1" step="0.05" value={volume}
+                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                className="vertical-slider"
+              />
+            </div>
+
+            {/* 歌曲简称显示 */}
+            <div className="text-[10px] font-black uppercase text-center px-1 leading-none break-words">
+              {(currentTrack.name as any)[lang] || currentTrack.name.en}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      <style>{`
+        .vertical-slider {
+          -webkit-appearance: none;
+          width: 80px;
+          height: 6px;
+          background: #eee;
+          border: 2px solid black;
+          border-radius: 10px;
+          transform: rotate(-90deg);
+          outline: none;
+        }
+        .vertical-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 14px;
+          height: 14px;
+          background: white;
+          border: 2px solid black;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+      `}</style>
     </div>
   );
 };

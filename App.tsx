@@ -206,7 +206,7 @@ const App: React.FC = () => {
 
       {/* Top Right Controls */}
       <div className="absolute top-4 right-4 flex gap-3 z-50">
-        <AudioPlayer />
+        <AudioPlayer lang={currentLang} />
         <LanguageSelector currentLang={currentLang} onLanguageChange={setCurrentLang} />
       </div>
 
