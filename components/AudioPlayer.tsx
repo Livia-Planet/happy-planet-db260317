@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 
 export const AudioPlayer: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [volume, setVolume] = useState(0.28);
+  const [volume, setVolume] = useState(0.3);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -11,6 +12,20 @@ export const AudioPlayer: React.FC = () => {
     audioRef.current = new Audio('/bgm.mp3');
     audioRef.current.loop = true;
     audioRef.current.volume = volume;
+
+    // Auto-play attempt on mount (may be blocked by browser)
+    const playAttempt = () => {
+      if (audioRef.current) {
+        audioRef.current.play()
+          .then(() => setIsPlaying(true))
+          .catch(e => {
+            console.log("Audio autoplay blocked, waiting for user interaction", e);
+            // We don't show hint here to avoid annoying users on mount
+          });
+      }
+    };
+
+    playAttempt();
 
     return () => {
       if (audioRef.current) {
@@ -29,16 +44,35 @@ export const AudioPlayer: React.FC = () => {
   const togglePlay = () => {
     if (!audioRef.current) return;
 
+    // Fix for some browser environments
+    audioRef.current.currentTime = audioRef.current.currentTime;
+
     if (isPlaying) {
       audioRef.current.pause();
+      setIsPlaying(false);
     } else {
-      audioRef.current.play().catch(e => console.log("Audio autoplay blocked", e));
+      audioRef.current.play()
+        .then(() => {
+          setIsPlaying(true);
+          setShowHint(false);
+        })
+        .catch(e => {
+          console.log("Audio play blocked", e);
+          setShowHint(true);
+          // Auto-hide hint after 3 seconds
+          setTimeout(() => setShowHint(false), 3000);
+        });
     }
-    setIsPlaying(!isPlaying);
   };
 
   return (
     <div className="relative font-rounded z-50">
+      {/* Autoplay Hint */}
+      {showHint && (
+        <div className="absolute top-14 right-0 bg-black/80 text-white text-[10px] px-3 py-1.5 rounded-lg whitespace-nowrap animate-bounce shadow-lg border border-white/20">
+          请先点击页面任意处以激活音频 🎵
+        </div>
+      )}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-12 h-12 bg-white border-[3px] border-black rounded-lg shadow-[3px_3px_0_black] flex items-center justify-center hover:translate-y-[1px] hover:shadow-[2px_2px_0_black] active:translate-y-[3px] active:shadow-none transition-all"

@@ -40,6 +40,40 @@ const App: React.FC = () => {
   const [savedPassports, setSavedPassports] = useState<PassportData[]>([]);
 
   // === EFFECTS ===
+  // 全局点击音效：独立于 BGM 音量控制 
+  useEffect(() => {
+    // 1. 【核心优化】预加载：只创建一次对象，解决点击延迟问题 
+    // 已经改为你确认的 click.wav 
+    const clickAudio = new Audio('/click.wav');
+    clickAudio.volume = 0.4; // 这是一个固定的舒适音量 
+
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+
+      // 2. 【逻辑增强】检测点击目标： 
+      // 包括按钮、链接，以及所有带有 cursor-pointer 类名的元素（如卡片） 
+      if (
+        target.closest('button') ||
+        target.closest('a') ||
+        target.closest('.cursor-pointer')
+      ) {
+        // 3. 【关键修复】连点支持： 
+        // 如果上次还没响完又点了一下，强制把进度拨回开头，实现即点即响 
+        clickAudio.currentTime = 0;
+
+        clickAudio.play().catch((err) => {
+          // 如果文件路径还有误，这里会在控制台打印明确提示 
+          console.warn("音效播放被拦截或文件未找到:", err);
+        });
+      }
+    };
+
+    document.addEventListener('click', handleGlobalClick);
+    return () => {
+      document.removeEventListener('click', handleGlobalClick);
+    };
+  }, []);
+
   // Load passports from LocalStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem('happyPlanet_passports');
