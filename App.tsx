@@ -3,7 +3,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Card } from './components/Card';
 import { Controls, TabType } from './components/Controls';
 import { LanguageSelector } from './components/LanguageSelector';
-import { AudioPlayer } from './components/AudioPlayer';
+import { AudioPlayer, PLAYLIST } from './components/AudioPlayer';
+import { SpaceBackground } from './components/SpaceBackground';
 import { PassportBook } from './components/PassportBook';
 import { CharacterData, PartCategory, PlanetCategory, Language, PassportData } from './types';
 import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS } from './utils/gameLogic';
@@ -32,6 +33,7 @@ const App: React.FC = () => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [currentLang, setCurrentLang] = useState<Language>('se');
   const [activeTab, setActiveTab] = useState<TabType>('body');
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
 
   // View State: 'editor' or 'passport'
   const [viewMode, setViewMode] = useState<'editor' | 'passport'>('editor');
@@ -199,6 +201,13 @@ const App: React.FC = () => {
   return (
     <div className={`min-h-screen transition-colors duration-700 ${isFlipped && viewMode === 'editor' ? 'bg-gray-900' : 'bg-livia-bg'} text-gray-900 p-4 md:p-8 font-rounded selection:bg-livia-yellow selection:text-black relative overflow-x-hidden`}>
 
+      {/* 🌠 SpaceBackground Decoration Layer */}
+      <SpaceBackground
+        bpm={PLAYLIST[currentTrackIndex].bpm}
+        themeColor={PLAYLIST[currentTrackIndex].themeColor}
+        meteorDensity={PLAYLIST[currentTrackIndex].meteorDensity}
+      />
+
       {/* Background Decor for Passport Mode */}
       {viewMode === 'passport' && (
         <div className="fixed inset-0 bg-[#2c3e50] z-0 pointer-events-none"></div>
@@ -206,7 +215,7 @@ const App: React.FC = () => {
 
       {/* Top Right Controls */}
       <div className="absolute top-4 right-4 flex gap-3 z-50">
-        <AudioPlayer lang={currentLang} />
+        <AudioPlayer lang={currentLang} currentTrackIndex={currentTrackIndex} onTrackChange={setCurrentTrackIndex} />
         <LanguageSelector currentLang={currentLang} onLanguageChange={setCurrentLang} />
       </div>
 

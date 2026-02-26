@@ -1,25 +1,47 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Language } from '../types';
 
-// 1. 定义多歌曲清单
-const PLAYLIST = [
-  { id: 'happy', name: { cn: '快乐星球', se: 'Lycklig Planet', en: 'Happy Planet' }, file: '/The Happy Planet.mp3' },
-  { id: 'snack', name: { cn: '星光小吃店', se: 'Stjärn -ljus -snack', en: 'Starlight Snack' }, file: '/Starlight Snack Bar.mp3' },
-  { id: 'orbit', name: { cn: '极光轨道', se: 'Norrsken -ets Bana', en: 'Aurora Orbit' }, file: '/Aurora Orbit.mp3' },
+// 1. 定义多歌曲清单 - 包含 BPM 和装饰层配置
+export const PLAYLIST = [
+  { 
+    id: 'happy', 
+    name: { cn: '快乐星球', se: 'Lycklig Planet', en: 'Happy Planet' }, 
+    file: '/The Happy Planet.mp3',
+    bpm: 90,
+    themeColor: '#FF6B6B',
+    meteorDensity: 5
+  },
+  { 
+    id: 'snack', 
+    name: { cn: '星光小吃店', se: 'Stjärn -ljus -snack', en: 'Starlight Snack' }, 
+    file: '/Starlight Snack Bar.mp3',
+    bpm: 120,
+    themeColor: '#FFD93D',
+    meteorDensity: 4
+  },
+  { 
+    id: 'orbit', 
+    name: { cn: '极光轨道', se: 'Norrsken -ets Bana', en: 'Aurora Orbit' }, 
+    file: '/Aurora Orbit.mp3',
+    bpm: 80,
+    themeColor: '#6BCB77',
+    meteorDensity: 7
+  },
 ];
 
 interface AudioPlayerProps {
   lang: Language; // 传入语言以同步显示
+  currentTrackIndex: number;
+  onTrackChange?: (index: number) => void;
 }
 
-export const AudioPlayer: React.FC<AudioPlayerProps> = ({ lang }) => {
+export const AudioPlayer: React.FC<AudioPlayerProps> = ({ lang, currentTrackIndex, onTrackChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [volume, setVolume] = useState(0.3);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [trackIndex, setTrackIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const currentTrack = PLAYLIST[trackIndex];
+  const currentTrack = PLAYLIST[currentTrackIndex];
 
   // 初始化与切歌逻辑
   useEffect(() => {
@@ -49,7 +71,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ lang }) => {
     return () => {
       // 这里留空，或者只在卸载时执行
     };
-  }, [trackIndex]); // 当 trackIndex 改变时触发
+  }, [currentTrackIndex]); // 当 currentTrackIndex 改变时触发
 
   // 音量同步
   useEffect(() => {
@@ -67,7 +89,10 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ lang }) => {
   };
 
   const nextTrack = () => {
-    setTrackIndex((prev) => (prev + 1) % PLAYLIST.length);
+    const nextIndex = (currentTrackIndex + 1) % PLAYLIST.length;
+    if (onTrackChange) {
+      onTrackChange(nextIndex);
+    }
   };
 
   return (
