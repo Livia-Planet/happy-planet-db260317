@@ -1,6 +1,23 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Card } from './components/Card';
+
+// 专业的零延迟音效加载函数
+const loadAudioBuffer = async (url: string, context: AudioContext) => {
+  const response = await fetch(url);
+  const arrayBuffer = await response.arrayBuffer();
+  return await context.decodeAudioData(arrayBuffer);
+};
+
+const playBuffer = (buffer: AudioBuffer, context: AudioContext, volume = 0.5) => {
+  const source = context.createBufferSource();
+  source.buffer = buffer;
+  const gainNode = context.createGain();
+  gainNode.gain.value = volume;
+  source.connect(gainNode);
+  gainNode.connect(context.destination);
+  source.start(0);
+};
 import { Controls, TabType } from './components/Controls';
 import { LanguageSelector } from './components/LanguageSelector';
 import { AudioPlayer, PLAYLIST } from './components/AudioPlayer';
@@ -34,6 +51,14 @@ const App: React.FC = () => {
   const [currentLang, setCurrentLang] = useState<Language>('se');
   const [activeTab, setActiveTab] = useState<TabType>('body');
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+
+  // stamping/flash state
+  const [isStamping, setIsStamping] = useState(false);
+  const [stampAngle, setStampAngle] = useState(0);
+  const [flash, setFlash] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const stampAudioRef = useRef<HTMLAudioElement | null>(null);
+  const cameraAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // View State: 'editor' or 'passport'
   const [viewMode, setViewMode] = useState<'editor' | 'passport'>('editor');
@@ -75,6 +100,28 @@ const App: React.FC = () => {
       document.removeEventListener('click', handleGlobalClick);
     };
   }, []);
+
+  // === AUDIO CONTEXT SETUP ===
+  const audioCtx = useRef<AudioContext | null>(null);
+  const buffers = useRef<Record<string, AudioBuffer>>({});
+
+  // 初始化 Web Audio 并预加载音频
+  useEffect(() => {
+    audioCtx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const preload = async () => {
+      if (!audioCtx.current) return;
+      const [cameraB, stampB, clickB] = await Promise.all([
+        loadAudioBuffer('/camera.wav', audioCtx.current),
+        loadAudioBuffer('/stamp.wav', audioCtx.current),
+        loadAudioBuffer('/click.wav', audioCtx.current),
+      ]);
+      buffers.current = { camera: cameraB, stamp: stampB, click: clickB };
+    };
+    preload();
+  }, []);
+
+  // 辅助延时函数
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   // Load passports from LocalStorage on mount
   useEffect(() => {
@@ -156,32 +203,72 @@ const App: React.FC = () => {
 
   // === PASSPORT LOGIC ===
   const handleSavePassport = () => {
-    const newId = generateUniqueId(Date.now());
+  // 1. 【第一阶段：拍照】声音和闪光灯同步
+  // 快门声立刻响起
+  if (audioCtx.current && buffers.current.camera) {
+    playBuffer(buffers.current.camera, audioCtx.current, 0.6);
+  }
+  
+  // 闪光灯紧随其后（延迟 400ms 模拟物理快门开启）
+  setTimeout(() => {
+    setFlash(true);
+    setTimeout(() => setFlash(false), 500); // 500ms 后熄灭
+  }, 400);
 
-    // Determine Bio
-    let bioText = DEFAULT_BIOS.general[currentLang];
-    if (characterData.name.toUpperCase() === 'BOBU.B') {
-      bioText = DEFAULT_BIOS.bobu[currentLang];
+  // 2. 【第二阶段：准备盖章】
+  setStampAngle(-15 - Math.random() * 10);
+
+  // 3. 【第三阶段：盖章声效】
+  // 你希望盖章声慢一点，我们把它的触发时间往后延（原先可能是 50ms，现在改到 800ms）
+  setTimeout(() => {
+    if (audioCtx.current && buffers.current.stamp) {
+      // 这里的 800ms 是从点击按钮开始计算的总延迟
+      playBuffer(buffers.current.stamp, audioCtx.current, 0.8);
     }
+  }, 800); 
+
+  // 4. 【第四阶段：印章动画落下】
+  // 为了让声音和动画对齐，印章变大的动画（setIsStamping）应该在声音响起稍后一点点
+  // 这样听起来像是“印章砸到了纸面上”产生的声音
+  setTimeout(() => {
+    setIsStamping(true); 
+  }, 850); // 比声音晚 50ms，视觉冲击感最强
+
+  // 5. 【后续存档逻辑】
+  // 存档和跳转也相应往后顺延，给前面的动画留足时间
+  setTimeout(() => {
+    const newId = generateUniqueId(Date.now());
+    let bioText = characterData.name.toUpperCase() === 'BOBU.B' 
+      ? DEFAULT_BIOS.bobu[currentLang] 
+      : DEFAULT_BIOS.general[currentLang];
 
     const newPassport: PassportData = {
       ...characterData,
       id: newId,
       bio: bioText,
-      gender: 'unknown', // Initialize with key
-      species: 'rabbit', // Initialize with key
-      occupations: [], // Initialize empty
+      gender: 'unknown',
+      species: 'rabbit',
+      occupations: [],
       savedAt: Date.now(),
-      relationships: [] // Initialize empty array
+      relationships: []
     };
 
     const updatedPassports = [newPassport, ...savedPassports];
     setSavedPassports(updatedPassports);
     localStorage.setItem('happyPlanet_passports', JSON.stringify(updatedPassports));
 
-    // Visual Feedback
-    alert(currentLang === 'cn' ? "护照签发成功！" : "Passport Issued Successfully!");
-  };
+    // 跳转到档案室的时间也可以稍微拉长，让用户看清印章
+    setTimeout(() => {
+       setToastMsg(currentLang === 'cn' ? "护照签发成功！" : "Passport Issued!");
+       setTimeout(() => {
+         setToastMsg(null);
+         setViewMode('passport');
+         setTimeout(() => setIsStamping(false), 500);
+       }, 2000);
+    }, 1000);
+
+  }, 1000); 
+};
 
   const handleUpdatePassportData = (id: string, field: keyof PassportData, value: any) => {
     const updated = savedPassports.map(p =>
@@ -200,6 +287,40 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen transition-colors duration-700 ${isFlipped && viewMode === 'editor' ? 'bg-gray-900' : 'bg-livia-bg'} text-gray-900 p-4 md:p-8 font-rounded selection:bg-livia-yellow selection:text-black relative overflow-x-hidden`}>
+      {/* camera flash overlay */}
+      {flash && (
+        <div className="fixed inset-0 bg-white opacity-0 animate-flash pointer-events-none z-[9999]"></div>
+      )}
+      
+      {/* 漫画风定制 Toast 提示 */}
+      {toastMsg && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[9999] animate-bounce-in pointer-events-none">
+          <div className="bg-livia-yellow text-black px-8 py-4 rounded-2xl border-[4px] border-black shadow-[6px_6px_0_black] -rotate-2">
+            <div className="flex items-center gap-3">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-8 h-8 text-green-600 flex-shrink-0">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="font-rounded font-black text-xl tracking-wide">{toastMsg}</span>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <style>{`
+        @keyframes flash {
+          0% { opacity: 0; }
+          20% { opacity: 0.8; }
+          100% { opacity: 0; }
+        }
+        .animate-flash { animation: flash 0.15s ease-out forwards; }
+        
+        @keyframes bounce-in {
+          0% { opacity: 0; transform: translate(-50%, -20px) scale(0.8); }
+          50% { opacity: 1; transform: translate(-50%, 5px) scale(1.05); }
+          100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+        }
+        .animate-bounce-in { animation: bounce-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+      `}</style>
 
       {/* 🌠 SpaceBackground Decoration Layer */}
       <SpaceBackground
@@ -243,6 +364,8 @@ const App: React.FC = () => {
                 isFlipped={isFlipped}
                 onFlip={toggleFlip}
                 lang={currentLang}
+                showStamp={isStamping}
+                stampAngle={stampAngle}
               />
               <div className="mt-6 text-center">
                 <button

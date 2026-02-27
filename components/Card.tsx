@@ -12,9 +12,11 @@ interface CardProps {
   isFlipped: boolean;
   onFlip: () => void;
   lang: Language;
+  showStamp?: boolean;
+  stampAngle?: number;
 }
 
-export const Card: React.FC<CardProps> = ({ data, stats, flavorText, isFlipped, onFlip, lang }) => {
+export const Card: React.FC<CardProps> = ({ data, stats, flavorText, isFlipped, onFlip, lang, showStamp, stampAngle }) => {
   const dominantStat = getDominantStat(stats);
   const uniqueId = generateUniqueId(data.lastModified);
 
@@ -34,14 +36,54 @@ export const Card: React.FC<CardProps> = ({ data, stats, flavorText, isFlipped, 
 
   return (
     <div
-      className="relative w-[340px] h-[480px] perspective-1000 cursor-pointer group"
+      className={`relative w-[340px] h-[480px] perspective-1000 cursor-pointer group ${showStamp ? 'animate-card-shake' : ''}`}
       onClick={onFlip}
     >
+      <style>{`
+        @keyframes stamp-drop {
+          0% { transform: scale(3) rotate(var(--angle)); opacity: 0; }
+          50% { transform: scale(1.1) rotate(var(--angle)); opacity: 1; }
+          70% { transform: scale(0.9) rotate(var(--angle)); }
+          100% { transform: scale(1) rotate(var(--angle)); opacity: 1; }
+        }
+        @keyframes card-shake {
+          0%,100%{transform:translateX(0)}
+          25%{transform:translateX(-3px)}
+          75%{transform:translateX(3px)}
+        }
+        /* 【完美对齐】印章掉落需要 0.2s，所以震动必须正好在 0.2s 时开始！ */
+        .animate-card-shake { animation: card-shake 0.2s linear 0.2s forwards; }
+      `}</style>
       <div
         className={`w-full h-full relative transform-style-3d transition-transform duration-700 ${isFlipped ? 'rotate-y-180' : ''}`}
       >
         {/* === FRONT FACE === */}
         <div className="absolute w-full h-full backface-hidden bg-white border-[6px] border-black rounded-3xl shadow-comic overflow-hidden flex flex-row">
+          {/* Stamp layer */}
+          {showStamp && (
+            <div
+              // 加上 z-50 防止被底层盖住
+              className="absolute right-4 bottom-4 w-[110px] h-[110px] z-50" 
+              style={{
+                '--angle': `${stampAngle}deg`, // 【必须加这行】把 React 的角度传给 CSS 动画
+                animation: 'stamp-drop 0.2s ease-out forwards',
+                opacity: 0,
+                mixBlendMode: 'multiply',
+              } as React.CSSProperties} // TypeScript 需要强转一下识别自定义 CSS 变量
+            >
+              {/* SVG 内容保持不变 */}
+              <svg viewBox="0 0 120 120" className="w-full h-full drop-shadow-sm">
+                <circle cx="60" cy="60" r="54" stroke="#EF4444" strokeWidth="6" fill="none" strokeDasharray="10 2 30 2" strokeLinecap="round" />
+                {/* 稍微调粗字体，增加印章厚重感 */}
+                <text x="60" y="58" textAnchor="middle" dominantBaseline="middle" fontSize="11" fill="#EF4444" fontWeight="900" style={{ letterSpacing: '1px' }}>
+                  OFFICIAL CITIZEN
+                </text>
+                <text x="60" y="72" textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#EF4444" fontWeight="bold">
+                  OF HAPPY PLANET
+                </text>
+              </svg>
+            </div>
+          )}
 
           {/* Left Content Area (Same as before) */}
           <div className="flex-1 flex flex-col relative">
