@@ -44,9 +44,9 @@ export const TRANSLATIONS = {
     cn: "快乐星球官方居民证"
   },
   namePlaceholder: {
-    se: "Skriv namn...",
-    en: "Enter name...",
-    cn: "输入名字..."
+    se: "Först.Namn (ex Bobu.B)",
+    en: "First.Last (e.g. Bobu.B)",
+    cn: "名.姓 (如 Bobu.B)"
   },
   buttons: {
     showFront: { se: "Visa Framsida", en: "Show Front", cn: "查看正面" },
@@ -491,6 +491,14 @@ export const getStarDate = (): string => {
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const dd = String(date.getDate()).padStart(2, '0');
   return `SD-${yyyy}.${mm}.${dd}`;
+};
+
+// *** 宇宙名字生成器 (Hard‑Code Protocol Section 1) ***
+// 生成形如 FirstName.Surname 的名字，姓氏为单字母或单数字
+export const generateStarName = (): string => {
+  const fNames = ['Zorp', 'Pix', 'Mochi', 'Nova', 'Nico', 'Bibi'];
+  const lNames = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
+  return `${fNames[Math.floor(Math.random() * fNames.length)]}.${lNames[Math.floor(Math.random() * lNames.length)]}`;
 };
 
 export const BOBU_PRESET: PassportData = {

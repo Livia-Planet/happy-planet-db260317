@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CharacterData, CharacterStats, PartCategory, PlanetCategory, Language } from '../types';
 import { getPartList } from '../data/parts';
 import { TRANSLATIONS, getPartName } from '../utils/gameLogic';
+import { DiceIcon } from './Icons';
 
 export type TabType = PartCategory | PlanetCategory;
 
@@ -39,19 +40,19 @@ export const Controls: React.FC<ControlsProps> = ({
 }) => {
   // === STAT ICONS (SVG LINE ART) ===
   const ModIcon = ({ className }: { className?: string }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
     </svg>
   );
 
   const BusIcon = ({ className }: { className?: string }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
     </svg>
   );
 
   const KlurighetIcon = ({ className }: { className?: string }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
       <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5" />
       <line x1="9" y1="18" x2="15" y2="18" />
       <line x1="10" y1="22" x2="14" y2="22" />
@@ -60,6 +61,41 @@ export const Controls: React.FC<ControlsProps> = ({
 
   // === PAGINATION STATE ===
   const [currentPage, setCurrentPage] = useState(0);
+
+  // Name validation regex: letters, one dot, one alphanumeric surname
+  const nameRegex = /^[A-Za-z]+\.[A-Za-z0-9]$/;
+
+  const sanitizeName = (val: string) => {
+    // strip invalid chars
+    let cleaned = val.replace(/[^A-Za-z0-9\.]/g, '');
+    // ensure only one dot
+    const parts = cleaned.split('.');
+    if (parts.length > 2) {
+      cleaned = parts[0] + '.' + parts.slice(1).join('');
+    }
+    // always include a dot and one-char surname
+    if (!cleaned.includes('.') && cleaned.length > 0) {
+      cleaned = `${cleaned}.A`;
+    }
+    // truncate surname to 1 char
+    if (cleaned.includes('.')) {
+      const [first, last] = cleaned.split('.');
+      cleaned = `${first.slice(0, 12)}.${last.slice(0,1)}`;
+    }
+    return cleaned.toUpperCase();
+  };
+
+  const handleNameInput = (val: string) => {
+    const sanitized = sanitizeName(val);
+    updateName(sanitized);
+  };
+
+  const handleRandomName = () => {
+    // lazy-load generator from utils
+    import('../utils/gameLogic').then(m => {
+      updateName(m.generateStarName().toUpperCase());
+    });
+  };
   const ITEMS_PER_PAGE = 4;
 
   // Reset pagination when switching tabs or flipping the card
@@ -116,14 +152,23 @@ export const Controls: React.FC<ControlsProps> = ({
           <label className="block font-hand font-bold text-lg mb-1 text-gray-500 leading-none">
             {TRANSLATIONS.ui.residentName[lang]}
           </label>
-          <input
-            type="text"
-            value={data.name}
-            onChange={(e) => updateName(e.target.value)}
-            className="w-full border-[3px] border-black rounded-lg p-2 font-rounded font-bold text-xl uppercase focus:outline-none focus:ring-4 focus:ring-livia-yellow transition-all"
-            placeholder={TRANSLATIONS.namePlaceholder[lang]}
-            maxLength={12}
-          />
+          <div className="relative flex items-center">
+            <input
+              type="text"
+              value={data.name}
+              onChange={(e) => handleNameInput(e.target.value)}
+              className="w-full border-[3px] border-black rounded-lg p-2 pr-10 font-rounded font-bold text-xl uppercase focus:outline-none focus:ring-4 focus:ring-livia-yellow transition-all"
+              placeholder={TRANSLATIONS.namePlaceholder[lang]}
+              maxLength={12}
+            />
+            <button
+              onClick={handleRandomName}
+              title="Random"
+              className="absolute right-2 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
+            >
+              <DiceIcon className="w-5 h-5 text-black" />
+            </button>
+          </div>
         </div>
 
         {/* --- PAGINATED GRID AREA --- */}

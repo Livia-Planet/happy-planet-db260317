@@ -23,11 +23,13 @@ import { LanguageSelector } from './components/LanguageSelector';
 import { AudioPlayer, PLAYLIST } from './components/AudioPlayer';
 import { SpaceBackground } from './components/SpaceBackground';
 import { PassportBook } from './components/PassportBook';
+import { RedX, CarrotCoinIcon, ArchivesIcon, DiceIcon } from './components/Icons';
 import { CharacterData, PartCategory, PlanetCategory, Language, PassportData } from './types';
-import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS } from './utils/gameLogic';
+import { PARTS_DB, getPartList } from './data/parts';
+import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS, generateStarName } from './utils/gameLogic';
 
 const INITIAL_DATA: CharacterData = {
-  name: "Bobu.B",
+  name: generateStarName().toUpperCase(),
   lastModified: Date.now(),
   selectedParts: {
     body: 'body_mimosa',
@@ -59,6 +61,11 @@ const App: React.FC = () => {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const stampAudioRef = useRef<HTMLAudioElement | null>(null);
   const cameraAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // new currency state (Hard‑Code Protocol §3)
+  const [carrotCoins, setCarrotCoins] = useState(30);
+  const [bigBangActive, setBigBangActive] = useState(false);
+  const [actionFeedback, setActionFeedback] = useState<{bigbang?: string; issue?: string}>({});
 
   // View State: 'editor' or 'passport'
   const [viewMode, setViewMode] = useState<'editor' | 'passport'>('editor');
@@ -203,6 +210,16 @@ const App: React.FC = () => {
 
   // === PASSPORT LOGIC ===
   const handleSavePassport = () => {
+    // cost 5 carrot coins to issue
+    if (carrotCoins < 5) {
+      setActionFeedback({ issue: 'no_carrot' });
+      setTimeout(() => setActionFeedback({}), 1200);
+      return;
+    }
+    setCarrotCoins(c => c - 5);
+    setActionFeedback({ issue: '-5' });
+    setTimeout(() => setActionFeedback({}), 1000);
+
   // 1. 【第一阶段：拍照】声音和闪光灯同步
   // 快门声立刻响起
   if (audioCtx.current && buffers.current.camera) {
@@ -285,8 +302,65 @@ const App: React.FC = () => {
     localStorage.setItem('happyPlanet_passports', JSON.stringify(updated));
   };
 
+  // Big Bang action consumes 1 carrot coin and randomizes EVERYTHING
+  const handleBigBang = () => {
+    // 1. 唯一货币检查：只认胡萝卜！(把 'noenergy' 改为 'no_carrot'，彻底去能量化)
+    if (carrotCoins < 1) {
+      setActionFeedback({ bigbang: 'no_carrot' }); 
+      setTimeout(() => setActionFeedback({}), 1200);
+      return;
+    }
+
+    // 2. 扣除胡萝卜币
+    setCarrotCoins(c => c - 1);
+    setActionFeedback({ bigbang: '-1' });
+
+    // 3. 执行真正的随机搭配逻辑
+    updateData(prev => {
+      // --- 随机角色部件 ---
+      const categories: PartCategory[] = ['body', 'ears', 'face', 'hair', 'access'];
+      const newSelectedParts = { ...prev.selectedParts };
+      
+      categories.forEach(cat => {
+        // 【关键修复】：使用 getPartList(cat) 而不是 PARTS_DB[cat]
+        const options = getPartList(cat); 
+        if (options && options.length > 0) {
+          const randomPart = options[Math.floor(Math.random() * options.length)];
+          newSelectedParts[cat] = randomPart.id;
+        }
+      });
+
+      // --- 随机行星部件 ---
+      const planetCats: PlanetCategory[] = ['base', 'surface', 'atmosphere', 'companion'];
+      const newPlanetParts = { ...prev.selectedPlanetParts };
+      
+      planetCats.forEach(cat => {
+        // 【关键修复】：同理，使用 getPartList(cat)
+        const options = getPartList(cat);
+        if (options && options.length > 0) {
+          const randomPart = options[Math.floor(Math.random() * options.length)];
+          newPlanetParts[cat] = randomPart.id;
+        }
+      });
+
+      return {
+        ...prev,
+        name: generateStarName().toUpperCase(), // 随机名字
+        selectedParts: newSelectedParts,
+        selectedPlanetParts: newPlanetParts
+      };
+    });
+
+    // 4. 触发视觉震动
+    setBigBangActive(true);
+    setTimeout(() => {
+      setBigBangActive(false);
+      setActionFeedback({});
+    }, 300);
+  };
+
   return (
-    <div className={`min-h-screen transition-colors duration-700 ${isFlipped && viewMode === 'editor' ? 'bg-gray-900' : 'bg-livia-bg'} text-gray-900 p-4 md:p-8 font-rounded selection:bg-livia-yellow selection:text-black relative overflow-x-hidden`}>
+    <div className={`min-h-screen transition-colors duration-700 ${isFlipped && viewMode === 'editor' ? 'bg-gray-900' : 'bg-livia-bg'} text-gray-900 p-4 md:p-8 font-rounded selection:bg-livia-yellow selection:text-black relative overflow-x-hidden ${bigBangActive ? 'animate-shake blur-sm' : ''}`}>
       {/* camera flash overlay */}
       {flash && (
         <div className="fixed inset-0 bg-white opacity-0 animate-flash pointer-events-none z-[9999]"></div>
@@ -329,15 +403,36 @@ const App: React.FC = () => {
         meteorDensity={PLAYLIST[currentTrackIndex].meteorDensity}
       />
 
+      {/* apply big-bang shake/blur to entire container */}
+      <style>{`
+        @keyframes shake-quick { 0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)} }
+        .animate-shake { animation: shake-quick 0.3s linear; }
+      `}</style>
+
       {/* Background Decor for Passport Mode */}
       {viewMode === 'passport' && (
         <div className="fixed inset-0 bg-[#2c3e50] z-0 pointer-events-none"></div>
       )}
 
       {/* Top Right Controls */}
-      <div className="absolute top-4 right-4 flex gap-3 z-50">
+      <div className="absolute top-4 right-4 flex gap-3 z-50 items-center">
+        {/* Carrot Coin Display - Clean, no border */}
+        <div className="flex items-center gap-1 font-bold">
+          <CarrotCoinIcon className="w-6 h-6" />
+          <span className="text-lg">{carrotCoins}</span>
+        </div>
+        {/* Audio Player */}
         <AudioPlayer lang={currentLang} currentTrackIndex={currentTrackIndex} onTrackChange={setCurrentTrackIndex} />
+        {/* Language Selector */}
         <LanguageSelector currentLang={currentLang} onLanguageChange={setCurrentLang} />
+        {/* Archives Button */}
+        <button
+          onClick={() => setViewMode('passport')}
+          className="w-12 h-12 bg-white border-[3px] border-black rounded-lg shadow-[3px_3px_0_black] flex items-center justify-center hover:translate-y-[1px] hover:shadow-[2px_2px_0_black] active:translate-y-[3px] active:shadow-none transition-all"
+          title="Archives"
+        >
+          <ArchivesIcon className="w-6 h-6" />
+        </button>
       </div>
 
       {/* === VIEW: EDITOR === */}
@@ -398,31 +493,56 @@ const App: React.FC = () => {
                 lang={currentLang}
               />
 
-              {/* ACTION BUTTONS (Moved Below) */}
-              <div className="flex gap-4 w-full justify-center md:justify-start">
-                {/* ISSUE PASSPORT (Save) */}
-                <button
-                  onClick={handleSavePassport}
-                  className="flex-1 bg-green-500 text-white font-bold border-[3px] border-black rounded-lg py-3 px-4 shadow-[4px_4px_0_black] hover:-translate-y-1 hover:shadow-[6px_6px_0_black] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 group"
-                >
-                  {/* Minimal SVG Icon */}
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>{currentLang === 'cn' ? "签发护照" : "Issue Passport"}</span>
-                </button>
-
-                {/* OPEN ARCHIVES */}
-                <button
-                  onClick={() => setViewMode('passport')}
-                  className="flex-1 bg-blue-500 text-white font-bold border-[3px] border-black rounded-lg py-3 px-4 shadow-[4px_4px_0_black] hover:-translate-y-1 hover:shadow-[6px_6px_0_black] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2"
-                >
-                  {/* Minimal SVG Icon */}
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                  </svg>
-                  <span>{currentLang === 'cn' ? "打开档案" : "Archives"}</span>
-                </button>
+              {/* CURRENCY & ACTION AREA - Aligned with Controls width */}
+              <div className="w-full max-w-[340px] flex flex-col gap-4 pb-8">
+                <div className="flex gap-4 w-full">
+                  {/* BIG BANG BUTTON */}
+                  <div className="flex-1 relative flex flex-col items-center">
+                    <button
+                      onClick={handleBigBang}
+                      disabled={carrotCoins < 1}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-3 bg-purple-500 text-white font-bold border-[3px] border-black rounded-lg shadow-[5px_5px_0_black] hover:shadow-[3px_3px_0_black] active:shadow-[1px_1px_0_black] disabled:opacity-50 transition-all"
+                    >
+                      <DiceIcon className="w-5 h-5 text-white" />
+                      <span className="text-xs font-black tracking-widest">BIG BANG</span>
+                    </button>
+                    {/* Cost Display */}
+                    <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 flex items-center gap-1">
+                      {actionFeedback.bigbang === 'no_carrot' ? (
+                        <div className="animate-pulse"><RedX /></div>
+                      ) : actionFeedback.bigbang ? (
+                        <>
+                          <CarrotCoinIcon className="w-4 h-4" />
+                          <span className="text-xs font-black">{actionFeedback.bigbang}</span>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                  {/* ISSUE BUTTON */}
+                  <div className="flex-1 relative flex flex-col items-center">
+                    <button
+                      onClick={handleSavePassport}
+                      disabled={carrotCoins < 5}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-3 bg-green-500 text-white font-bold border-[3px] border-black rounded-lg shadow-[5px_5px_0_black] hover:shadow-[3px_3px_0_black] active:shadow-[1px_1px_0_black] disabled:opacity-50 transition-all"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" className="w-5 h-5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-xs font-black tracking-widest">ISSUE</span>
+                    </button>
+                    {/* Cost Display */}
+                    <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 flex items-center gap-1">
+                      {actionFeedback.issue === 'no_carrot' ? (
+                        <div className="animate-pulse"><RedX /></div>
+                      ) : actionFeedback.issue ? (
+                        <>
+                          <CarrotCoinIcon className="w-4 h-4" />
+                          <span className="text-xs font-black">{actionFeedback.issue}</span>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 

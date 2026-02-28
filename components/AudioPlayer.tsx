@@ -96,56 +96,48 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ lang, currentTrackInde
   };
 
   return (
-    <div className="flex gap-2 items-start z-50">
-      {/* 切歌按钮 - 延续 SVG 线条画风格 */}
+    <div className="relative z-50">
+      {/* 音量控制主按钮 */}
       <button
-        onClick={nextTrack}
-        className="w-12 h-12 bg-white border-[3px] border-black rounded-lg shadow-[3px_3px_0_black] flex flex-col items-center justify-center hover:translate-y-[1px] hover:shadow-[2px_2px_0_black] active:translate-y-[3px] active:shadow-none transition-all group"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-12 h-12 bg-white border-[3px] border-black rounded-lg shadow-[3px_3px_0_black] flex items-center justify-center hover:translate-y-[1px] hover:shadow-[2px_2px_0_black] active:translate-y-[3px] active:shadow-none transition-all"
       >
-        <svg viewBox="0 0 24 24" className="w-6 h-6 group-active:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M15 5v14" strokeLinecap="round" strokeLinejoin="round"/>
+        {/* 喇叭图标 */}
+        <svg viewBox="0 0 24 24" className={`w-6 h-6 ${isPlaying ? 'text-black' : 'text-gray-300'}`} fill="none" stroke="currentColor" strokeWidth="3">
+          <path d="M11 5L6 9H2V15H6L11 19V5Z" strokeLinecap="round" strokeLinejoin="round"/>
+          {isPlaying && <path d="M15.54 8.46a5 5 0 0 1 0 7.07" strokeLinecap="round" strokeLinejoin="round"/>}
         </svg>
       </button>
 
-      {/* 音量控制主按钮 */}
-      <div className="relative">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-12 h-12 bg-white border-[3px] border-black rounded-lg shadow-[3px_3px_0_black] flex items-center justify-center hover:translate-y-[1px] hover:shadow-[2px_2px_0_black] active:translate-y-[3px] active:shadow-none transition-all"
-        >
-          {/* 喇叭图标 */}
-          <svg viewBox="0 0 24 24" className={`w-6 h-6 ${isPlaying ? 'text-black' : 'text-gray-300'}`} fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M11 5L6 9H2V15H6L11 19V5Z" strokeLinecap="round" strokeLinejoin="round"/>
-            {isPlaying && <path d="M15.54 8.46a5 5 0 0 1 0 7.07" strokeLinecap="round" strokeLinejoin="round"/>}
-          </svg>
-        </button>
+      {/* 下拉面板 - 垂直长条 */}
+      {isOpen && (
+        <div className="absolute top-full right-0 mt-3 w-14 py-4 bg-white border-[3px] border-black rounded-xl shadow-[4px_4px_0_black] flex flex-col items-center gap-4 animate-in fade-in slide-in-from-top-2">
+          {/* 播放/暂停 */}
+          <button onClick={togglePlay} className={`w-8 h-8 rounded-full border-2 border-black flex items-center justify-center ${isPlaying ? 'bg-red-400' : 'bg-green-400'}`}>
+             {isPlaying ? <div className="w-2 h-4 border-l-2 border-r-2 border-black" /> : <div className="ml-1 w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-black border-b-[6px] border-b-transparent" />}
+          </button>
 
-        {/* 下拉面板 - 保持与语言切换器的视觉统一 */}
-        {isOpen && (
-          <div className="absolute top-full right-0 mt-3 w-14 py-4 bg-white border-[3px] border-black rounded-xl shadow-[4px_4px_0_black] flex flex-col items-center gap-4 animate-in fade-in slide-in-from-top-2">
-            
-            {/* 播放/暂停 */}
-            <button onClick={togglePlay} className={`w-8 h-8 rounded-full border-2 border-black flex items-center justify-center ${isPlaying ? 'bg-red-400' : 'bg-green-400'}`}>
-               {isPlaying ? <div className="w-2 h-4 border-l-2 border-r-2 border-black" /> : <div className="ml-1 w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-black border-b-[6px] border-b-transparent" />}
-            </button>
-
-            {/* 音量条 */}
-            <div className="h-24 flex items-center">
-              <input
-                type="range" min="0" max="1" step="0.05" value={volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="vertical-slider"
-              />
-            </div>
-
-            {/* 歌曲简称显示 */}
-            <div className="text-[10px] font-black uppercase text-center px-1 leading-none break-words">
-              {(currentTrack.name as any)[lang] || currentTrack.name.en}
-            </div>
+          {/* 音量条 */}
+          <div className="h-24 flex items-center">
+            <input
+              type="range" min="0" max="1" step="0.05" value={volume}
+              onChange={(e) => setVolume(parseFloat(e.target.value))}
+              className="vertical-slider"
+            />
           </div>
-        )}
-      </div>
+
+          {/* 切歌按钮 */}
+          <button
+            onClick={nextTrack}
+            className="w-6 h-6 flex items-center justify-center text-black"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+              <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M15 5v14" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       <style>{`
         .vertical-slider {

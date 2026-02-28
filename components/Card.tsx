@@ -101,7 +101,7 @@ export const Card: React.FC<CardProps> = ({ data, stats, flavorText, isFlipped, 
                 {/* Name Tag */}
                 <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-30">
                   <div className="bg-black text-white px-4 py-2 rounded-2xl border-2 border-white shadow-sm flex items-center justify-center min-w-[120px]">
-                    <h2 className="font-rounded font-black text-lg uppercase tracking-wider leading-none text-center">{data.name}</h2>
+                    <h2 className="font-rounded font-black text-lg uppercase tracking-wider leading-none text-center whitespace-nowrap">{data.name}</h2>
                   </div>
                 </div>
               </div>

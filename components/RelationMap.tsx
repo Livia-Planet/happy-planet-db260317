@@ -104,7 +104,7 @@ export const RelationMap: React.FC<RelationMapProps> = ({
                 x2={`${pos.x}%`}
                 y2={`${pos.y}%`}
                 stroke="black"
-                strokeWidth="2"
+                strokeWidth="3"
                 strokeDasharray="5,5"
                 className="opacity-50"
               />

@@ -106,7 +106,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({ stats, lang, isDark }) =
                         r="4.5"
                         fill={isDark ? "#60EFFF" : "#7E57FF"}
                         stroke={isDark ? "#000" : "#fff"}
-                        strokeWidth="2.5"
+                        strokeWidth="3"
                         className={`transition-all duration-700 ease-in-out animate-node-blink`}
                         style={{ animationDelay: `${i * 0.6}s` }}
                     />

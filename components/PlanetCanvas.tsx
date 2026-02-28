@@ -291,7 +291,7 @@ export const PlanetCanvas: React.FC<PlanetCanvasProps> = ({ parts, uniqueId, lan
          {parts.companion === 'planet_comp_moon' && (
              <div className="absolute top-1/2 left-1/2 w-12 h-12 -ml-6 -mt-6 animate-orbit">
                 <svg viewBox="0 0 50 50" className="w-full h-full drop-shadow-md filter drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">
-                    <circle cx="25" cy="25" r="22" fill="#E5E7EB" stroke="black" strokeWidth="2" />
+                    <circle cx="25" cy="25" r="22" fill="#E5E7EB" stroke="black" strokeWidth="3" />
                     <circle cx="15" cy="18" r="5" fill="rgba(0,0,0,0.1)" />
                     <circle cx="32" cy="30" r="3" fill="rgba(0,0,0,0.1)" />
                 </svg>
@@ -302,8 +302,8 @@ export const PlanetCanvas: React.FC<PlanetCanvasProps> = ({ parts, uniqueId, lan
          {parts.companion === 'planet_comp_ufo' && (
              <div className="absolute top-1/2 left-1/2 w-16 h-12 -ml-8 -mt-6 animate-float">
                  <svg viewBox="0 0 60 40" className="w-full h-full drop-shadow-md filter drop-shadow-[0_0_8px_rgba(77,150,255,0.6)]">
-                    <path d="M15 20 A 15 15 0 0 1 45 20" fill="#60A5FA" stroke="white" strokeWidth="2" />
-                    <ellipse cx="30" cy="20" rx="28" ry="10" fill="#9CA3AF" stroke="white" strokeWidth="2" />
+                    <path d="M15 20 A 15 15 0 0 1 45 20" fill="#60A5FA" stroke="white" strokeWidth="3" />
+                    <ellipse cx="30" cy="20" rx="28" ry="10" fill="#9CA3AF" stroke="white" strokeWidth="3" />
                     <circle cx="15" cy="20" r="3" fill="#FCD34D" />
                     <circle cx="30" cy="24" r="3" fill="#FCD34D" />
                     <circle cx="45" cy="20" r="3" fill="#FCD34D" />
