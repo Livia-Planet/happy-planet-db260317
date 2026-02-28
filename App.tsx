@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Card } from './components/Card';
 
 // 专业的零延迟音效加载函数
@@ -24,6 +24,10 @@ import { AudioPlayer, PLAYLIST } from './components/AudioPlayer';
 import { SpaceBackground } from './components/SpaceBackground';
 import { PassportBook } from './components/PassportBook';
 import { RedX, CarrotCoinIcon, ArchivesIcon, DiceIcon } from './components/Icons';
+
+// new visual/audio helpers
+import { ParticleOverlay } from './components/effects/ParticleOverlay';
+import { useAnimateTokens } from './hooks/useAnimateTokens';
 import { CharacterData, PartCategory, PlanetCategory, Language, PassportData } from './types';
 import { PARTS_DB, getPartList } from './data/parts';
 import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS, generateStarName } from './utils/gameLogic';
@@ -65,7 +69,11 @@ const App: React.FC = () => {
   // new currency state (Hard‑Code Protocol §3)
   const [carrotCoins, setCarrotCoins] = useState(30);
   const [bigBangActive, setBigBangActive] = useState(false);
+  const [bigBangTrigger, setBigBangTrigger] = useState(0); // triggers particle overlay
   const [actionFeedback, setActionFeedback] = useState<{bigbang?: string; issue?: string}>({});
+
+  // carrot spend animation helper
+  const { spendCarrots } = useAnimateTokens();
 
   // View State: 'editor' or 'passport'
   const [viewMode, setViewMode] = useState<'editor' | 'passport'>('editor');
@@ -209,83 +217,77 @@ const App: React.FC = () => {
   };
 
   // === PASSPORT LOGIC ===
-  const handleSavePassport = () => {
-    // cost 5 carrot coins to issue
+  const handleIssue = () => {
     if (carrotCoins < 5) {
       setActionFeedback({ issue: 'no_carrot' });
       setTimeout(() => setActionFeedback({}), 1200);
       return;
     }
-    setCarrotCoins(c => c - 5);
-    setActionFeedback({ issue: '-5' });
-    setTimeout(() => setActionFeedback({}), 1000);
 
-  // 1. 【第一阶段：拍照】声音和闪光灯同步
-  // 快门声立刻响起
-  if (audioCtx.current && buffers.current.camera) {
-    playBuffer(buffers.current.camera, audioCtx.current, 0.6);
-  }
-  
-  // 闪光灯紧随其后（延迟 400ms 模拟物理快门开启）
-  setTimeout(() => {
-    setFlash(true);
-    setTimeout(() => setFlash(false), 500); // 500ms 后熄灭
-  }, 400);
-
-  // 2. 【第二阶段：准备盖章】
-  setStampAngle(-15 - Math.random() * 10);
-
-  // 3. 【第三阶段：盖章声效】
-  // 你希望盖章声慢一点，我们把它的触发时间往后延（原先可能是 50ms，现在改到 800ms）
-  setTimeout(() => {
-    if (audioCtx.current && buffers.current.stamp) {
-      // 这里的 800ms 是从点击按钮开始计算的总延迟
-      playBuffer(buffers.current.stamp, audioCtx.current, 0.8);
-    }
-  }, 800); 
-
-  // 4. 【第四阶段：印章动画落下】
-  // 为了让声音和动画对齐，印章变大的动画（setIsStamping）应该在声音响起稍后一点点
-  // 这样听起来像是“印章砸到了纸面上”产生的声音
-  setTimeout(() => {
-    setIsStamping(true); 
-  }, 850); // 比声音晚 50ms，视觉冲击感最强
-
-  // 5. 【后续存档逻辑】
-  // 存档和跳转也相应往后顺延，给前面的动画留足时间
-  setTimeout(() => {
-    const newId = generateUniqueId(Date.now());
-    let bioText = characterData.name.toUpperCase() === 'BOBU.B' 
-      ? DEFAULT_BIOS.bobu[currentLang] 
-      : DEFAULT_BIOS.general[currentLang];
-
-    const newPassport: PassportData = {
-      ...characterData,
-      id: newId,
-      bio: bioText,
-      gender: 'unknown',
-      species: 'rabbit',
-      occupations: [],
-      savedAt: Date.now(),
-      relationships: []
-    };
-
-    const updatedPassports = [newPassport, ...savedPassports];
-    setSavedPassports(updatedPassports);
-    localStorage.setItem('happyPlanet_passports', JSON.stringify(updatedPassports));
-
-    // 跳转到档案室的时间也可以稍微拉长，让用户看清印章
+    spendCarrots('btn-issue', 5);
+    
     setTimeout(() => {
-       setToastMsg(currentLang === 'cn' ? "护照签发成功！" : "Passport Issued!");
-       setTimeout(() => {
-         setToastMsg(null);
-         setViewMode('passport');
-         setTimeout(() => setIsStamping(false), 500);
-       }, 2000);
-    }, 1000);
+      setCarrotCoins(prev => prev - 5);
+      setActionFeedback({ issue: '-5' });
 
-  }, 1000); 
-};
+      if (audioCtx.current && buffers.current.camera) {
+        playBuffer(buffers.current.camera, audioCtx.current, 0.6);
+      }
+      
+      // Flash effect at 400ms
+      setTimeout(() => {
+        setFlash(true);
+        setTimeout(() => setFlash(false), 500);
+      }, 400);
+
+      setStampAngle(-15 - Math.random() * 10);
+
+      // Stamp sound at 800ms
+      setTimeout(() => {
+        if (audioCtx.current && buffers.current.stamp) {
+          playBuffer(buffers.current.stamp, audioCtx.current, 0.8);
+        }
+      }, 800); 
+
+      // Stamp animation at 850ms
+      setTimeout(() => setIsStamping(true), 850);
+
+      // Save passport at 1000ms
+      setTimeout(() => {
+        const newId = generateUniqueId(Date.now());
+        let bioText = characterData.name.toUpperCase() === 'BOBU.B' 
+          ? DEFAULT_BIOS.bobu[currentLang] 
+          : DEFAULT_BIOS.general[currentLang];
+
+        const newPassport: PassportData = {
+          ...characterData,
+          id: newId,
+          bio: bioText,
+          gender: 'unknown',
+          species: 'rabbit',
+          occupations: [],
+          savedAt: Date.now(),
+          relationships: []
+        };
+
+        const updatedPassports = [newPassport, ...savedPassports];
+        setSavedPassports(updatedPassports);
+        localStorage.setItem('happyPlanet_passports', JSON.stringify(updatedPassports));
+
+        // Toast notification
+        setTimeout(() => {
+          setToastMsg(currentLang === 'cn' ? "护照签发成功！" : "Passport Issued!");
+          setTimeout(() => {
+            setToastMsg(null);
+            setViewMode('passport');
+            setTimeout(() => setIsStamping(false), 500);
+          }, 2000);
+        }, 1000);
+      }, 1000); 
+
+      setTimeout(() => setActionFeedback({}), 1000);
+    }, 600);
+  };
 
   const handleUpdatePassportData = (id: string, field: keyof PassportData, value: any) => {
     const updated = savedPassports.map(p =>
@@ -304,59 +306,57 @@ const App: React.FC = () => {
 
   // Big Bang action consumes 1 carrot coin and randomizes EVERYTHING
   const handleBigBang = () => {
-    // 1. 唯一货币检查：只认胡萝卜！(把 'noenergy' 改为 'no_carrot'，彻底去能量化)
     if (carrotCoins < 1) {
       setActionFeedback({ bigbang: 'no_carrot' }); 
       setTimeout(() => setActionFeedback({}), 1200);
       return;
     }
 
-    // 2. 扣除胡萝卜币
-    setCarrotCoins(c => c - 1);
-    setActionFeedback({ bigbang: '-1' });
-
-    // 3. 执行真正的随机搭配逻辑
-    updateData(prev => {
-      // --- 随机角色部件 ---
-      const categories: PartCategory[] = ['body', 'ears', 'face', 'hair', 'access'];
-      const newSelectedParts = { ...prev.selectedParts };
-      
-      categories.forEach(cat => {
-        // 【关键修复】：使用 getPartList(cat) 而不是 PARTS_DB[cat]
-        const options = getPartList(cat); 
-        if (options && options.length > 0) {
-          const randomPart = options[Math.floor(Math.random() * options.length)];
-          newSelectedParts[cat] = randomPart.id;
-        }
-      });
-
-      // --- 随机行星部件 ---
-      const planetCats: PlanetCategory[] = ['base', 'surface', 'atmosphere', 'companion'];
-      const newPlanetParts = { ...prev.selectedPlanetParts };
-      
-      planetCats.forEach(cat => {
-        // 【关键修复】：同理，使用 getPartList(cat)
-        const options = getPartList(cat);
-        if (options && options.length > 0) {
-          const randomPart = options[Math.floor(Math.random() * options.length)];
-          newPlanetParts[cat] = randomPart.id;
-        }
-      });
-
-      return {
-        ...prev,
-        name: generateStarName().toUpperCase(), // 随机名字
-        selectedParts: newSelectedParts,
-        selectedPlanetParts: newPlanetParts
-      };
-    });
-
-    // 4. 触发视觉震动
-    setBigBangActive(true);
+    spendCarrots('btn-bigbang', 1);
+    
     setTimeout(() => {
-      setBigBangActive(false);
-      setActionFeedback({});
-    }, 300);
+      setCarrotCoins(prev => prev - 1);
+      setActionFeedback({ bigbang: '-1' });
+
+      updateData(prev => {
+        const categories: PartCategory[] = ['body', 'ears', 'face', 'hair', 'access'];
+        const newSelectedParts = { ...prev.selectedParts };
+        
+        categories.forEach(cat => {
+          const options = getPartList(cat); 
+          if (options && options.length > 0) {
+            const randomPart = options[Math.floor(Math.random() * options.length)];
+            newSelectedParts[cat] = randomPart.id;
+          }
+        });
+
+        const planetCats: PlanetCategory[] = ['base', 'surface', 'atmosphere', 'companion'];
+        const newPlanetParts = { ...prev.selectedPlanetParts };
+        
+        planetCats.forEach(cat => {
+          const options = getPartList(cat);
+          if (options && options.length > 0) {
+            const randomPart = options[Math.floor(Math.random() * options.length)];
+            newPlanetParts[cat] = randomPart.id;
+          }
+        });
+
+        return {
+          ...prev,
+          name: generateStarName().toUpperCase(),
+          selectedParts: newSelectedParts,
+          selectedPlanetParts: newPlanetParts
+        };
+      });
+
+      setBigBangTrigger(prev => prev + 1);
+      
+      setBigBangActive(true);
+      setTimeout(() => {
+        setBigBangActive(false);
+        setTimeout(() => setActionFeedback({}), 300);
+      }, 300);
+    }, 400);
   };
 
   return (
@@ -365,6 +365,9 @@ const App: React.FC = () => {
       {flash && (
         <div className="fixed inset-0 bg-white opacity-0 animate-flash pointer-events-none z-[9999]"></div>
       )}
+
+      {/* big bang particles */}
+      <ParticleOverlay trigger={bigBangTrigger} />
       
       {/* 漫画风定制 Toast 提示 */}
       {toastMsg && (
@@ -417,7 +420,7 @@ const App: React.FC = () => {
       {/* Top Right Controls */}
       <div className="absolute top-4 right-4 flex gap-3 z-50 items-center">
         {/* Carrot Coin Display - Clean, no border */}
-        <div className="flex items-center gap-1 font-bold">
+        <div id="carrot-wallet" className="flex items-center gap-1 font-bold">
           <CarrotCoinIcon className="w-6 h-6" />
           <span className="text-lg">{carrotCoins}</span>
         </div>
@@ -499,6 +502,7 @@ const App: React.FC = () => {
                   {/* BIG BANG BUTTON */}
                   <div className="flex-1 relative flex flex-col items-center">
                     <button
+                      id="btn-bigbang"
                       onClick={handleBigBang}
                       disabled={carrotCoins < 1}
                       className="w-full flex items-center justify-center gap-2 px-3 py-3 bg-purple-500 text-white font-bold border-[3px] border-black rounded-lg shadow-[5px_5px_0_black] hover:shadow-[3px_3px_0_black] active:shadow-[1px_1px_0_black] disabled:opacity-50 transition-all"
@@ -521,7 +525,8 @@ const App: React.FC = () => {
                   {/* ISSUE BUTTON */}
                   <div className="flex-1 relative flex flex-col items-center">
                     <button
-                      onClick={handleSavePassport}
+                      id="btn-issue"
+                      onClick={handleIssue}
                       disabled={carrotCoins < 5}
                       className="w-full flex items-center justify-center gap-2 px-3 py-3 bg-green-500 text-white font-bold border-[3px] border-black rounded-lg shadow-[5px_5px_0_black] hover:shadow-[3px_3px_0_black] active:shadow-[1px_1px_0_black] disabled:opacity-50 transition-all"
                     >

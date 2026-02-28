@@ -156,6 +156,23 @@
     .animate-node-blink {
       animation: node-blink 2s ease-in-out infinite;
     }
+
+    /* pulsing stars synced to BPM */
+    @keyframes space-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.3; }
+      50% { transform: scale(1.5); opacity: 1; }
+    }
+    .animate-space-pulse {
+      animation: space-pulse var(--beat-duration) infinite ease-in-out;
+    }
+
+    .animate-bounce-short {
+      animation: bounce-short 0.3s ease-out;
+    }
+    @keyframes bounce-short {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
   </style>
   <script type="importmap">
 {

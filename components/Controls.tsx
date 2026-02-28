@@ -115,7 +115,9 @@ export const Controls: React.FC<ControlsProps> = ({
   const currentParts = allParts.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE);
 
   return (
-    <div className="w-full max-w-[340px] h-[480px] flex flex-col mt-8 md:mt-0 relative">
+    <div
+      className="w-full max-w-[340px] h-[480px] flex flex-col mt-8 md:mt-0 relative"
+    >
 
       {/* --- FOLDER TABS (Dynamic based on View) --- */}
       <div className="flex w-full px-3 space-x-1 relative z-10 translate-y-[4px] overflow-hidden">

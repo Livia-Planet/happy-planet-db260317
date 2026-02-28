@@ -17,7 +17,7 @@ export const PLAYLIST = [
     file: '/Starlight Snack Bar.mp3',
     bpm: 120,
     themeColor: '#FFD93D',
-    meteorDensity: 4
+    meteorDensity: 10
   },
   { 
     id: 'orbit', 
@@ -25,7 +25,39 @@ export const PLAYLIST = [
     file: '/Aurora Orbit.mp3',
     bpm: 80,
     themeColor: '#6BCB77',
-    meteorDensity: 7
+    meteorDensity: 4
+  },
+  { 
+    id: 'Morning', 
+    name: { cn: '清晨', se: 'Gryning', en: 'Morning' }, 
+    file: '/Morning.mp3',
+    bpm: 60,
+    themeColor: '#fff288',
+    meteorDensity: 3
+  },
+  { 
+    id: 'Vivacity', 
+    name: { cn: '活力', se: 'Livlighet', en: 'Vivacity' }, 
+    file: '/Vivacity.mp3',
+    bpm: 142,
+    themeColor: '#FFA500',
+    meteorDensity: 12
+  },
+  { 
+    id: 'Canon in D', 
+    name: { cn: 'D大调卡农', se: 'Canon i D', en: 'Canon in D' }, 
+    file: '/Canon in D.mp3',
+    bpm: 83,
+    themeColor: '#8B4513',
+    meteorDensity: 2
+  },
+  { 
+    id: 'Pixelland', 
+    name: { cn: '像素乐园', se: 'Pixellandet', en: 'Pixelland' }, 
+    file: '/Pixelland.mp3',
+    bpm: 230,
+    themeColor: '#4A90E2',
+    meteorDensity: 15
   },
 ];
 

@@ -6,31 +6,34 @@ interface SpaceBackgroundProps {
   meteorDensity?: number;
 }
 
-// Hand‑drawn neon star shapes and one surprise comet. V5 stylistic rewrite.
 export const SpaceBackground: React.FC<SpaceBackgroundProps> = ({
   bpm,
   themeColor,
   meteorDensity = 5,
 }) => {
-  const beat = 60 / Math.max(1, bpm); // seconds per beat
+  const beat = 60 / Math.max(1, bpm);
 
-  // star count between 58 and 128
+  // --- [ADD] 新增：微型背景星尘的数据生成 ---
+  const stardustCount = 50; // 星尘数量
+  const backgroundStardust = useMemo(() => {
+    return Array.from({ length: stardustCount }).map((_, i) => ({
+      id: `dust-${i}`,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      size: 1 + Math.random() * 1.5, // 1px - 2.5px 极小
+      delay: Math.random() * (beat * 2),
+      duration: beat * (1.5 + Math.random() * 1), // 呼吸频率略慢于主节奏，更有深邃感
+    }));
+  }, [bpm]);
+
+  // 原有的霓虹星数据生成 (保持不变)
   const starCount = Math.floor(15 + Math.random() * 8);
-
-  // color pool (rgba/hsla friendly)
   const colorPool = [
-    'rgba(255,99,132,VAR)', // red
-    'rgba(255,159,64,VAR)', // orange
-    'rgba(255,205,86,VAR)', // yellow
-    'rgba(75,192,192,VAR)', // green-cyan
-    'rgba(54,162,235,VAR)', // blue
-    'rgba(153,102,255,VAR)', // purple
-    'rgba(255,102,204,VAR)', // pink
-    'rgba(0,0,0,VAR)', // black
-    'rgba(255,255,255,VAR)', // white
+    'rgba(255,99,132,VAR)', 'rgba(255,159,64,VAR)', 'rgba(255,205,86,VAR)',
+    'rgba(75,192,192,VAR)', 'rgba(54,162,235,VAR)', 'rgba(153,102,255,VAR)',
+    'rgba(255,102,204,VAR)', 'rgba(0,0,0,VAR)', 'rgba(255,255,255,VAR)',
   ];
 
-  // different doodle path templates (rough, hand-drawn like)
   const starPaths = {
     four: 'M50 8 L64 46 L92 54 L66 74 L76 96 L50 82 L24 96 L34 74 L8 54 L36 46 Z',
     cross: 'M50 6 L54 44 L92 50 L54 56 L50 94 L46 56 L8 50 L46 44 Z',
@@ -38,63 +41,63 @@ export const SpaceBackground: React.FC<SpaceBackgroundProps> = ({
     five: 'M50 10 L61 38 L92 38 L67 58 L78 88 L50 68 L22 88 L33 58 L8 38 L39 38 Z',
   } as const;
 
-  // Generate stars with organic randomness; depend on bpm so change when music changes
   const stars = useMemo(() => {
     return Array.from({ length: starCount }).map((_, i) => {
-      const left = 6 + Math.random() * 88; // padding to keep balanced
+      const left = 6 + Math.random() * 88;
       const top = 6 + Math.random() * 88;
-      const size = 15 + Math.random() * 30; // 15 - 45 px
-      const strokeWidth = 1.5 + Math.random() * 2; // 1.5 - 3.5
-      const alpha = 0.4 + Math.random() * 0.3; // 0.4 - 0.7
+      const size = 15 + Math.random() * 30;
+      const strokeWidth = 1.5 + Math.random() * 2;
+      const alpha = 0.4 + Math.random() * 0.3;
       const colorTemplate = colorPool[Math.floor(Math.random() * colorPool.length)];
       const color = colorTemplate.replace('VAR', alpha.toFixed(2));
-      const delay = Math.random() * (beat * 2.5 + 4); // fully random delays
-      const baseDuration = beat * (0.9 + Math.random() * 1.6); // bpm-linked
-      const rotible = Math.random() < 0.18; // ~18% rotate
-      const rotDelta = (Math.random() * 20 + 6) * (Math.random() < 0.5 ? -1 : 1); // ±6-26deg
+      const delay = Math.random() * (beat * 2.5 + 4);
+      const baseDuration = beat * (0.9 + Math.random() * 1.6);
+      const rotible = Math.random() < 0.18;
+      const rotDelta = (Math.random() * 20 + 6) * (Math.random() < 0.5 ? -1 : 1);
       const initialRotate = Math.random() * 360;
       const pathKeys = Object.keys(starPaths);
       const shapeKey = pathKeys[Math.floor(Math.random() * pathKeys.length)] as keyof typeof starPaths;
       return {
         id: `s-${i}-${Math.random().toString(36).slice(2,7)}`,
-        left,
-        top,
-        size,
-        strokeWidth,
-        color,
-        delay,
-        duration: baseDuration,
-        rotible,
-        rotDelta,
-        initialRotate,
-        path: starPaths[shapeKey],
+        left, top, size, strokeWidth, color, delay, duration: baseDuration,
+        rotible, rotDelta, initialRotate, path: starPaths[shapeKey],
       };
     });
   }, [bpm]);
 
-  // Surprise comet: very infrequent, fast and long fan-shaped tail
   const comet = useMemo(() => {
-    const appearDelay = 10 + Math.random() * 20; // 10s - 30s (rare)
-    const travel = 0.6 + Math.random() * 0.2; // 0.6 - 0.8s (very quick)
-    const startLeft = 105 + Math.random() * 20; // start off-screen right
-    const startTop = -20 + Math.random() * 30; // slightly above
-    const tailLength = 250 + Math.random() * 50; // 250 - 300 px
-    const color = '#FFFBEB'; // creamy white for high-end look
+    const appearDelay = 10 + Math.random() * 20;
+    const travel = 0.6 + Math.random() * 0.2;
+    const startLeft = 105 + Math.random() * 20;
+    const startTop = -20 + Math.random() * 30;
+    const tailLength = 250 + Math.random() * 50;
+    const color = '#FFFBEB';
     return { id: `comet-${Math.random().toString(36).slice(2,8)}`, appearDelay, travel, startLeft, startTop, tailLength, color };
   }, [bpm]);
 
-  // Container-level subtle paper ink bloom
   return (
     <div
       className="fixed inset-0 z-5 pointer-events-none overflow-hidden"
       style={{
         filter: 'blur(0.3px)',
-        // expose beat for potential CSS usage
         ['--beat-duration' as any]: `${beat}s`,
       } as React.CSSProperties}
     >
       <style>{`
-        /* V5 doodle neon star animations */
+        /* --- [ADD] 新增：星尘呼吸动画 --- */
+        @keyframes stardust-breath {
+          0%, 100% { opacity: 0.1; transform: scale(0.8); }
+          50% { opacity: 0.6; transform: scale(1.2); }
+        }
+        .stardust {
+          position: absolute;
+          background: white;
+          border-radius: 50%;
+          animation: stardust-breath var(--dur) ease-in-out infinite;
+          animation-delay: var(--delay);
+        }
+
+        /* 原有动画 (保持不变) */
         @keyframes doodle-breath {
           0% { transform: translate(-50%,-50%) rotate(var(--initial)) scale(calc(var(--scale) * 0.92)); opacity: calc(var(--alpha) * 0.85); }
           50% { transform: translate(-50%,-50%) rotate(calc(var(--initial) + var(--rot-delta))) scale(calc(var(--scale) * 1.18)); opacity: calc(var(--alpha) * 1.15); }
@@ -120,7 +123,6 @@ export const SpaceBackground: React.FC<SpaceBackgroundProps> = ({
 
         .doodle-star svg { display:block; width:100%; height:100%; }
 
-        /* comet styling */
         .comet {
           position: absolute;
           left: var(--start-left);
@@ -129,15 +131,27 @@ export const SpaceBackground: React.FC<SpaceBackgroundProps> = ({
           filter: blur(1.5px) drop-shadow(0 0 8px rgba(255,255,255,0.6));
           will-change: transform, opacity;
         }
-
         .comet svg { overflow: visible; display:block; }
-
-        .comet .comet-head {
-          transform-origin: center;
-        }
+        .comet .comet-head { transform-origin: center; }
       `}</style>
 
-      {/* Stars */}
+      {/* --- [ADD] 新增渲染：底层星尘 (放在 Stars 之前以确保在底层) --- */}
+      {backgroundStardust.map((d) => (
+        <div
+          key={d.id}
+          className="stardust"
+          style={{
+            left: `${d.left}%`,
+            top: `${d.top}%`,
+            width: `${d.size}px`,
+            height: `${d.size}px`,
+            ['--delay' as any]: `${d.delay}s`,
+            ['--dur' as any]: `${d.duration}s`,
+          } as React.CSSProperties}
+        />
+      ))}
+
+      {/* Stars (原封不动) */}
       {stars.map((s) => (
         <div
           key={s.id}
@@ -162,7 +176,7 @@ export const SpaceBackground: React.FC<SpaceBackgroundProps> = ({
         </div>
       ))}
 
-      {/* Surprise Comet (rare, quick) rendered as a fan-shaped SVG tail + tiny head */}
+      {/* Surprise Comet (原封不动) */}
       <div
         className="comet"
         style={{
@@ -171,13 +185,7 @@ export const SpaceBackground: React.FC<SpaceBackgroundProps> = ({
           animation: `comet-travel ${comet.travel}s ease-in-out ${comet.appearDelay}s 1 forwards`,
         } as React.CSSProperties}
       >
-        <svg
-          width={comet.tailLength}
-          height={28}
-          viewBox={`0 0 ${comet.tailLength} 28`}
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden
-        >
+        <svg width={comet.tailLength} height={28} viewBox={`0 0 ${comet.tailLength} 28`} xmlns="http://www.w3.org/2000/svg" aria-hidden>
           <defs>
             <linearGradient id={`grad-${comet.id}`} x1="0" x2="1">
               <stop offset="0%" stopColor={comet.color} stopOpacity="0.8" />
@@ -185,14 +193,7 @@ export const SpaceBackground: React.FC<SpaceBackgroundProps> = ({
               <stop offset="100%" stopColor={comet.color} stopOpacity="0" />
             </linearGradient>
           </defs>
-
-          {/* Fan-shaped tapered tail drawn as a rounded triangular path with slight curve */}
-          <path
-            d={`M0 14 Q ${comet.tailLength * 0.12} 6 ${comet.tailLength} 2 L ${comet.tailLength} 26 Q ${comet.tailLength * 0.12} 22 0 14 Z`}
-            fill={`url(#grad-${comet.id})`}
-          />
-
-          {/* Tiny head dot (2px radius) */}
+          <path d={`M0 14 Q ${comet.tailLength * 0.12} 6 ${comet.tailLength} 2 L ${comet.tailLength} 26 Q ${comet.tailLength * 0.12} 22 0 14 Z`} fill={`url(#grad-${comet.id})`} />
           <circle className="comet-head" cx={4} cy={14} r={2} fill={comet.color} />
         </svg>
       </div>
