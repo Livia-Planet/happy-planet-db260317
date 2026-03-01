@@ -14,9 +14,10 @@ interface CardProps {
   lang: Language;
   showStamp?: boolean;
   stampAngle?: number;
+  particles?: any[];
 }
 
-export const Card: React.FC<CardProps> = ({ data, stats, flavorText, isFlipped, onFlip, lang, showStamp, stampAngle }) => {
+export const Card: React.FC<CardProps> = ({ data, stats, flavorText, isFlipped, onFlip, lang, showStamp, stampAngle, particles = [] }) => {
   const dominantStat = getDominantStat(stats);
   const uniqueId = generateUniqueId(data.lastModified);
 
@@ -51,46 +52,70 @@ export const Card: React.FC<CardProps> = ({ data, stats, flavorText, isFlipped, 
           25%{transform:translateX(-3px)}
           75%{transform:translateX(3px)}
         }
-        /* 【完美对齐】印章掉落需要 0.2s，所以震动必须正好在 0.2s 时开始！ */
+        /* 陨石重力砸下效果 */
+        @keyframes heavy-impact {
+          0% { transform: scale(10); filter: blur(30px); opacity: 0; }
+          15% { transform: scale(1); filter: blur(0); opacity: 1; }
+          20% { transform: scale(1.3); }
+          30% { transform: scale(1); }
+        }
+        /* 物理粒子抛物线飞溅 */
+        @keyframes particle-fly {
+          0% { transform: translate(0, 0) scale(1.5); opacity: 1; }
+          100% { 
+            transform: translate(calc(var(--tx) * 1px), calc(var(--ty) * 1px)) rotate(720deg) scale(0);
+            opacity: 0; 
+          }
+        }
         .animate-card-shake { animation: card-shake 0.2s linear 0.2s forwards; }
+        .carrot-bit { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
       `}</style>
+      
       <div
         className={`w-full h-full relative transform-style-3d transition-transform duration-700 ${isFlipped ? 'rotate-y-180' : ''}`}
       >
         {/* === FRONT FACE === */}
         <div className="absolute w-full h-full backface-hidden bg-white border-[6px] border-black rounded-3xl shadow-comic overflow-hidden flex flex-row">
-          {/* Stamp layer */}
+          
+          {/* Particle explosion and heavy-impact stamp layer */}
           {showStamp && (
-            <div
-              // 加上 z-50 防止被底层盖住
-              className="absolute right-4 bottom-4 w-[110px] h-[110px] z-50" 
-              style={{
-                '--angle': `${stampAngle}deg`, // 【必须加这行】把 React 的角度传给 CSS 动画
-                animation: 'stamp-drop 0.2s ease-out forwards',
-                opacity: 0,
-                mixBlendMode: 'multiply',
-              } as React.CSSProperties} // TypeScript 需要强转一下识别自定义 CSS 变量
-            >
-              {/* SVG 内容保持不变 */}
-              <svg viewBox="0 0 120 120" className="w-full h-full drop-shadow-sm">
-                <circle cx="60" cy="60" r="54" stroke="#EF4444" strokeWidth="6" fill="none" strokeDasharray="10 2 30 2" strokeLinecap="round" />
-                {/* 稍微调粗字体，增加印章厚重感 */}
-                <text x="60" y="58" textAnchor="middle" dominantBaseline="middle" fontSize="11" fill="#EF4444" fontWeight="900" style={{ letterSpacing: '1px' }}>
-                  OFFICIAL CITIZEN
-                </text>
-                <text x="60" y="72" textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#EF4444" fontWeight="bold">
-                  OF HAPPY PLANET
-                </text>
-              </svg>
+            <div className="absolute inset-0 pointer-events-none z-[100]">
+              
+              {/* 1. 粒子喷发层 */}
+              {particles.map((p: any) => (
+                <div key={p.id}
+                  className={`absolute right-12 bottom-12 ${p.shape === 'carrot' ? 'carrot-bit' : ''}`}
+                  style={{
+                    '--tx': p.tx,
+                    '--ty': p.ty,
+                    width: p.size,
+                    height: p.size,
+                    backgroundColor: p.color,
+                    borderRadius: p.shape === 'circle' ? '50%' : '2px',
+                    animation: `particle-fly 1s cubic-bezier(0.1, 0.8, 0.3, 1) ${p.delay}s forwards`
+                  } as any}
+                />
+              ))}
+
+              {/* 2. 陨石坠落印章 */}
+              <div className="absolute right-12 bottom-12"
+                   style={{ transform: `rotate(${stampAngle}deg) translate(50%, 50%)`, transformOrigin: 'center' }}>
+                <div style={{ animation: 'heavy-impact 0.25s cubic-bezier(0.1, 0.9, 0.2, 1) forwards' }}>
+                  <svg viewBox="0 0 120 120" className="w-[110px] h-[110px] drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
+                    <circle cx="60" cy="60" r="54" stroke="#EF4444" strokeWidth="8" fill="white" />
+                    <circle cx="60" cy="60" r="48" stroke="#EF4444" strokeWidth="2" fill="none" strokeDasharray="4 2" />
+                    <text x="60" y="65" textAnchor="middle" fontSize="18" fill="#EF4444" fontWeight="900">VERIFIED</text>
+                  </svg>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Left Content Area (Same as before) */}
+          {/* Left Content Area */}
           <div className="flex-1 flex flex-col relative">
 
             {/* 1. Header/Avatar Area */}
             <div className={`flex-1 ${cardBgColors[dominantStat]} transition-colors duration-500 relative p-4 flex flex-col items-center justify-center border-b-[6px] border-black`}>
-              {/* Decorative dots */}
               <div className="absolute top-3 left-3 w-4 h-4 rounded-full bg-white border-2 border-black opacity-60"></div>
               <div className="absolute bottom-6 right-3 w-5 h-5 rounded-full bg-white border-2 border-black opacity-60"></div>
 
@@ -107,7 +132,7 @@ export const Card: React.FC<CardProps> = ({ data, stats, flavorText, isFlipped, 
               </div>
             </div>
 
-            {/* 3. Stat Badge Area (Translated) */}
+            {/* 3. Stat Badge Area */}
             <div className="flex justify-center gap-3 py-2 bg-white border-b-[4px] border-gray-100">
               <div className={`flex items-center gap-1 font-bold font-rounded text-sm ${dominantStat === 'mod' ? 'scale-110' : 'opacity-60'} transition-all duration-300`}>
                 <div className="w-2 h-2 rounded-full bg-livia-red"></div>
@@ -150,11 +175,9 @@ export const Card: React.FC<CardProps> = ({ data, stats, flavorText, isFlipped, 
 
         {/* === BACK FACE === */}
         <div className={`absolute w-full h-full backface-hidden rotate-y-180 bg-black border-[6px] border-black rounded-3xl shadow-comic overflow-hidden`}>
-
           <div className="absolute inset-0 w-full h-full">
             <PlanetCanvas parts={data.selectedPlanetParts} uniqueId={uniqueId} lang={lang} />
           </div>
-
         </div>
       </div>
     </div>

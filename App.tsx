@@ -1,7 +1,19 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Card } from './components/Card';
+import { Controls, TabType } from './components/Controls';
+import { LanguageSelector } from './components/LanguageSelector';
+import { AudioPlayer, PLAYLIST } from './components/AudioPlayer';
+import { SpaceBackground } from './components/SpaceBackground';
+import { PassportBook } from './components/PassportBook';
+import { RedX, CarrotCoinIcon, ArchivesIcon, DiceIcon } from './components/Icons';
+import { ParticleOverlay } from './components/effects/ParticleOverlay';
+import { useAnimateTokens } from './hooks/useAnimateTokens';
+import { SuccessOverlay } from './components/effects/SuccessOverlay';
+import { CharacterData, PartCategory, PlanetCategory, Language, PassportData } from './types';
+import { getPartList } from './data/parts';
+import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS, generateStarName } from './utils/gameLogic';
 
-// 专业的零延迟音效加载函数
+// --- 专业的零延迟音效加载函数 ---
 const loadAudioBuffer = async (url: string, context: AudioContext) => {
   const response = await fetch(url);
   const arrayBuffer = await response.arrayBuffer();
@@ -17,19 +29,21 @@ const playBuffer = (buffer: AudioBuffer, context: AudioContext, volume = 0.5) =>
   gainNode.connect(context.destination);
   source.start(0);
 };
-import { Controls, TabType } from './components/Controls';
-import { LanguageSelector } from './components/LanguageSelector';
-import { AudioPlayer, PLAYLIST } from './components/AudioPlayer';
-import { SpaceBackground } from './components/SpaceBackground';
-import { PassportBook } from './components/PassportBook';
-import { RedX, CarrotCoinIcon, ArchivesIcon, DiceIcon } from './components/Icons';
 
-// new visual/audio helpers
-import { ParticleOverlay } from './components/effects/ParticleOverlay';
-import { useAnimateTokens } from './hooks/useAnimateTokens';
-import { CharacterData, PartCategory, PlanetCategory, Language, PassportData } from './types';
-import { PARTS_DB, getPartList } from './data/parts';
-import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS, generateStarName } from './utils/gameLogic';
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+// --- 极致版粒子生成器 ---
+const generateParticles = (count: number) => {
+  return Array.from({ length: count }).map((_, i) => ({
+    id: Math.random(),
+    tx: (Math.random() - 0.5) * 600, 
+    ty: (Math.random() - 0.7) * 600, 
+    size: Math.random() * 12 + 4,
+    color: ['#FF6B6B', '#FFD93D', '#6BCB77', '#FF9F43', '#FFFFFF'][i % 5],
+    shape: i % 4 === 0 ? 'carrot' : (i % 2 === 0 ? 'circle' : 'square'),
+    delay: Math.random() * 0.15
+  }));
+};
 
 const INITIAL_DATA: CharacterData = {
   name: generateStarName().toUpperCase(),
@@ -67,6 +81,10 @@ const App: React.FC = () => {
   const [isIssuing, setIsIssuing] = useState(false); 
   const [shakeBtn, setShakeBtn] = useState<string | null>(null);
 
+  // New states for space-time collapse effect
+  const [displayBpm, setDisplayBpm] = useState(80);
+  const [particles, setParticles] = useState<any[]>([]);
+
   // new currency state
   const [carrotCoins, setCarrotCoins] = useState(30);
   const [bigBangActive, setBigBangActive] = useState(false);
@@ -76,13 +94,15 @@ const App: React.FC = () => {
   const { spendCarrots } = useAnimateTokens();
   const [viewMode, setViewMode] = useState<'editor' | 'passport'>('editor');
   const [savedPassports, setSavedPassports] = useState<PassportData[]>([]);
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [issuedPassport, setIssuedPassport] = useState<PassportData | null>(null);
 
   // === AUDIO CONTEXT SETUP & EFFECTS ===
   const audioCtx = useRef<AudioContext | null>(null);
   const buffers = useRef<Record<string, AudioBuffer>>({});
 
   useEffect(() => {
-    // 全局点击音效 (保留你的原生 Audio 实现，保证绝对稳定)
+    // 全局点击音效
     const clickAudio = new Audio('/click.wav');
     clickAudio.volume = 0.4; 
 
@@ -98,7 +118,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // 预加载所有高级音效
+    // 预加载所有高级音效 (修复了路径，去掉/sounds/)
     audioCtx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     const preload = async () => {
       if (!audioCtx.current) return;
@@ -132,6 +152,11 @@ const App: React.FC = () => {
     setSavedPassports([...syncedPresets, ...others]);
   }, [currentLang]);
 
+  // 同步当前音乐的 BPM
+  useEffect(() => {
+    setDisplayBpm(PLAYLIST[currentTrackIndex].bpm);
+  }, [currentTrackIndex]);
+
   // === LOGIC ===
   const currentStats = useMemo(() => calculateStats(characterData.selectedParts), [characterData.selectedParts]);
   const flavorText = useMemo(() => generateFlavorText(currentStats, currentLang), [currentStats, currentLang]);
@@ -146,17 +171,16 @@ const App: React.FC = () => {
   const handleUpdateName = (name: string) => updateData(prev => ({ ...prev, name }));
   const handleUpdatePart = (cat: PartCategory, id: string) => updateData(prev => ({ ...prev, selectedParts: { ...prev.selectedParts, [cat]: id } }));
   const handleUpdatePlanetPart = (cat: PlanetCategory, id: string) => updateData(prev => ({ ...prev, selectedPlanetParts: { ...prev.selectedPlanetParts, [cat]: id } }));
-
+  
   const toggleFlip = () => {
     const next = !isFlipped;
     setIsFlipped(next);
     setActiveTab(next ? 'base' : 'body');
   };
 
-  // === ACTION: ISSUE PASSPORT ===
-  const handleIssue = () => {
+  // === ACTION: ISSUE PASSPORT (Space-Time Collapse Version) ===
+  const handleIssue = async () => {
     if (carrotCoins < 5) {
-      // 错误摇晃 + 错误音效
       if (audioCtx.current && buffers.current.error) playBuffer(buffers.current.error, audioCtx.current, 0.6);
       setShakeBtn('btn-issue');
       setTimeout(() => setShakeBtn(null), 400);
@@ -165,69 +189,43 @@ const App: React.FC = () => {
       return;
     }
 
-    // 播放花钱飞出的清脆音效
+    // 0. 支付胡萝卜
     if (audioCtx.current && buffers.current.coins) playBuffer(buffers.current.coins, audioCtx.current, 0.5);
     spendCarrots('btn-issue', 5);
+    setCarrotCoins(prev => prev - 5);
+    setActionFeedback({ issue: '-5' });
+
+    await delay(600);
+
+    // 1. 启动"升维"氛围（BPM 飙升 + 背景暗化）
+    const originalBpm = PLAYLIST[currentTrackIndex].bpm;
+    setDisplayBpm(260);
+    setFlash(true);
+    setIsIssuing(true); // 让背景变暗，突出即将出现的弹窗
     
-    // 恰好等到飞过去
+    if (audioCtx.current && buffers.current.camera) playBuffer(buffers.current.camera, audioCtx.current, 1.2);
+    setTimeout(() => setFlash(false), 150);
+
+    // 2. 蓄力停顿：增加期待感
+    await delay(500);
+
+    // 3. 生成数据并保存
+    const newId = generateUniqueId(Date.now());
+    let bioText = characterData.name.toUpperCase() === 'BOBU.B' ? DEFAULT_BIOS.bobu[currentLang] : DEFAULT_BIOS.general[currentLang];
+    const newPassport: PassportData = { ...characterData, id: newId, bio: bioText, stats: { ...currentStats }, savedAt: Date.now() };
+    
+    const updatedPassports = [newPassport, ...savedPassports];
+    setSavedPassports(updatedPassports);
+    localStorage.setItem('happyPlanet_passports', JSON.stringify(updatedPassports));
+
+    // 4. 【关键】仅打开弹窗，不再在 App.tsx 背景里设置 isStamping 或 particles
+    setIssuedPassport(newPassport);
+    setIsSuccessOpen(true);
+
+    // 5. 恢复背景心跳
     setTimeout(() => {
-      setCarrotCoins(prev => prev - 5);
-      setActionFeedback({ issue: '-5' });
-
-      // 【安全升维开启】：背景变暗，放出金光粒子，播放 success 庆祝音效
-      setIsIssuing(true);
-      if (audioCtx.current && buffers.current.success) playBuffer(buffers.current.success, audioCtx.current, 0.6);
-      setBigBangTrigger(prev => prev + 1); // 复用粒子触发器
-
-      // ==========================================
-      // 👇 下面这部分是你昨晚对齐的时间轴，一行都没动！👇
-      // ==========================================
-      if (audioCtx.current && buffers.current.camera) {
-        playBuffer(buffers.current.camera, audioCtx.current, 0.6);
-      }
-      
-      setTimeout(() => {
-        setFlash(true);
-        setTimeout(() => setFlash(false), 500);
-      }, 400);
-
-      setStampAngle(-15 - Math.random() * 10);
-
-      setTimeout(() => {
-        if (audioCtx.current && buffers.current.stamp) {
-          playBuffer(buffers.current.stamp, audioCtx.current, 0.8);
-        }
-      }, 800); 
-
-      setTimeout(() => setIsStamping(true), 850);
-
-      setTimeout(() => {
-        const newId = generateUniqueId(Date.now());
-        let bioText = characterData.name.toUpperCase() === 'BOBU.B' ? DEFAULT_BIOS.bobu[currentLang] : DEFAULT_BIOS.general[currentLang];
-        const newPassport: PassportData = { ...characterData, id: newId, bio: bioText, gender: 'unknown', species: 'rabbit', occupations: [], savedAt: Date.now(), relationships: [] };
-        const updatedPassports = [newPassport, ...savedPassports];
-        setSavedPassports(updatedPassports);
-        localStorage.setItem('happyPlanet_passports', JSON.stringify(updatedPassports));
-
-        setTimeout(() => {
-          setToastMsg(currentLang === 'cn' ? "护照签发成功！" : "Passport Issued!");
-          setTimeout(() => {
-            setToastMsg(null);
-            setViewMode('passport');
-            // 归位清理
-            setTimeout(() => {
-              setIsStamping(false);
-              setIsIssuing(false); // 关闭暗化图层
-            }, 500);
-          }, 2000);
-        }, 1000);
-      }, 1000); 
-      // ==========================================
-      // 👆 完美时间轴结束 👆
-      // ==========================================
-
-      setTimeout(() => setActionFeedback({}), 1000);
-    }, 600);
+      setDisplayBpm(originalBpm);
+    }, 1000);
   };
 
   // === ACTION: BIG BANG ===
@@ -332,8 +330,8 @@ const App: React.FC = () => {
         .btn-gold-glow { animation: glow-gold 1.5s infinite ease-in-out; }
       `}</style>
 
-      {/* 🌠 SpaceBackground Decoration Layer */}
-      <SpaceBackground bpm={PLAYLIST[currentTrackIndex].bpm} themeColor={PLAYLIST[currentTrackIndex].themeColor} meteorDensity={PLAYLIST[currentTrackIndex].meteorDensity} />
+      {/* 🌠 SpaceBackground Decoration Layer - 必须传 displayBpm，背景才会跟着炸裂！ */}
+      <SpaceBackground bpm={displayBpm} themeColor={PLAYLIST[currentTrackIndex].themeColor} meteorDensity={PLAYLIST[currentTrackIndex].meteorDensity} />
       {viewMode === 'passport' && <div className="fixed inset-0 bg-[#2c3e50] z-0 pointer-events-none"></div>}
 
       {/* Top Right Controls */}
@@ -361,7 +359,7 @@ const App: React.FC = () => {
 
             {/* Left: The Card (升维动画区) */}
             <div className={`flex flex-col items-center relative transition-all duration-700 ease-in-out ${isIssuing ? 'z-[110] scale-105 md:scale-110 drop-shadow-2xl' : 'z-10'}`}>
-              <Card data={characterData} stats={currentStats} flavorText={flavorText} isFlipped={isFlipped} onFlip={toggleFlip} lang={currentLang} showStamp={isStamping} stampAngle={stampAngle} />
+              <Card data={characterData} stats={currentStats} flavorText={flavorText} isFlipped={isFlipped} onFlip={toggleFlip} lang={currentLang} showStamp={false} stampAngle={-15} particles={[]} />
               
               <div className={`mt-6 text-center transition-opacity duration-500 ${isIssuing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                 <button onClick={toggleFlip} className={`font-hand text-lg transition-all duration-300 px-6 py-2 rounded-full ${isFlipped ? 'bg-white/10 text-white backdrop-blur-md border border-white/20 hover:bg-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)]' : 'text-gray-900 underline hover:text-livia-orange'}`}>
@@ -430,9 +428,27 @@ const App: React.FC = () => {
       <footer className={`max-w-4xl mx-auto mt-20 text-center font-hand text-sm transition-colors duration-500 relative z-10 ${isFlipped || viewMode === 'passport' ? 'text-gray-400' : 'text-gray-400'} ${isIssuing ? 'opacity-0' : ''}`}>
         <p>© 2024 Happy Planet Customizer.</p>
       </footer>
+
+      {/* 注册成功弹窗（包含 Big Bang 爆炸和盖章效果） */}
+      <SuccessOverlay 
+        isOpen={isSuccessOpen}
+        passportData={issuedPassport}
+        lang={currentLang}
+        onClose={() => {
+          setIsSuccessOpen(false);
+          setIsIssuing(false);
+          setViewMode('passport');
+          setToastMsg(currentLang === 'cn' ? "🚀 档案已载入星际数据库！" : "🚀 DATA ENCODED!");
+          setTimeout(() => setToastMsg(null), 2000);
+        }}
+        playStampSound={() => {
+          if (audioCtx.current && buffers.current.stamp) {
+            playBuffer(buffers.current.stamp, audioCtx.current, 1.5);
+          }
+        }}
+      />
     </div>
   );
 };
 
 export default App;
-
