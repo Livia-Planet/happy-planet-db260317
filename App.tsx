@@ -261,7 +261,7 @@ const App: React.FC = () => {
           if (options && options.length > 0) newPlanetParts[cat] = options[Math.floor(Math.random() * options.length)].id;
         });
 
-        return { ...prev, name: generateStarName().toUpperCase(), selectedParts: newSelectedParts, selectedPlanetParts: newPlanetParts };
+        return { ...prev, selectedParts: newSelectedParts, selectedPlanetParts: newPlanetParts };
       });
 
       setBigBangTrigger(prev => prev + 1);

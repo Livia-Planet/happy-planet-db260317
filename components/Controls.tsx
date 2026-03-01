@@ -85,9 +85,10 @@ export const Controls: React.FC<ControlsProps> = ({
     return cleaned.toUpperCase();
   };
 
-  const handleNameInput = (val: string) => {
-    const sanitized = sanitizeName(val);
-    updateName(sanitized);
+  const handleNameInput =(val: string) => {
+    // 只允许字母、数字和点，且转为大写
+    const cleaned = val.replace(/[^A-Za-z0-9\.]/g, '').toUpperCase();
+    updateName(cleaned);
   };
 
   const handleRandomName = () => {
@@ -161,7 +162,7 @@ export const Controls: React.FC<ControlsProps> = ({
               onChange={(e) => handleNameInput(e.target.value)}
               className="w-full border-[3px] border-black rounded-lg p-2 pr-10 font-rounded font-bold text-xl uppercase focus:outline-none focus:ring-4 focus:ring-livia-yellow transition-all"
               placeholder={TRANSLATIONS.namePlaceholder[lang]}
-              maxLength={12}
+              maxLength={14}
             />
             <button
               onClick={handleRandomName}
