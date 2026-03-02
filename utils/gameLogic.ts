@@ -646,3 +646,25 @@ export const PLUTTENPLOTT_PRESET: PassportData = {
 };
 
 export const ALL_PRESETS = [BOBU_PRESET, DUDDU_PRESET, POLLY_PRESET, PLUTTENPLOTT_PRESET];
+
+// === NEW: STORY REWARD ALGORITHM ===
+export const calculateStoryReward = (text: string): number => {
+  const content = text.trim();
+  const len = content.length;
+
+  // 1. 太短不给奖励
+  if (len < 5) return 0;
+
+  // 2. 防作弊：计算唯一字符占比 (Unique Characters Ratio)
+  // 防止玩家输入 "啊啊啊啊啊啊啊啊" 来刷字数
+  const uniqueChars = new Set(content.split('')).size;
+  const diversityRatio = uniqueChars / len;
+
+  // 如果多样性极低，直接判定为乱填，只给 1 颗（保底奖励）
+  if (diversityRatio < 0.2) return 1;
+
+  // 3. 根据字数梯度阶梯奖励
+  if (len < 20) return 1;    // 短句奖励 1 颗
+  if (len < 60) return 5;    // 中等日记奖励 5 颗
+  return 10;                 // 认真创作的长故事奖励 10 颗
+};

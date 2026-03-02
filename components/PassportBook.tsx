@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PassportData, Language, StoryEntry } from '../types';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
-import { calculateStats, generateFlavorText, getDominantStat, TRANSLATIONS, getStarDate, ALL_PRESETS, getMixedTraits } from '../utils/gameLogic';
+import { calculateStats, generateFlavorText, getDominantStat, TRANSLATIONS, getStarDate, ALL_PRESETS, getMixedTraits, calculateStoryReward } from '../utils/gameLogic';
 import { RadarChart } from './RadarChart';
 import { StoryTab } from './StoryTab';
 import { RelationMap } from './RelationMap';
@@ -13,6 +13,7 @@ interface PassportBookProps {
   onUpdatePassport: (id: string, field: keyof PassportData, value: any) => void;
   onDelete: (id: string) => void;
   lang: Language;
+  onReward?: (amount: number, sourceId: string) => void; // <--- 新增这行
 }
 
 type Tab = 'profile' | 'personality' | 'relations' | 'story';
@@ -164,7 +165,8 @@ export const PassportBook: React.FC<PassportBookProps> = ({
   onBack,
   onUpdatePassport,
   onDelete,
-  lang
+  lang,
+  onReward
 }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -233,13 +235,26 @@ export const PassportBook: React.FC<PassportBookProps> = ({
     } catch { setStories([]); }
   }, [storageKey, selectedId]);
 
-  const handleUpdateStories = useCallback((next: StoryEntry[]) => {
-    setStories(next);
-    if (storageKey) localStorage.setItem(storageKey, JSON.stringify(next));
-  }, [storageKey]);
-
   // Find selected passport
   const activePassport = passports.find(p => p.id === selectedId);
+
+  const handleUpdateStories = useCallback((next: StoryEntry[], newlySavedText?: string) => {
+    setStories(next);
+    if (storageKey) localStorage.setItem(storageKey, JSON.stringify(next));
+
+    // 防作弊 & 发放奖励机制
+    if (newlySavedText && activePassport && !activePassport.hasReceivedStoryReward && onReward) {
+      const rewardAmount = calculateStoryReward(newlySavedText);
+      
+      if (rewardAmount > 0) {
+        // 触发父组件的动画与加钱逻辑
+        onReward(rewardAmount, 'btn-save-story');
+        
+        // 标记该护照为已领奖（防止二次修改刷金币）
+        onUpdatePassport(activePassport.id, 'hasReceivedStoryReward', true);
+      }
+    }
+  }, [storageKey, activePassport, onReward, onUpdatePassport]);
 
   // Calculate dynamic data for the active passport
   const activeStats = activePassport ? calculateStats(activePassport.selectedParts, activePassport.stats) : null;

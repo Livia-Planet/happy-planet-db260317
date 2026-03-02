@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Card } from './components/Card';
 import { Controls, TabType } from './components/Controls';
 import { LanguageSelector } from './components/LanguageSelector';
@@ -91,7 +91,7 @@ const App: React.FC = () => {
   const [bigBangTrigger, setBigBangTrigger] = useState(0); 
   const [actionFeedback, setActionFeedback] = useState<{bigbang?: string; issue?: string}>({});
 
-  const { spendCarrots } = useAnimateTokens();
+  const { spendCarrots, gainCarrots } = useAnimateTokens();
   const [viewMode, setViewMode] = useState<'editor' | 'passport'>('editor');
   const [savedPassports, setSavedPassports] = useState<PassportData[]>([]);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
@@ -177,6 +177,23 @@ const App: React.FC = () => {
     setIsFlipped(next);
     setActiveTab(next ? 'base' : 'body');
   };
+
+  // === ACTION: 获得奖励闭环 ===
+  const handleReward = useCallback((amount: number, sourceId: string) => {
+    // 1. 发射胡萝卜动画
+    gainCarrots(sourceId, amount);
+    
+    // 2. 延迟 700ms (等胡萝卜飞到钱包) 后增加余额并播放清脆的音效
+    setTimeout(() => {
+      setCarrotCoins(prev => prev + amount);
+      if (audioCtx.current && buffers.current.coins) {
+        playBuffer(buffers.current.coins, audioCtx.current, 0.4);
+      }
+      // 弹出提示
+      setToastMsg(currentLang === 'cn' ? `🚀 故事记录成功！奖励 ${amount} 🥕` : `🚀 Story Saved! Reward: ${amount} 🥕`);
+      setTimeout(() => setToastMsg(null), 3000);
+    }, 700);
+  }, [gainCarrots, currentLang]);
 
   // === ACTION: ISSUE PASSPORT (Space-Time Collapse Version) ===
   const handleIssue = async () => {
@@ -328,6 +345,12 @@ const App: React.FC = () => {
         @keyframes glow-gold { 0%, 100% { box-shadow: 0 0 8px rgba(255, 215, 0, 0.4); border-color: #000; transform: scale(1); } 50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.9); border-color: #FFD700; transform: scale(1.03); } }
         .btn-orange-glow { animation: glow-orange 2s infinite ease-in-out; }
         .btn-gold-glow { animation: glow-gold 1.5s infinite ease-in-out; }
+        
+        @keyframes bounce-short { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+        .animate-bounce-short { animation: bounce-short 0.3s ease-out; }
+        
+        @keyframes spend-hit { 0% { transform: scale(1); } 50% { transform: scale(0.95); } 100% { transform: scale(1); } }
+        .animate-spend-hit { animation: spend-hit 0.2s ease-out; }
       `}</style>
 
       {/* 🌠 SpaceBackground Decoration Layer - 必须传 displayBpm，背景才会跟着炸裂！ */}
@@ -420,7 +443,7 @@ const App: React.FC = () => {
       {/* === VIEW: PASSPORT ARCHIVES === */}
       {viewMode === 'passport' && (
         <div className="relative z-10 pt-16 pb-20">
-          <PassportBook passports={savedPassports} onBack={() => setViewMode('editor')} onUpdatePassport={handleUpdatePassportData} onDelete={handleDeletePassport} lang={currentLang} />
+          <PassportBook passports={savedPassports} onBack={() => setViewMode('editor')} onUpdatePassport={handleUpdatePassportData} onDelete={handleDeletePassport} lang={currentLang} onReward={handleReward} />
         </div>
       )}
 

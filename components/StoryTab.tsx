@@ -12,7 +12,8 @@ interface StoryTabProps {
     stories: StoryEntry[];
     lang: Language;
     isFlipped: boolean;
-    onUpdateStories: (stories: StoryEntry[]) => void;
+    // 添加 savedText 参数
+    onUpdateStories: (stories: StoryEntry[], savedText?: string) => void;
     /** 用于持久化星系锁状态 */
     selectedId?: string | null;
 }
@@ -322,7 +323,8 @@ export const StoryTab: React.FC<StoryTabProps> = ({
             };
             next = [...stories, entry];
         }
-        onUpdateStories(next);
+        // 把玩家写的故事传出去用于算法判定
+        onUpdateStories(next, content[lang]); 
         setEditingIdx(null);
     };
 
@@ -690,6 +692,7 @@ const StoryModal: React.FC<StoryModalProps> = ({
                         </button>
                     )}
                     <button
+                        id="btn-save-story" // <--- 必须加上这行 ID ！！！
                         onClick={() => onSave(title, content, { isLocked, password: isLocked ? lockPassword : '' })}
                         className="bg-[#FACC15] border-2 border-black font-black py-4 px-10 rounded-2xl text-lg md:text-xl uppercase tracking-widest shadow-[4px_4px_0_black] hover:scale-105 active:scale-100 transition-transform min-h-[52px]"
                     >

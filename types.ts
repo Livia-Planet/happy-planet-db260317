@@ -44,6 +44,8 @@ export interface PassportData extends CharacterData {
   relationships: { targetId: string, relationType: string }[]; // New: Relationship system
   stats?: CharacterStats; // Optional: Override calculated stats
   traits?: string[]; // Personality tags
+  // 标记是否已经领取过本篇日记的写作奖励（防止重复刷币）
+  hasReceivedStoryReward?: boolean;
 }
 
 export interface StoryEntry {
