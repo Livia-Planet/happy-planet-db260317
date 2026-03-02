@@ -238,23 +238,48 @@ export const PassportBook: React.FC<PassportBookProps> = ({
   // Find selected passport
   const activePassport = passports.find(p => p.id === selectedId);
 
-  const handleUpdateStories = useCallback((next: StoryEntry[], newlySavedText?: string) => {
-    setStories(next);
-    if (storageKey) localStorage.setItem(storageKey, JSON.stringify(next));
+const handleUpdateStories = useCallback((next: StoryEntry[], newlySavedText?: string) => {
+    let finalStories = [...next];
 
-    // 防作弊 & 发放奖励机制
-    if (newlySavedText && activePassport && !activePassport.hasReceivedStoryReward && onReward) {
-      const rewardAmount = calculateStoryReward(newlySavedText);
-      
-      if (rewardAmount > 0) {
-        // 触发父组件的动画与加钱逻辑
-        onReward(rewardAmount, 'btn-save-story');
-        
-        // 标记该护照为已领奖（防止二次修改刷金币）
-        onUpdatePassport(activePassport.id, 'hasReceivedStoryReward', true);
+    // 1. 如果有新保存的文字，并且有发奖函数
+    if (newlySavedText && typeof onReward === 'function') {
+      // 2. 找到刚刚保存的那篇故事 (通过内容匹配)
+      const activeStoryIndex = finalStories.findIndex(s => 
+        s.content.cn === newlySavedText || 
+        s.content.en === newlySavedText || 
+        s.content.se === newlySavedText
+      );
+
+      if (activeStoryIndex !== -1) {
+        const activeStory = finalStories[activeStoryIndex] as any;
+
+        // 3. 【核心需求】：检查这篇故事本身是否领过奖！
+        if (!activeStory.hasReceivedReward) {
+          try {
+            const rewardAmount = calculateStoryReward(newlySavedText);
+            if (rewardAmount > 0) {
+              // 发射胡萝卜！
+              onReward(rewardAmount, 'btn-save-story');
+              
+              // 4. 标记这篇故事为“已领奖”，这样再次修改保存就不会重复发金币了
+              finalStories[activeStoryIndex] = {
+                ...activeStory,
+                hasReceivedReward: true
+              };
+            }
+          } catch (err) {
+            console.error("Reward calculation failed:", err);
+          }
+        }
       }
     }
-  }, [storageKey, activePassport, onReward, onUpdatePassport]);
+
+    // 5. 更新状态并存入本地
+    setStories(finalStories);
+    if (storageKey) {
+      localStorage.setItem(storageKey, JSON.stringify(finalStories));
+    }
+  }, [storageKey, onReward]);
 
   // Calculate dynamic data for the active passport
   const activeStats = activePassport ? calculateStats(activePassport.selectedParts, activePassport.stats) : null;

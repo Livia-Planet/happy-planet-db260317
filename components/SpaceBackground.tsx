@@ -103,6 +103,14 @@ export const SpaceBackground: React.FC<SpaceBackgroundProps> = ({
           50% { transform: translate(-50%,-50%) rotate(calc(var(--initial) + var(--rot-delta))) scale(calc(var(--scale) * 1.18)); opacity: calc(var(--alpha) * 1.15); }
           100% { transform: translate(-50%,-50%) rotate(var(--initial)) scale(calc(var(--scale) * 0.92)); opacity: calc(var(--alpha) * 0.85); }
         }
+        
+        @keyframes slow-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+          animation: slow-spin 120s linear infinite; /* 极其缓慢，像行星自转 */
+        }
 
         @keyframes comet-travel {
           0% { transform: translate(0,0) rotate(-45deg); opacity: 1; }
@@ -150,6 +158,10 @@ export const SpaceBackground: React.FC<SpaceBackgroundProps> = ({
           } as React.CSSProperties}
         />
       ))}
+
+      {/* 放置一些大的、模糊的背景装饰 */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none animate-spin-slow">
+        </div>
 
       {/* Stars (原封不动) */}
       {stars.map((s) => (
