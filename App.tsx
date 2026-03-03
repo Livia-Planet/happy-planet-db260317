@@ -11,7 +11,7 @@ import { useAnimateTokens } from './hooks/useAnimateTokens';
 import { SuccessOverlay } from './components/effects/SuccessOverlay';
 import { CharacterData, PartCategory, PlanetCategory, Language, PassportData } from './types';
 import { getPartList } from './data/parts';
-import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS, generateStarName } from './utils/gameLogic';
+import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS, generateStarName, getWeightedRandomPart } from './utils/gameLogic';
 
 // --- 专业的零延迟音效加载函数 ---
 const loadAudioBuffer = async (url: string, context: AudioContext) => {
@@ -268,14 +268,16 @@ const App: React.FC = () => {
         const newSelectedParts = { ...prev.selectedParts };
         categories.forEach(cat => {
           const options = getPartList(cat); 
-          if (options && options.length > 0) newSelectedParts[cat] = options[Math.floor(Math.random() * options.length)].id;
+          const picked = getWeightedRandomPart(options);
+          if (picked) newSelectedParts[cat] = picked.id;
         });
 
         const planetCats: PlanetCategory[] = ['base', 'surface', 'atmosphere', 'companion'];
         const newPlanetParts = { ...prev.selectedPlanetParts };
         planetCats.forEach(cat => {
           const options = getPartList(cat);
-          if (options && options.length > 0) newPlanetParts[cat] = options[Math.floor(Math.random() * options.length)].id;
+          const picked = getWeightedRandomPart(options);
+          if (picked) newPlanetParts[cat] = picked.id;
         });
 
         return { ...prev, selectedParts: newSelectedParts, selectedPlanetParts: newPlanetParts };

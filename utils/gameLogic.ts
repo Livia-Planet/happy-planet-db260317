@@ -668,3 +668,34 @@ export const calculateStoryReward = (text: string): number => {
   if (len < 60) return 5;    // 中等日记奖励 5 颗
   return 10;                 // 认真创作的长故事奖励 10 颗
 };
+
+// --- 抽卡稀有度逻辑 ---
+
+// 1. 定义权重数值
+const RARITY_WEIGHTS: Record<string, number> = {
+  'C': 700, // Common: 70%
+  'R': 200, // Rare: 20%
+  'E': 80,  // Epic: 8%
+  'L': 20   // Legendary: 2%
+};
+
+// 2. 导出权重随机函数 (注意加了 export)
+export const getWeightedRandomPart = (parts: any[]) => {
+  if (parts.length === 0) return null;
+  
+  const totalWeight = parts.reduce((sum, part) => {
+    // 兼容性处理：如果没有设置 rarity，默认给 C
+    const rarity = (part.rarity || 'C') as string;
+    return sum + (RARITY_WEIGHTS[rarity] || 0);
+  }, 0);
+
+  let random = Math.random() * totalWeight;
+  
+  for (const part of parts) {
+    const rarity = (part.rarity || 'C') as string;
+    const weight = RARITY_WEIGHTS[rarity] || 0;
+    if (random < weight) return part;
+    random -= weight;
+  }
+  return parts[0];
+};

@@ -63,3 +63,16 @@ export interface StoryEntry {
   /** 单篇密码（用户设置后存储，用于验证） */
   password?: string;
 }
+
+// 1. 定义稀有度类型
+export type Rarity = 'C' | 'R' | 'E' | 'L'; // Common, Rare, Epic, Legendary
+
+export interface PartDefinition {
+  id: string;
+  name: string;
+  category: PartCategory | PlanetCategory;
+  stats: CharacterStats;
+  rarity?: Rarity; // 2. 强制要求每个部件都有稀有度
+  offsetY?: number;
+  images: PartImages;
+}
