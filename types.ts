@@ -15,13 +15,17 @@ export interface PartImages {
   back?: string;       // For Hair/Access (Layer 0/1)
 }
 
+// 1. 定义稀有度类型
+export type Rarity = 'C' | 'U' | 'R' | 'E' | 'L'; // Common, Uncommon,Rare, Epic, Legendary
+
 export interface PartDefinition {
   id: string;
   name: string;
   category: PartCategory | PlanetCategory;
   stats: CharacterStats;
-  offsetY?: number;      // Vertical offset for fine-tuning gear rendering
-  images: PartImages;    // Path to local PNG files
+  rarity?: Rarity; // 2. 强制要求每个部件都有稀有度的话，就删掉问好。
+  offsetY?: number;
+  images: PartImages;
 }
 
 export interface CharacterData {
@@ -46,6 +50,7 @@ export interface PassportData extends CharacterData {
   traits?: string[]; // Personality tags
   // 标记是否已经领取过本篇日记的写作奖励（防止重复刷币）
   hasReceivedStoryReward?: boolean;
+  rarity?: Rarity; // 2. 强制要求每个部件都有稀有度的话，就删掉问好。
 }
 
 export interface StoryEntry {
@@ -64,15 +69,3 @@ export interface StoryEntry {
   password?: string;
 }
 
-// 1. 定义稀有度类型
-export type Rarity = 'C' | 'R' | 'E' | 'L'; // Common, Rare, Epic, Legendary
-
-export interface PartDefinition {
-  id: string;
-  name: string;
-  category: PartCategory | PlanetCategory;
-  stats: CharacterStats;
-  rarity?: Rarity; // 2. 强制要求每个部件都有稀有度
-  offsetY?: number;
-  images: PartImages;
-}

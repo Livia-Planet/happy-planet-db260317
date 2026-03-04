@@ -1,5 +1,5 @@
 
-import { CharacterStats, PartCategory, Language, PassportData } from '../types';
+import { CharacterStats, Rarity, PartCategory, Language, PassportData } from '../types';
 import { PARTS_DB } from '../data/parts';
 
 export const BASE_STATS: CharacterStats = { mod: 1, bus: 1, klurighet: 1 };
@@ -698,4 +698,50 @@ export const getWeightedRandomPart = (parts: any[]) => {
     random -= weight;
   }
   return parts[0];
+};
+
+// 在文件末尾添加判定函数
+export const calculateFinalRarity = (
+  selectedParts: Record<string, string>, 
+  selectedPlanetParts: Record<string, string>, // 新增：星球部件
+  stats: CharacterStats
+): Rarity => {
+  // 1. 获取所有部件定义
+  const charParts = Object.values(selectedParts).map(id => PARTS_DB[id]).filter(Boolean);
+  const planetParts = Object.values(selectedPlanetParts).map(id => PARTS_DB[id]).filter(Boolean);
+  
+  // 2. 核心数值：原始属性总和
+  let totalScore = stats.mod + stats.bus + stats.klurighet;
+
+  // --- 大师级秘籍：星球共鸣加分 ---
+  // 规则：星球部件中，每有一件 R 给总分 +2，每有一件 E/L 给总分 +4
+  planetParts.forEach(part => {
+    if (part.rarity === 'R') totalScore += 2;
+    if (part.rarity === 'E' || part.rarity === 'L') totalScore += 4;
+  });
+
+  // 3. 统计各等级部件数量 (包含角色和星球，全方位的华丽度)
+  const allParts = [...charParts, ...planetParts];
+  const countL = allParts.filter(p => p.rarity === 'L').length;
+  const countEOrHigher = allParts.filter(p => p.rarity === 'E' || p.rarity === 'L').length;
+  const countROrHigher = allParts.filter(p => p.rarity === 'R' || p.rarity === 'E' || p.rarity === 'L').length;
+
+  // --- 判定阶梯 (使用了加分后的 totalScore) ---
+
+  // 【Legendary】 极难：总分(含加分) >= 35 且 至少 6 件 L 部件 (角色+星球共计)
+  if (totalScore >= 35 && countL >= 6) return 'L';
+
+  // 【Epic】 总分 >= 28 且 至少 4 件 E 及以上
+  if (totalScore >= 28 && countEOrHigher >= 4) return 'E';
+
+  // 【Rare】 总分 >= 18 且 至少 3 件 R 及以上
+  if (totalScore >= 18 && countROrHigher >= 3) return 'R';
+
+  // 【Uncommon】 总分 >= 12 且 至少 1 件 R 及以上
+  if (totalScore >= 12 && countROrHigher >= 1) return 'U';
+
+  // 【天选之零】 如果原始分数极低且没有任何高级部件
+  if ((stats.mod + stats.bus + stats.klurighet) <= 3 && countROrHigher === 0) return 'L'; 
+
+  return 'C';
 };

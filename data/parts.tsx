@@ -6,6 +6,7 @@ const stats = (m: number, b: number, k: number) => ({ mod: m, bus: b, klurighet:
 // NOTE: Ensure you have a folder named 'parts' in your public directory with these PNG files.
 // 建议的权重分配逻辑：
 // C (Common): 普通部件
+// U (Uncommon): 稍微有点特别的部件
 // R (Rare): 稍微酷一点的
 // E (Epic): 华丽的
 // L (Legendary): 极其罕见的（比如发光、特殊材质）
@@ -36,11 +37,11 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     images: { main: '/parts/ears_tech.png' }
   },
   // --- Ear Colors (Matching Body) ---
-  'ears_mimosa': { id: 'ears_mimosa', category: 'ears', name: 'Mimosa Yellow', stats: stats(1, 3, 1), rarity: 'R', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-07-ears.png' } },
-  'ears_amber': { id: 'ears_amber', category: 'ears', name: 'Amber', stats: stats(1, 1, 3), rarity: 'C', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Plott400x400-ears.png' } },
+  'ears_mimosa': { id: 'ears_mimosa', category: 'ears', name: 'Mimosa Yellow', stats: stats(1, 3, 1), rarity: 'E', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-07-ears.png' } },
+  'ears_amber': { id: 'ears_amber', category: 'ears', name: 'Amber', stats: stats(1, 1, 3), rarity: 'L', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Plott400x400-ears.png' } },
   'ears_pastel': { id: 'ears_pastel', category: 'ears', name: 'Pastel Yellow', stats: stats(0, 3, 2), rarity: 'C', images: { main: '/parts/ears_pastel.png' } },
-  'ears_camel': { id: 'ears_camel', category: 'ears', name: 'Camel', stats: stats(2, 0, 3), rarity: 'C', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Duddu400x400-ears.png' } },
-  'ears_white': { id: 'ears_white', category: 'ears', name: 'White', stats: stats(1, 1, 1), rarity: 'C', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Polly400x400-ears.png' } },
+  'ears_camel': { id: 'ears_camel', category: 'ears', name: 'Camel', stats: stats(2, 0, 3), rarity: 'R', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Duddu400x400-ears.png' } },
+  'ears_white': { id: 'ears_white', category: 'ears', name: 'White', stats: stats(1, 1, 1), rarity: 'R', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Polly400x400-ears.png' } },
   'ears_rose': { id: 'ears_rose', category: 'ears', name: 'Rose Red', stats: stats(3, 1, 1), rarity: 'C', images: { main: '/parts/ears_rose.png' } },
 
   // === BODY (Layer 3) ===
@@ -69,11 +70,11 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     images: { main: '/parts/body_gold.png' }
   },
   // --- Colors ---
-  'body_mimosa': { id: 'body_mimosa', category: 'body', name: 'Mimosa Yellow', stats: stats(1, 3, 1), rarity: 'R', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-05-body.png' } },
-  'body_amber': { id: 'body_amber', category: 'body', name: 'Amber', stats: stats(1, 1, 3), rarity: 'C', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Plott400x400-body.png' } },
+  'body_mimosa': { id: 'body_mimosa', category: 'body', name: 'Mimosa Yellow', stats: stats(1, 3, 1), rarity: 'E', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-05-body.png' } },
+  'body_amber': { id: 'body_amber', category: 'body', name: 'Amber', stats: stats(1, 1, 3), rarity: 'L', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Plott400x400-body.png' } },
   'body_pastel': { id: 'body_pastel', category: 'body', name: 'Pastel Yellow', stats: stats(0, 3, 2), rarity: 'C', images: { main: '/parts/body_pastel.png' } },
-  'body_camel': { id: 'body_camel', category: 'body', name: 'Camel', stats: stats(2, 0, 3), rarity: 'C', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Duddu400x400-body.png' } },
-  'body_white': { id: 'body_white', category: 'body', name: 'White', stats: stats(1, 1, 1), rarity: 'C', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Polly400x400-body.png' } },
+  'body_camel': { id: 'body_camel', category: 'body', name: 'Camel', stats: stats(2, 0, 3), rarity: 'R', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Duddu400x400-body.png' } },
+  'body_white': { id: 'body_white', category: 'body', name: 'White', stats: stats(1, 1, 1), rarity: 'R', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Polly400x400-body.png' } },
   'body_rose': { id: 'body_rose', category: 'body', name: 'Rose Red', stats: stats(3, 1, 1), rarity: 'C', images: { main: '/parts/body_rose.png' } },
 
   // === FACE (Layer 4) ===
@@ -90,7 +91,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     category: 'face',
     name: 'Smart Specs',
     stats: stats(0, 0, 1),
-    rarity: 'C',
+    rarity: 'L',
     images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Plott400x400-face.png' }
   },
   'eyes_angry': {
@@ -114,7 +115,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     category: 'face',
     name: 'Laugh',
     stats: stats(0, 1, 0),
-    rarity: 'C',
+    rarity: 'E',
     images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-04-facial%20features.png' }
   },
   'mouth_line': {
@@ -139,7 +140,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     id: 'hair_yellow',
     category: 'hair',
     name: 'Yellow Hair',
-    rarity: 'R',
+    rarity: 'E',
     stats: stats(2, 2, 4),
     images: {
       front: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-03-hair1.png'
@@ -150,7 +151,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     category: 'hair',
     name: 'Black Hair',
     stats: stats(0, 0, 1),
-    rarity: 'C',
+    rarity: 'L',
     images: {
       front: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Plott400x400-hair.png'
     }
@@ -170,7 +171,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     category: 'access', // Changed from 'hair' to 'access'
     name: 'Yellow Braids',
     stats: stats(1, 4, 2),
-    rarity: 'R',
+    rarity: 'E',
     images: {
       back: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-06-hair2.png'
     }
@@ -218,7 +219,7 @@ export const PLANET_PARTS_DB: Record<string, PartDefinition> = {
   'planet_base_red': { id: 'planet_base_red', category: 'base', name: 'Magma Red', stats: stats(0, 0, 0), rarity: 'C', images: { main: '/parts/planet_base_red.png' } },
   'planet_base_blue': { id: 'planet_base_blue', category: 'base', name: 'Ice Blue', stats: stats(0, 0, 0), rarity: 'C', images: { main: '/parts/planet_base_blue.png' } },
   'planet_base_green': { id: 'planet_base_green', category: 'base', name: 'Forest', stats: stats(0, 0, 0), rarity: 'C', images: { main: '/parts/planet_base_green.png' } },
-  'planet_base_yellow': { id: 'planet_base_yellow', category: 'base', name: 'Lemon', stats: stats(0, 0, 0), rarity: 'C', images: { main: '/parts/planet_base_yellow.png' } },
+  'planet_base_yellow': { id: 'planet_base_yellow', category: 'base', name: 'Lemon', stats: stats(0, 0, 0), rarity: 'L', images: { main: '/parts/planet_base_yellow.png' } },
 
   // SURFACE
   'planet_surf_none': { id: 'planet_surf_none', category: 'surface', name: 'None', stats: stats(0, 0, 0), rarity: 'C', images: {} },
@@ -227,7 +228,7 @@ export const PLANET_PARTS_DB: Record<string, PartDefinition> = {
 
   // ATMOSPHERE
   'planet_atmo_none': { id: 'planet_atmo_none', category: 'atmosphere', name: 'None', stats: stats(0, 0, 0), rarity: 'C', images: {} },
-  'planet_atmo_rings': { id: 'planet_atmo_rings', category: 'atmosphere', name: 'Saturn Rings', stats: stats(0, 0, 0), rarity: 'C', images: { main: '/parts/planet_atmo_rings.png' } },
+  'planet_atmo_rings': { id: 'planet_atmo_rings', category: 'atmosphere', name: 'Saturn Rings', stats: stats(0, 0, 0), rarity: 'L', images: { main: '/parts/planet_atmo_rings.png' } },
   'planet_atmo_glow': { id: 'planet_atmo_glow', category: 'atmosphere', name: 'Cosmic Glow', stats: stats(0, 0, 0), rarity: 'C', images: { main: '/parts/planet_atmo_glow.png' } },
 
   // COMPANION

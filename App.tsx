@@ -11,7 +11,7 @@ import { useAnimateTokens } from './hooks/useAnimateTokens';
 import { SuccessOverlay } from './components/effects/SuccessOverlay';
 import { CharacterData, PartCategory, PlanetCategory, Language, PassportData } from './types';
 import { getPartList } from './data/parts';
-import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS, generateStarName, getWeightedRandomPart } from './utils/gameLogic';
+import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS, generateStarName, getWeightedRandomPart, calculateFinalRarity } from './utils/gameLogic';
 
 // --- 专业的零延迟音效加载函数 ---
 const loadAudioBuffer = async (url: string, context: AudioContext) => {
@@ -229,8 +229,22 @@ const App: React.FC = () => {
     // 3. 生成数据并保存
     const newId = generateUniqueId(Date.now());
     let bioText = characterData.name.toUpperCase() === 'BOBU.B' ? DEFAULT_BIOS.bobu[currentLang] : DEFAULT_BIOS.general[currentLang];
-    const newPassport: PassportData = { ...characterData, id: newId, bio: bioText, stats: { ...currentStats }, savedAt: Date.now() };
+        
+    /** --- [大师级修改点：加入稀有度判定] --- **/
+    // 根据当前选中的部件和属性，计算最终稀有度
+    const finalRarity = calculateFinalRarity(characterData.selectedParts, characterData.selectedPlanetParts, currentStats);
+
+    const newPassport: PassportData = { 
+      ...characterData, 
+      id: newId, 
+      bio: bioText, 
+      stats: { ...currentStats }, 
+      rarity: finalRarity, // <-- 将计算出的稀有度存入档案
+      savedAt: Date.now() 
+    };
+    /** ---------------------------------- **/
     
+    // 保存到列表和本地存储
     const updatedPassports = [newPassport, ...savedPassports];
     setSavedPassports(updatedPassports);
     localStorage.setItem('happyPlanet_passports', JSON.stringify(updatedPassports));

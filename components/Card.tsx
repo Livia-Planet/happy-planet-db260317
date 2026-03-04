@@ -1,9 +1,58 @@
 import React from 'react';
-import { CharacterData, CharacterStats, Language, PassportData } from '../types';
+import { CharacterData, CharacterStats, Language, PassportData, Rarity, } from '../types';
 import { StatBar } from './StatBar';
 import { Avatar } from './Avatar';
 import { getDominantStat, generateUniqueId, TRANSLATIONS } from '../utils/gameLogic';
 import { PlanetCanvas } from './PlanetCanvas';
+
+// --- [全新可爱版：果冻贴纸风印章] ---
+const RaritySeal: React.FC<{ rarity: string }> = ({ rarity }) => {
+  const themes: Record<string, { color: string, fill: string, label: string, svg: React.ReactNode, anim: string }> = {
+    C: { 
+      color: 'text-stone-400', fill: '#f5f5f4', label: 'COMMON', anim: '',
+      // 可爱的虚线胖圆圈
+      svg: <circle cx="50" cy="50" r="35" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="8" strokeDasharray="12 12" strokeLinecap="round" />
+    },
+    U: { 
+      color: 'text-emerald-500', fill: '#ecfdf5', label: 'UNCOMMON', anim: '',
+      // 果冻方块（超大圆角）
+      svg: <rect x="20" y="20" width="60" height="60" rx="20" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="8" />
+    },
+    R: { 
+      color: 'text-sky-500', fill: '#e0f2fe', label: 'RARE', anim: '',
+      // 圆润的水滴/钻石
+      svg: <path d="M50 15 L80 50 L50 85 L20 50 Z" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="8" strokeLinejoin="round" />
+    },
+    E: { 
+      color: 'text-purple-500', fill: '#faf5ff', label: 'EPIC', anim: '',
+      // 胖乎乎的四角星
+      svg: <path d="M50 10 Q50 50 90 50 Q50 50 50 90 Q50 50 10 50 Q50 50 50 10 Z" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="8" strokeLinejoin="round" />
+    },
+    L: { 
+      color: 'text-amber-500', fill: '#fffbeb', label: 'LEGENDARY', anim: 'animate-bounce',
+      // 小皇冠！孩子们最喜欢的
+      svg: <path d="M15 80 L85 80 L95 30 L70 50 L50 20 L30 50 L5 30 Z" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="8" strokeLinejoin="round" />
+    }
+  };
+  
+  const active = themes[rarity || 'C'];
+  
+  return (
+    // group 属性用来联动 hover 动画
+    <div className={`flex flex-col items-center justify-center ${active.color} drop-shadow-sm group cursor-pointer`}>
+      {/* 图形部分：Hover时会放大一点点 */}
+      <svg viewBox="0 0 100 100" className={`w-14 h-14 transition-transform duration-300 group-hover:scale-110 ${active.anim}`}>
+        {active.svg}
+      </svg>
+      {/* 文字部分：做成了白色底色、带边框的药丸形状 */}
+      <div className={`mt-1 px-2 py-0.5 bg-white border-2 border-current rounded-full shadow-sm transition-transform duration-300 group-hover:-translate-y-1`}>
+        <span className="font-black text-[10px] tracking-wider leading-none block">
+          {active.label}
+        </span>
+      </div>
+    </div>
+  );
+};
 
 interface CardProps {
   data: PassportData | CharacterData;
@@ -15,9 +64,10 @@ interface CardProps {
   showStamp?: boolean;
   stampAngle?: number;
   particles?: any[];
+  rarity?: Rarity;
 }
 
-export const Card: React.FC<CardProps> = ({ data, stats, flavorText, isFlipped, onFlip, lang, showStamp, stampAngle, particles = [] }) => {
+export const Card: React.FC<CardProps> = ({ data, stats, flavorText, isFlipped, onFlip, lang, showStamp, stampAngle, particles = [], rarity }) => {
   const dominantStat = getDominantStat(stats);
   const uniqueId = generateUniqueId(data.lastModified);
 
@@ -108,6 +158,13 @@ export const Card: React.FC<CardProps> = ({ data, stats, flavorText, isFlipped, 
                   </svg>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* --- [果冻贴纸：定位到照片右下角（红色箭头处）] --- */}
+          {rarity && (
+            <div className="absolute bottom-32 left-2 z-[60] transform -rotate-6 hover:rotate-0 transition-all duration-300">
+              <RaritySeal rarity={rarity} />
             </div>
           )}
 
