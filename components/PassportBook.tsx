@@ -219,6 +219,40 @@ export const PassportBook: React.FC<PassportBookProps> = ({
   const [openDropdown, setOpenDropdown] = useState<'gender' | 'species' | 'rel-target' | 'rel-type' | null>(null);
   const [dropdownPage, setDropdownPage] = useState(0);
 
+  // --- [升级]：头部搜索、排序与背景状态 ---
+  const [searchQuery, setSearchQuery] = useState(''); // 新增搜索状态
+  const [sortBy, setSortBy] = useState<'time' | 'rarity' | 'power'>('time');
+  const [openHeaderMenu, setOpenHeaderMenu] = useState<'theme' | 'sort' | null>(null);
+
+  // --- [升级]：搜索 + 收藏置顶 + 属性排序 ---
+  const sortedPassports = useMemo(() => {
+    // 1. 先按搜索词过滤 (忽略大小写)
+    let list = passports.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const rarityMap: Record<string, number> = { L: 5, E: 4, R: 3, U: 2, C: 1 };
+
+    // 2. 复合排序
+    return list.sort((a, b) => {
+      // 优先级 1：收藏的永远排在前面
+      if (a.isFavorite && !b.isFavorite) return -1;
+      if (!a.isFavorite && b.isFavorite) return 1;
+
+      // 优先级 2：按照玩家选择的下拉菜单排序
+      if (sortBy === 'rarity') {
+        return (rarityMap[b.rarity || 'C'] || 0) - (rarityMap[a.rarity || 'C'] || 0);
+      }
+      if (sortBy === 'power') {
+        const getP = (p: PassportData) => {
+          const s = p.stats || calculateStats(p.selectedParts, p.stats);
+          return s.mod + s.bus + s.klurighet;
+        }
+        return getP(b) - getP(a);
+      }
+      // 默认按时间最新
+      return b.lastModified - a.lastModified;
+    });
+  }, [passports, sortBy, searchQuery]);
+
   // Form states for Add Relation
   const [pendingRelTarget, setPendingRelTarget] = useState<string | null>(null);
   const [pendingRelType, setPendingRelType] = useState<string>('friend');
@@ -377,17 +411,109 @@ export const PassportBook: React.FC<PassportBookProps> = ({
           </button>
 
           <div className="flex items-center gap-4">
-            {/* Theme Switcher */}
-            <div className="flex gap-2 bg-white/20 backdrop-blur-sm p-2 rounded-full border border-white/30 shadow-sm">
-              {THEMES.map(theme => (
-                <button
-                  key={theme.id}
-                  onClick={() => setCurrentTheme(theme)}
-                  className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${currentTheme.id === theme.id ? 'border-white scale-125 shadow-md ring-2 ring-white/50' : 'border-transparent opacity-80 hover:opacity-100'}`}
-                  style={{ backgroundColor: theme.bg }}
-                  aria-label={`Select theme ${theme.id}`}
+
+            {/* 3. 搜索框 (Search Bar) - 胶囊磨砂风格 */}
+            <div className="relative flex items-center bg-white/20 backdrop-blur-sm h-10 rounded-full border border-white/30 shadow-sm px-3 transition-all hover:bg-white/30 focus-within:bg-white/40 focus-within:border-white/60 focus-within:ring-2 focus-within:ring-white/20 w-32 md:w-48">
+              <svg className={`w-4 h-4 opacity-60 ${currentTheme.text === 'text-white' ? 'text-white' : 'text-black'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={lang === 'cn' ? '搜索名字...' : 'Search...'}
+                className={`bg-transparent w-full h-full pl-2 outline-none font-bold text-sm font-hand placeholder-current placeholder-opacity-50 ${currentTheme.text === 'text-white' ? 'text-white' : 'text-black'}`}
+              />
+            </div>
+
+            {/* 1. 排序下拉菜单 (Sort Dropdown) */}
+            <div className="relative">
+              <button
+                onClick={() => setOpenHeaderMenu(openHeaderMenu === 'sort' ? null : 'sort')}
+                className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 h-10 rounded-full border border-white/30 shadow-sm transition-all hover:bg-white/30"
+              >
+                <span className={`font-bold font-hand text-sm ${currentTheme.text === 'text-white' ? 'text-white' : 'text-black'}`}>
+                  {sortBy === 'time' ? (lang === 'cn' ? '最新' : lang === 'se' ? 'Nyaste' : 'Newest') :
+                    sortBy === 'rarity' ? (lang === 'cn' ? '稀有度' : lang === 'se' ? 'Sällsynthet' : 'Rarity') :
+                      (lang === 'cn' ? '战斗力' : lang === 'se' ? 'Kraft' : 'Power')}
+                </span>
+                <span className={`text-[10px] opacity-70 ${currentTheme.text === 'text-white' ? 'text-white' : 'text-black'}`}>▼</span>
+              </button>
+
+              {openHeaderMenu === 'sort' && (
+                <div className="absolute top-full right-0 mt-2 z-[70] bg-white border-[3px] border-black rounded-2xl p-2 shadow-[6px_6px_0_black] animate-scale-in flex flex-col gap-1 min-w-[120px]">
+                  {(['time', 'rarity', 'power'] as const).map(opt => {
+                    const label = opt === 'time' ? (lang === 'cn' ? '最新' : lang === 'se' ? 'Nyaste' : 'Newest') :
+                      opt === 'rarity' ? (lang === 'cn' ? '稀有度' : lang === 'se' ? 'Sällsynthet' : 'Rarity') :
+                        (lang === 'cn' ? '战斗力' : lang === 'se' ? 'Kraft' : 'Power');
+                    return (
+                      <button
+                        key={opt}
+                        onClick={() => { setSortBy(opt); setOpenHeaderMenu(null); }}
+                        className={`p-2 rounded-xl text-sm font-bold font-hand transition-all text-center
+                          ${sortBy === opt ? 'bg-livia-yellow border-2 border-black shadow-[2px_2px_0_black] -translate-y-[2px]' : 'bg-transparent border-2 border-transparent text-gray-600 hover:bg-gray-100'}
+                        `}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* 2. 背景选择下拉菜单 (Theme Dropdown) - 升级版色卡托盘 */}
+            <div className="relative">
+              <button
+                onClick={() => setOpenHeaderMenu(openHeaderMenu === 'theme' ? null : 'theme')}
+                className="flex items-center gap-2 bg-white/20 backdrop-blur-sm p-1.5 h-10 rounded-full border border-white/30 shadow-sm transition-all hover:bg-white/30 group"
+              >
+                {/* 当前颜色的预览小圆点，带内阴影更有质感 */}
+                <div
+                  className="w-7 h-7 rounded-full border-2 border-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.2),0_1px_2px_rgba(0,0,0,0.1)] transition-transform group-hover:scale-110"
+                  style={{ backgroundColor: currentTheme.bg }}
                 />
-              ))}
+                <span className={`text-[10px] opacity-70 pr-1 transition-transform ${openHeaderMenu === 'theme' ? 'rotate-180' : ''} ${currentTheme.text === 'text-white' ? 'text-white' : 'text-black'}`}>
+                  ▼
+                </span>
+              </button>
+
+              {openHeaderMenu === 'theme' && (
+                <div className="absolute top-full right-0 mt-3 z-[70] bg-white border-[3px] border-black rounded-[24px] p-3 shadow-[8px_8px_0_black] animate-scale-in min-w-[220px]">
+                  {/* 顶部小标题：增加专业感 */}
+                  <p className="text-[10px] font-black text-gray-400 mb-2 px-1 tracking-widest uppercase">Select Theme</p>
+
+                  {/* 色卡布局：不再是简单的格子，而是有呼吸感的平铺 */}
+                  <div className="flex flex-wrap gap-2.5 justify-center">
+                    {THEMES.map(theme => {
+                      const isSelected = currentTheme.id === theme.id;
+                      return (
+                        <button
+                          key={theme.id}
+                          onClick={() => { setCurrentTheme(theme); setOpenHeaderMenu(null); }}
+                          className={`
+                            relative w-9 h-9 rounded-full transition-all duration-300
+                            ${isSelected
+                              ? 'scale-110 ring-2 ring-black ring-offset-2'
+                              : 'hover:scale-110 hover:shadow-md active:scale-95'}
+                          `}
+                          style={{ backgroundColor: theme.bg }}
+                        >
+                          {/* 选中时的内部勾选标记 */}
+                          {isSelected && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className={`w-1.5 h-1.5 rounded-full ${theme.id === 'dark' ? 'bg-white' : 'bg-black opacity-30'}`} />
+                            </div>
+                          )}
+
+                          {/* 悬停时的光泽层 */}
+                          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent to-white/30 pointer-events-none" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             <h2 className={`text-3xl md:text-4xl font-black drop-shadow-[2px_2px_0_black] stroke-black transition-colors duration-500 ${currentTheme.text}`} style={{ WebkitTextStroke: '1.5px black' }}>
@@ -411,7 +537,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
 
         {/* Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {passports.map(p => {
+          {sortedPassports.map(p => {
             const pStats = calculateStats(p.selectedParts, p.stats);
             const domStat = getDominantStat(pStats);
 
@@ -448,6 +574,19 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                     <RaritySeal rarity={p.rarity || 'C'} />
                   </div>
 
+                  {/* --- [新增：收藏锁定小星星] --- */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // 阻止点击卡片触发详情
+                      onUpdatePassport(p.id, 'isFavorite', !p.isFavorite);
+                    }}
+                    className="absolute top-2 left-2 z-30 transition-transform hover:scale-125 drop-shadow-md"
+                  >
+                    <svg viewBox="0 0 24 24" fill={p.isFavorite ? "#FFD700" : "none"} stroke={p.isFavorite ? "#FFD700" : "currentColor"} className={`w-6 h-6 ${p.isFavorite ? 'drop-shadow-[0_0_4px_rgba(255,215,0,0.8)]' : 'text-black opacity-30 hover:opacity-80 hover:text-white'}`} strokeWidth="2.5" strokeLinejoin="round">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  </button>
+
                   <div className="absolute inset-0 z-10 flex justify-center items-end">
                     <div className="transform scale-[0.85] translate-y-[15px] origin-bottom transition-transform group-hover:scale-[0.9]">
                       {/* 这里的 Avatar 保持你原来的 */}
@@ -463,7 +602,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                 </div>
 
                 {/* Delete Button (Hover only) - Hidden for permanent residents */}
-                {!ALL_PRESETS.some(preset => preset.id.toUpperCase() === p.id.toUpperCase()) && (
+                {!p.isFavorite && (
                   <button
                     onClick={(e) => { e.stopPropagation(); setDeleteId(p.id); }}
                     className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full border-2 border-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 z-10 shadow-sm"
@@ -813,7 +952,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                 </div>
 
                 {/* Delete Button Detail (Hidden for permanent residents) */}
-                {!ALL_PRESETS.some(preset => preset.id.toUpperCase() === activePassport.id.toUpperCase()) && (
+                {!activePassport.isFavorite && (
                   <div className="pt-8 border-t border-dashed border-gray-200">
                     <button
                       onClick={() => setDeleteId(activePassport.id)}

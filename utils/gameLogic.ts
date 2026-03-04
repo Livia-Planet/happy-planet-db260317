@@ -504,6 +504,7 @@ export const generateStarName = (): string => {
 export const BOBU_PRESET: PassportData = {
   id: 'HP-00001-BOBU-B',
   name: 'Bobu.B',
+  isFavorite: true,
   selectedParts: {
     body: 'body_mimosa',
     ears: 'ears_mimosa',
@@ -540,6 +541,7 @@ export const BOBU_PRESET: PassportData = {
 export const DUDDU_PRESET: PassportData = {
   id: 'HP-00002-DUDDU-A',
   name: 'Duddu.A',
+  isFavorite: true,
   selectedParts: {
     body: 'body_camel',
     ears: 'ears_camel',
@@ -576,6 +578,7 @@ export const DUDDU_PRESET: PassportData = {
 export const POLLY_PRESET: PassportData = {
   id: 'HP-00003-POLLYPLUTTEN-A-B',
   name: 'Polly.A.B',
+  isFavorite: true,
   selectedParts: {
     body: 'body_white',
     ears: 'ears_white',
@@ -612,6 +615,7 @@ export const POLLY_PRESET: PassportData = {
 export const PLUTTENPLOTT_PRESET: PassportData = {
   id: 'HP-00004-PLUTTENPLOTT-E-F',
   name: 'Plott.E.F',
+  isFavorite: true,
   selectedParts: {
     body: 'body_amber',
     ears: 'ears_amber',

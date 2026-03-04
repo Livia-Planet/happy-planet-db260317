@@ -51,6 +51,7 @@ export interface PassportData extends CharacterData {
   // 标记是否已经领取过本篇日记的写作奖励（防止重复刷币）
   hasReceivedStoryReward?: boolean;
   rarity?: Rarity; // 2. 强制要求每个部件都有稀有度的话，就删掉问好。
+  isFavorite?: boolean; // <--- 新增这行：用于标记是否被收藏/锁定
 }
 
 export interface StoryEntry {
