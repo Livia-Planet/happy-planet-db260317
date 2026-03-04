@@ -13,40 +13,40 @@ interface SuccessOverlayProps {
 
 // === 大师级视觉配置：定义每个等级的灵魂 ===
 const RARITY_THEMES: Record<Rarity, { color: string; label: string; bgEffect?: string; cardEffect?: string }> = {
-  C: { 
-    color: '#FFD93D', 
-    label: 'COMMON', 
-    cardEffect: '' 
+  C: {
+    color: '#FFD93D',
+    label: 'COMMON',
+    cardEffect: ''
   },
-  U: { 
-    color: '#4ECDC4', 
-    label: 'UNCOMMON', 
-    cardEffect: 'animate-float' 
+  U: {
+    color: '#4ECDC4',
+    label: 'UNCOMMON',
+    cardEffect: 'animate-float'
   },
-  R: { 
-    color: '#45B7D1', 
-    label: 'RARE', 
-    cardEffect: 'animate-rare-glow' 
+  R: {
+    color: '#45B7D1',
+    label: 'RARE',
+    cardEffect: 'animate-rare-glow'
   },
-  E: { 
-    color: '#A29BFE', 
-    label: 'EPIC', 
-    cardEffect: 'animate-epic-pulse' 
+  E: {
+    color: '#A29BFE',
+    label: 'EPIC',
+    cardEffect: 'animate-epic-pulse'
   },
-  L: { 
-    color: '#FFD700', 
-    label: 'LEGENDARY', 
+  L: {
+    color: '#FFD700',
+    label: 'LEGENDARY',
     bgEffect: 'animate-legendary-flash', // 全屏闪烁
     cardEffect: 'animate-gold-flow'      // 金光流转边框
   },
 };
 
-export const SuccessOverlay: React.FC<SuccessOverlayProps> = ({ 
-  isOpen, 
-  passportData, 
-  lang, 
-  onClose, 
-  playStampSound 
+export const SuccessOverlay: React.FC<SuccessOverlayProps> = ({
+  isOpen,
+  passportData,
+  lang,
+  onClose,
+  playStampSound
 }) => {
   const [showCard, setShowCard] = useState(false);
   const [showStamp, setShowStamp] = useState(false);
@@ -65,7 +65,7 @@ export const SuccessOverlay: React.FC<SuccessOverlayProps> = ({
         playStampSound();
         setExplosionTrigger(prev => prev + 1);
         setShake(true);
-        
+
         // 如果是传奇卡，触发全屏闪烁
         if (currentRarity === 'L') {
           setShowFlash(true);
@@ -89,7 +89,7 @@ export const SuccessOverlay: React.FC<SuccessOverlayProps> = ({
     <div className="fixed inset-0 z-[1000] flex items-center justify-center overflow-hidden">
       {/* 1. 背景暗化层 */}
       <div className="absolute inset-0 bg-black/90 backdrop-blur-md animate-fade-in" onClick={onClose} />
-      
+
       {/* 2. 传奇全屏闪烁层 */}
       {showFlash && <div className="absolute inset-0 z-[1100] bg-white animate-flash-overlay pointer-events-none" />}
 
@@ -102,16 +102,16 @@ export const SuccessOverlay: React.FC<SuccessOverlayProps> = ({
       <div className={`relative z-40 transition-all duration-700 transform 
         ${showCard ? 'scale-90 opacity-100 rotate-1' : 'scale-50 opacity-0 rotate-0'}
         ${shake ? 'animate-stamp-hit' : ''}
-        translate-y-4
+        translate-y-0
       `}>
-        
+
         {/* 顶部标签 - 现在 Common 也会显示 */}
         {showStamp && (
-          <div 
+          <div
             className={`absolute -top-14 left-1/2 -translate-x-1/2 font-black text-5xl italic tracking-tighter animate-bounce-in whitespace-nowrap z-50`}
-            style={{ 
+            style={{
               color: theme.color,
-              textShadow: currentRarity === 'C' ? '2px 2px 0 #000' : `0 0 20px ${theme.color}aa, 4px 4px 0 #000` 
+              textShadow: currentRarity === 'C' ? '2px 2px 0 #000' : `0 0 20px ${theme.color}aa, 4px 4px 0 #000`
             }}
           >
             {currentRarity === 'L' ? '👑 LEGENDARY 👑' : `✨ ${theme.label} ✨`}
@@ -120,12 +120,12 @@ export const SuccessOverlay: React.FC<SuccessOverlayProps> = ({
 
         {/* 卡片包装层：用于实现金光边框等特殊效果 */}
         <div className={`relative p-2 rounded-[2rem] ${theme.cardEffect}`}>
-          <Card 
-            data={passportData} 
-            stats={passportData.stats || {mod:0, bus:0, klurighet:0}} 
-            flavorText={passportData.bio || ""} 
-            isFlipped={false} 
-            onFlip={() => {}} 
+          <Card
+            data={passportData}
+            stats={passportData.stats || { mod: 0, bus: 0, klurighet: 0 }}
+            flavorText={passportData.bio || ""}
+            isFlipped={false}
+            onFlip={() => { }}
             lang={lang}
             showStamp={showStamp}
             stampAngle={-15}
@@ -135,13 +135,13 @@ export const SuccessOverlay: React.FC<SuccessOverlayProps> = ({
         {/* 底部按钮 */}
         {showStamp && (
           <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-full flex justify-center animate-bounce-in">
-             <button 
-                onClick={onClose} 
-                className="px-10 py-3 text-black border-[4px] border-black font-black text-xl rounded-full shadow-[6px_6px_0_0_#000] hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
-                style={{ backgroundColor: theme.color }}
-             >
-                {lang === 'cn' ? '收进口袋！' : 'GOT IT!'} 🥕
-             </button>
+            <button
+              onClick={onClose}
+              className="px-10 py-3 text-black border-[4px] border-black font-black text-xl rounded-full shadow-[6px_6px_0_0_#000] hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
+              style={{ backgroundColor: theme.color }}
+            >
+              {lang === 'cn' ? '收进口袋！' : 'GOT IT!'} 🥕
+            </button>
           </div>
         )}
       </div>
@@ -193,6 +193,15 @@ export const SuccessOverlay: React.FC<SuccessOverlayProps> = ({
         @keyframes rare-float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-10px); }
+        }
+
+        .animate-float {
+          filter: drop-shadow(0 0 10px rgba(78, 205, 196, 0.3));
+          animation: uncommon-float 4s ease-in-out infinite;
+        }
+        @keyframes uncommon-float {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-14px) rotate(-2deg); }
         }
 
         /* 标签弹出动画 */
