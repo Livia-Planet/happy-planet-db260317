@@ -93,19 +93,21 @@ export const SuccessOverlay: React.FC<SuccessOverlayProps> = ({
       {/* 2. 传奇全屏闪烁层 */}
       {showFlash && <div className="absolute inset-0 z-[1100] bg-white animate-flash-overlay pointer-events-none" />}
 
-      {/* 3. 粒子喷泉层 */}
-      <div className="absolute inset-0 z-50 pointer-events-none">
-        <ParticleOverlay trigger={explosionTrigger} color={theme.color} />
-      </div>
+      {/* 3. 粒子喷泉层：必须用 {showStamp &&} 包裹，防止未盖章时颜色暴露 */}
+      {showStamp && (
+        <div className="absolute inset-0 z-50 pointer-events-none">
+          <ParticleOverlay trigger={explosionTrigger} color={theme.color} />
+        </div>
+      )}
 
-      {/* 4. 核心内容容器 (调小了整体 scale 以适配 100% 屏幕) */}
+      {/* 4. 核心内容容器 */}
       <div className={`relative z-40 transition-all duration-700 transform 
         ${showCard ? 'scale-90 opacity-100 rotate-1' : 'scale-50 opacity-0 rotate-0'}
         ${shake ? 'animate-stamp-hit' : ''}
         translate-y-0
       `}>
 
-        {/* 顶部标签 - 现在 Common 也会显示 */}
+        {/* 顶部标签 */}
         {showStamp && (
           <div
             className={`absolute -top-14 left-1/2 -translate-x-1/2 font-black text-5xl italic tracking-tighter animate-bounce-in whitespace-nowrap z-50`}
@@ -118,8 +120,8 @@ export const SuccessOverlay: React.FC<SuccessOverlayProps> = ({
           </div>
         )}
 
-        {/* 卡片包装层：用于实现金光边框等特殊效果 */}
-        <div className={`relative p-2 rounded-[2rem] ${theme.cardEffect}`}>
+        {/* 卡片包装层：只有在 showStamp 为 true 时，才渲染卡片外圈的浮动和光效 */}
+        <div className={`relative p-2 rounded-[2rem] transition-all duration-500 ${showStamp ? theme.cardEffect : ''}`}>
           <Card
             data={passportData}
             stats={passportData.stats || { mod: 0, bus: 0, klurighet: 0 }}
@@ -129,6 +131,7 @@ export const SuccessOverlay: React.FC<SuccessOverlayProps> = ({
             lang={lang}
             showStamp={showStamp}
             stampAngle={-15}
+            hideRarity={!showStamp} // <--- 关键！没盖章前，隐藏卡片上的印章！
           />
         </div>
 

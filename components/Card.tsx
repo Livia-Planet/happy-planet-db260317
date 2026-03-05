@@ -78,16 +78,22 @@ interface CardProps {
   stampAngle?: number;
   particles?: any[];
   rarity?: Rarity;
+  hideRarity?: boolean;
 }
 
-export const Card: React.FC<CardProps> = ({ data, stats, flavorText, isFlipped, onFlip, lang, showStamp, stampAngle, particles = [], rarity = 'C' }) => {
+export const Card: React.FC<CardProps> = ({ 
+  data, stats, flavorText, isFlipped, onFlip, lang, showStamp, stampAngle, particles = [], rarity, hideRarity = false 
+}) => {
   const dominantStat = getDominantStat(stats);
   const uniqueId = generateUniqueId(data.lastModified);
 
   const cardBgColors = { mod: 'bg-red-50', bus: 'bg-yellow-50', klurighet: 'bg-blue-50' };
   const statTextColors = { mod: 'text-livia-red', bus: 'text-yellow-600', klurighet: 'text-livia-blue' };
 
-  const activeEffect = rarityEffects[rarity] || rarityEffects.C;
+  const dataRarity = rarity || (data as PassportData).rarity; 
+  const displayRarity = hideRarity ? undefined : dataRarity; // 如果要求隐藏，就彻底抹除
+  
+  const activeEffect = displayRarity ? (rarityEffects[displayRarity] || rarityEffects.C) : rarityEffects.C;/*  */
 
   return (
     <div
@@ -163,9 +169,9 @@ export const Card: React.FC<CardProps> = ({ data, stats, flavorText, isFlipped, 
             </div>
           )}
 
-          {rarity && (
+          {displayRarity && (
             <div className="absolute bottom-32 left-2 z-[60] transform -rotate-6 hover:rotate-0 transition-all duration-300">
-              <RaritySeal rarity={rarity} />
+              <RaritySeal rarity={displayRarity} />
             </div>
           )}
 
@@ -212,7 +218,7 @@ export const Card: React.FC<CardProps> = ({ data, stats, flavorText, isFlipped, 
         <div className="absolute w-full h-full backface-hidden rotate-y-180 bg-black border-[6px] border-black rounded-3xl shadow-comic overflow-hidden group/back">
 
           {/* 1. 稀有度环境光 (底层) */}
-          {rarity && rarity !== 'C' && rarity !== 'U' && (
+          {displayRarity && displayRarity !== 'C' && displayRarity !== 'U' && (
             <div className={`absolute inset-0 transition-opacity duration-1000 ${activeEffect.glow} z-0`} />
           )}
 
@@ -228,20 +234,20 @@ export const Card: React.FC<CardProps> = ({ data, stats, flavorText, isFlipped, 
           {/* 3. 稀有度特效光圈 (叠加层，不影响星球) */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 -translate-y-4">
             {/* Legendary 专属旋转星环 */}
-            {rarity === 'L' && (
+            {displayRarity === 'L' && (
               <>
                 <div className="absolute w-[340px] h-[340px] border-2 border-yellow-400/20 rounded-full animate-spin-slow" />
                 <div className="absolute w-[310px] h-[310px] border border-yellow-200/10 rounded-full animate-spin-reverse" />
               </>
             )}
             {/* 稀有度保护外圈 */}
-            {rarity && activeEffect.ring && (
+            {displayRarity && activeEffect.ring && (
               <div className={`absolute w-[280px] h-[280px] rounded-full border-2 transition-all duration-700 ${activeEffect.ring} scale-110 group-hover/back:scale-125`} />
             )}
           </div>
 
           {/* 4. 漂浮粒子层 (E/L 专属) */}
-          {(rarity === 'L' || rarity === 'E') && (
+          {(displayRarity === 'L' || displayRarity === 'E') && (
             <div className="absolute inset-0 pointer-events-none opacity-40 mix-blend-screen animate-float-particles z-30">
               <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:20px_20px]" />
             </div>
