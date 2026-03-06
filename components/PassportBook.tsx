@@ -7,6 +7,19 @@ import { RadarChart } from './RadarChart';
 import { StoryTab } from './StoryTab';
 import { RelationMap } from './RelationMap';
 
+// === 统计弹窗专用图标 ===
+const IconAstroStats = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M21 7V17C21 19.2091 19.2091 21 17 21H7C4.79086 21 3 19.2091 3 17V7M21 7L12 3L3 7M21 7L12 11L3 7M12 11V21" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const IconCloseModal = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M18 6L6 18M6 6L18 18" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 // 替换 PassportBook.tsx 顶部的旧 RaritySeal
 const RaritySeal: React.FC<{ rarity: string }> = ({ rarity }) => {
   const themes: Record<string, { color: string, label: string, svg: React.ReactNode, anim: string }> = {
@@ -214,6 +227,34 @@ export const PassportBook: React.FC<PassportBookProps> = ({
   const [isJobPickerOpen, setIsJobPickerOpen] = useState(false);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(THEMES[0]);
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [isThemeOpen, setIsThemeOpen] = useState(false);
+
+  // 控制自定义排序下拉菜单的展开
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  // 终端在线运行时长 (秒)
+  const [sessionTime, setSessionTime] = useState(0);
+
+  // 实时计时器
+  useEffect(() => {
+    const timer = setInterval(() => setSessionTime(s => s + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const statsData = useMemo(() => {
+    const total = passports.length || 0;
+    const legendary = passports.filter(p => p.rarity === 'L').length;
+    const sums = passports.reduce((acc, p) => ({
+      mod: acc.mod + (p.stats?.mod || 0),
+      bus: acc.bus + (p.stats?.bus || 0),
+      klu: acc.klu + (p.stats?.klurighet || 0)
+    }), { mod: 0, bus: 0, klu: 0 });
+
+    let topStat: 'mod' | 'bus' | 'klurighet' = 'mod';
+    if (sums.bus >= sums.mod && sums.bus >= sums.klu) topStat = 'bus';
+    if (sums.klu >= sums.mod && sums.klu >= sums.bus) topStat = 'klurighet';
+    return { total, legendary, topStat };
+  }, [passports]);
 
   // Dropdown states
   const [openDropdown, setOpenDropdown] = useState<'gender' | 'species' | 'rel-target' | 'rel-type' | null>(null);
@@ -352,7 +393,12 @@ export const PassportBook: React.FC<PassportBookProps> = ({
     if (storageKey) {
       localStorage.setItem(storageKey, JSON.stringify(finalStories));
     }
-  }, [storageKey, onReward]);
+
+    // 6. 【关键修复】：更新 App.tsx 中的 savedPassports 状态，确保统计面板能感应到数据变化
+    if (activePassport) {
+      onUpdatePassport(activePassport.id, 'stories', finalStories);
+    }
+  }, [storageKey, onReward, activePassport, onUpdatePassport]);
 
   // Calculate dynamic data for the active passport
   const activeStats = activePassport ? calculateStats(activePassport.selectedParts, activePassport.stats) : null;
@@ -371,250 +417,406 @@ export const PassportBook: React.FC<PassportBookProps> = ({
   // === ARCHIVE VIEW (GRID) ===
   if (!selectedId || !activePassport || !activeStats) {
     return (
-      <div className="w-full max-w-5xl mx-auto min-h-[600px] flex flex-col relative">
-        {/* Theme Background Override */}
+      <div className="w-full max-w-6xl mx-auto min-h-[600px] flex flex-col relative pb-20 px-4">
+        {/* 背景色随主题切换 */}
         <div className="fixed inset-0 -z-10 transition-colors duration-700" style={{ backgroundColor: currentTheme.bg }}></div>
 
-        {/* Delete Confirmation Modal */}
-        {deleteId && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white border-[4px] border-black rounded-2xl p-6 max-w-md w-full shadow-[8px_8px_0_rgba(0,0,0,0.5)] animate-fade-in">
-              <h3 className="text-2xl font-black mb-4 text-red-500 uppercase">{TRANSLATIONS.ui.delete[lang]}?</h3>
-              <p className="font-hand text-xl mb-8 text-gray-700">
-                {TRANSLATIONS.ui.confirmDelete[lang]}
-              </p>
-              <div className="flex gap-4">
+        {/* ======================================================= */}
+        {/* 1. 全新进化：单行顶置工具栏 (左轻柔，右硬核) */}
+        {/* ======================================================= */}
+        <div className="flex flex-wrap items-center justify-between gap-4 py-8 mb-8 z-[100]">
+
+          {/* 【左侧】透明/磨砂功能组 (主题点 + 搜索 + 排序) */}
+          <div className="flex items-center gap-2 bg-white/20 backdrop-blur-xl p-2 rounded-2xl border border-white/30 shadow-lg">
+
+            {/* A.主题切换：抽屉式进化版 */}
+            <div className="flex items-center px-2 border-r border-white/30 mr-2 overflow-hidden">
+              <div className="flex items-center gap-1.5 transition-all duration-500 ease-out">
+
+                {/* 1. 当前选中的颜色（作为开关） */}
                 <button
-                  onClick={() => setDeleteId(null)}
-                  className="flex-1 py-3 font-bold border-2 border-black rounded-lg hover:bg-gray-100 transition-colors"
+                  onClick={() => setIsThemeOpen(!isThemeOpen)}
+                  className={`w-6 h-6 rounded-full border-2 transition-all active:scale-90 shadow-sm ${isThemeOpen ? 'border-black ring-2 ring-white/50 scale-110' : 'border-black/20 hover:scale-105'
+                    }`}
+                  style={{ backgroundColor: currentTheme.bg }}
+                  title="Change Theme"
+                />
+
+                {/* 2. 展开的备选颜色列表 */}
+                <div
+                  className={`flex items-center gap-1.5 transition-all duration-500 overflow-hidden ${isThemeOpen ? 'max-w-[200px] opacity-100 ml-1' : 'max-w-0 opacity-0 ml-0'
+                    }`}
                 >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteConfirm}
-                  className="flex-1 py-3 font-bold bg-red-500 text-white border-2 border-black rounded-lg shadow-[4px_4px_0_black] hover:translate-y-1 hover:shadow-[2px_2px_0_black] active:translate-y-2 active:shadow-none transition-all"
-                >
-                  {TRANSLATIONS.ui.delete[lang]}
-                </button>
+                  {THEMES.filter(t => t.id !== currentTheme.id).map(theme => (
+                    <button
+                      key={theme.id}
+                      onClick={() => {
+                        setCurrentTheme(theme);
+                        setIsThemeOpen(false); // 选中后自动缩回
+                      }}
+                      className="w-5 h-5 rounded-full border border-white/30 opacity-70 hover:opacity-100 hover:scale-110 transition-all"
+                      style={{ backgroundColor: theme.bg }}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <button
-            onClick={onBack}
-            className="px-6 py-2 bg-white border-[3px] border-black rounded-full font-bold shadow-[4px_4px_0_black] hover:translate-y-[2px] hover:shadow-[2px_2px_0_black] active:translate-y-[4px] active:shadow-none transition-all"
-          >
-            ← {lang === 'cn' ? '返回编辑器' : 'Back to Editor'}
-          </button>
+            {/* B. 排序下拉 (移到了左边 + 解决遮挡 + 配色同步) */}
+            <div className="relative">
+              <div
+                onClick={() => setIsSortOpen(!isSortOpen)}
+                className={`flex items-center rounded-2xl px-4 py-2 hover:bg-white/20 transition-all cursor-pointer border border-white/10 backdrop-blur-md ${currentTheme.bg === '#ffffff' ? 'bg-black/5' : 'bg-white/10'}`}
+              >
+                <span className={`text-[10px] font-black uppercase tracking-widest mr-2 opacity-50 ${currentTheme.text}`}>
+                  {lang === 'cn' ? '排序' : lang === 'sv' ? 'SORTERA' : 'SORT'}
+                </span>
+                <span className={`text-[11px] font-black uppercase tracking-tighter pr-2 ${currentTheme.text}`}>
+                  {sortBy === 'time' ? (lang === 'cn' ? '最新' : lang === 'sv' ? 'NYASTE' : 'NEWEST') :
+                    sortBy === 'rarity' ? (lang === 'cn' ? '稀有度' : lang === 'sv' ? 'SÄLLSYNTHET' : 'RARITY') :
+                      (lang === 'cn' ? '战力' : lang === 'sv' ? 'KRAFT' : 'POWER')}
+                </span>
+                <span className={`text-[10px] opacity-40 transition-transform ${isSortOpen ? 'rotate-180' : ''} ${currentTheme.text}`}>▼</span>
+              </div>
 
-          <div className="flex items-center gap-4">
+              {/* 下拉面板: 增加了 z-[110] 确保在最顶层 */}
+              {isSortOpen && (
+                <div className="absolute top-full mt-2 left-0 w-full min-w-[140px] bg-[#1a1a1a]/90 backdrop-blur-2xl border border-white/20 rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[110] animate-in fade-in slide-in-from-top-2">
+                  {['time', 'rarity', 'power'].map((type) => (
+                    <div
+                      key={type}
+                      onClick={() => { setSortBy(type as any); setIsSortOpen(false); }}
+                      className={`px-4 py-3 text-[11px] font-black uppercase tracking-tighter cursor-pointer transition-all hover:bg-white/20 ${sortBy === type ? 'text-[#FFD93D] bg-white/10' : 'text-white/70'}`}
+                    >
+                      {type === 'time' ? (lang === 'cn' ? '最新' : lang === 'sv' ? 'NYASTE' : 'NEWEST') :
+                        type === 'rarity' ? (lang === 'cn' ? '稀有度' : lang === 'sv' ? 'SÄLLSYNTHET' : 'RARITY') :
+                          (lang === 'cn' ? '战力' : lang === 'sv' ? 'KRAFT' : 'POWER')}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-            {/* 3. 搜索框 (Search Bar) - 胶囊磨砂风格 */}
-            <div className="relative flex items-center bg-white/20 backdrop-blur-sm h-10 rounded-full border border-white/30 shadow-sm px-3 transition-all hover:bg-white/30 focus-within:bg-white/40 focus-within:border-white/60 focus-within:ring-2 focus-within:ring-white/20 w-32 md:w-48">
-              <svg className={`w-4 h-4 opacity-60 ${currentTheme.text === 'text-white' ? 'text-white' : 'text-black'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {/* C. 搜索栏 (移到了右边) */}
+            <div className={`flex items-center px-4 py-2 rounded-2xl border border-white/10 backdrop-blur-md transition-all ${currentTheme.bg === '#ffffff' ? 'bg-black/5' : 'bg-white/10'}`}>
+              <svg className={`w-3.5 h-3.5 mr-2 opacity-40 ${currentTheme.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
                 type="text"
+                placeholder={lang === 'cn' ? '搜索档案...' : lang === 'sv' ? 'Sök...' : 'Search...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={lang === 'cn' ? '搜索名字...' : 'Search...'}
-                className={`bg-transparent w-full h-full pl-2 outline-none font-bold text-sm font-hand placeholder-current placeholder-opacity-50 ${currentTheme.text === 'text-white' ? 'text-white' : 'text-black'}`}
+                className={`bg-transparent border-none text-[11px] font-black tracking-tight focus:outline-none w-32 placeholder:opacity-30 ${currentTheme.text}`}
               />
             </div>
+          </div>
 
-            {/* 1. 排序下拉菜单 (Sort Dropdown) */}
-            <div className="relative">
-              <button
-                onClick={() => setOpenHeaderMenu(openHeaderMenu === 'sort' ? null : 'sort')}
-                className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 h-10 rounded-full border border-white/30 shadow-sm transition-all hover:bg-white/30"
-              >
-                <span className={`font-bold font-hand text-sm ${currentTheme.text === 'text-white' ? 'text-white' : 'text-black'}`}>
-                  {sortBy === 'time' ? (lang === 'cn' ? '最新' : lang === 'se' ? 'Nyaste' : 'Newest') :
-                    sortBy === 'rarity' ? (lang === 'cn' ? '稀有度' : lang === 'se' ? 'Sällsynthet' : 'Rarity') :
-                      (lang === 'cn' ? '战斗力' : lang === 'se' ? 'Kraft' : 'Power')}
-                </span>
-                <span className={`text-[10px] opacity-70 ${currentTheme.text === 'text-white' ? 'text-white' : 'text-black'}`}>▼</span>
-              </button>
+          {/* 【右侧】硬核黑框组 (标题 + 统计报告 + 返回按钮) */}
+          <div className="flex items-center gap-4">
+            <h2 className={`text-2xl md:text-3xl font-black italic uppercase tracking-tighter mr-2 ${currentTheme.text}`} style={{ WebkitTextStroke: '0.5px black' }}>
+              {lang === 'cn' ? '星际档案馆' : 'Archives'}
+            </h2>
 
-              {openHeaderMenu === 'sort' && (
-                <div className="absolute top-full right-0 mt-2 z-[70] bg-white border-[3px] border-black rounded-2xl p-2 shadow-[6px_6px_0_black] animate-scale-in flex flex-col gap-1 min-w-[120px]">
-                  {(['time', 'rarity', 'power'] as const).map(opt => {
-                    const label = opt === 'time' ? (lang === 'cn' ? '最新' : lang === 'se' ? 'Nyaste' : 'Newest') :
-                      opt === 'rarity' ? (lang === 'cn' ? '稀有度' : lang === 'se' ? 'Sällsynthet' : 'Rarity') :
-                        (lang === 'cn' ? '战斗力' : lang === 'se' ? 'Kraft' : 'Power');
-                    return (
-                      <button
-                        key={opt}
-                        onClick={() => { setSortBy(opt); setOpenHeaderMenu(null); }}
-                        className={`p-2 rounded-xl text-sm font-bold font-hand transition-all text-center
-                          ${sortBy === opt ? 'bg-livia-yellow border-2 border-black shadow-[2px_2px_0_black] -translate-y-[2px]' : 'bg-transparent border-2 border-transparent text-gray-600 hover:bg-gray-100'}
-                        `}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+            {/* 统计触发按钮 */}
+            <button
+              onClick={() => setIsStatsOpen(true)}
+              className="w-12 h-12 flex items-center justify-center bg-[#FFD93D] text-black border-[3px] border-black rounded-xl shadow-[4px_4px_0_black] hover:-translate-y-1 active:translate-y-0.5 active:shadow-none transition-all"
+              title="Astro Report"
+            >
+              <IconAstroStats className="w-6 h-6" />
+            </button>
+
+            {/* 返回编辑器 */}
+            <button
+              onClick={onBack}
+              className="px-6 py-3 bg-white border-[3px] border-black rounded-xl font-black text-sm shadow-[4px_4px_0_black] hover:-translate-y-1 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-2"
+            >
+              <span>←</span>
+              {lang === 'cn' ? '返回' : 'BACK'}
+            </button>
+          </div>
+        </div>
+
+        {/* ======================================================= */}
+        {/* 2. 列表内容区域 (网格) */}
+        {/* ======================================================= */}
+        {
+          passports.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center bg-white/30 backdrop-blur-md border-[4px] border-dashed border-black/30 rounded-[3rem] p-10 mt-10 shadow-lg">
+              <div className="text-6xl mb-4 opacity-70">📂</div>
+              <p className="font-hand text-2xl text-black/70 font-bold">{lang === 'cn' ? '还没有签发的护照...' : 'No passports issued yet...'}</p>
+              <p className="font-hand text-xl text-black/50 mt-2">{lang === 'cn' ? '快去创建一个角色并保存吧！' : 'Go create a character and save it!'}</p>
             </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+              {sortedPassports.map(p => {
+                const pStats = calculateStats(p.selectedParts, p.stats);
+                const domStat = getDominantStat(pStats);
+                const rarityBarColors = {
+                  C: 'bg-stone-200/60 border-stone-300',
+                  U: 'bg-emerald-100/70 border-emerald-200',
+                  R: 'bg-sky-100/70 border-sky-200',
+                  E: 'bg-purple-200/80 border-purple-300',
+                  L: 'bg-amber-300 border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]'
+                };
 
-            {/* 2. 背景选择下拉菜单 (Theme Dropdown) - 升级版色卡托盘 */}
-            <div className="relative">
-              <button
-                onClick={() => setOpenHeaderMenu(openHeaderMenu === 'theme' ? null : 'theme')}
-                className="flex items-center gap-2 bg-white/20 backdrop-blur-sm p-1.5 h-10 rounded-full border border-white/30 shadow-sm transition-all hover:bg-white/30 group"
-              >
-                {/* 当前颜色的预览小圆点，带内阴影更有质感 */}
-                <div
-                  className="w-7 h-7 rounded-full border-2 border-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.2),0_1px_2px_rgba(0,0,0,0.1)] transition-transform group-hover:scale-110"
-                  style={{ backgroundColor: currentTheme.bg }}
-                />
-                <span className={`text-[10px] opacity-70 pr-1 transition-transform ${openHeaderMenu === 'theme' ? 'rotate-180' : ''} ${currentTheme.text === 'text-white' ? 'text-white' : 'text-black'}`}>
-                  ▼
-                </span>
-              </button>
+                return (
+                  <div
+                    key={p.id}
+                    onClick={() => { setSelectedId(p.id); setIsFlipped(false); setActiveTab('profile'); }}
+                    className={`group cursor-pointer bg-white p-3 pb-6 border-[3px] border-black rounded-2xl transition-all relative ${currentTheme.isLight ? 'shadow-[0_8px_20px_rgba(0,0,0,0.1)] hover:-translate-y-1.5' : 'shadow-[6px_6px_0_black] hover:-translate-y-1.5 hover:shadow-[10px_10px_0_black]'}`}
+                  >
+                    {/* 稀有度彩色胶带 */}
+                    <div className={`absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 rotate-1 shadow-sm border-l border-r border-white/50 ${rarityBarColors[p.rarity || 'C']}`} />
 
-              {openHeaderMenu === 'theme' && (
-                <div className="absolute top-full right-0 mt-3 z-[70] bg-white border-[3px] border-black rounded-[24px] p-3 shadow-[8px_8px_0_black] animate-scale-in min-w-[220px]">
-                  {/* 顶部小标题：增加专业感 */}
-                  <p className="text-[10px] font-black text-gray-400 mb-2 px-1 tracking-widest uppercase">Select Theme</p>
+                    {/* Polaroid 照片区 */}
+                    <div className="aspect-square border-2 border-black rounded-xl overflow-hidden mb-4 relative bg-white">
+                      <ArtBackground dominantStat={domStat} seed={p.id} />
 
-                  {/* 色卡布局：不再是简单的格子，而是有呼吸感的平铺 */}
-                  <div className="flex flex-wrap gap-2.5 justify-center">
-                    {THEMES.map(theme => {
-                      const isSelected = currentTheme.id === theme.id;
+                      {/* 稀有度印章 */}
+                      <div className="absolute top-1 right-2 z-20 transform rotate-12 pointer-events-none">
+                        <RaritySeal rarity={p.rarity || 'C'} />
+                      </div>
+
+                      {/* 收藏星星 */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onUpdatePassport(p.id, 'isFavorite', !p.isFavorite); }}
+                        className="absolute top-2 left-2 z-30 transition-transform hover:scale-125 drop-shadow-md"
+                      >
+                        <svg viewBox="0 0 24 24" fill={p.isFavorite ? "#FFD700" : "none"} stroke={p.isFavorite ? "#FFD700" : "currentColor"} className={`w-6 h-6 ${p.isFavorite ? 'drop-shadow-[0_0_4px_rgba(255,215,0,0.8)]' : 'text-black opacity-30 hover:opacity-80 hover:text-white'}`} strokeWidth="2.5" strokeLinejoin="round">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                      </button>
+
+                      {/* 角色立绘 */}
+                      <div className="absolute inset-0 z-10 flex justify-center items-end">
+                        <div className="transform scale-[0.85] translate-y-[15px] origin-bottom transition-transform group-hover:scale-[0.9]">
+                          <Avatar selectedParts={p.selectedParts} dominantStat={domStat} transparent={true} className="border-none shadow-none" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 名称 & ID */}
+                    <div className="text-center">
+                      <h3 className="font-bold font-rounded text-lg leading-none uppercase truncate px-1">{p.name}</h3>
+                      <p className="font-mono text-[10px] text-gray-400 mt-1 truncate tracking-widest">{p.id}</p>
+                    </div>
+
+                    {/* 删除按钮 */}
+                    {!p.isFavorite && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDeleteId(p.id); }}
+                        className="absolute -top-3 -right-3 w-8 h-8 bg-red-500 text-white rounded-full border-2 border-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 z-10 shadow-sm font-bold"
+                        title="Delete"
+                      > × </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )
+        }
+
+        {/* ======================================================= */}
+        {/* 终极修复版: 星际终端 (彻底解决 .trim() 导致的白屏) */}
+        {/* ======================================================= */}
+        {
+          isStatsOpen && (() => {
+            const l = (lang === 'se' || lang === 'sv' ? 'se' : (lang === 'cn' ? 'cn' : 'en')) as 'se' | 'en' | 'cn';
+
+            let totalLitStars = 0;
+            let totalCompletedGalaxies = 0;
+            const traits = { mod: 0, bus: 0, klurighet: 0 };
+            const rarities = { L: 0, E: 0, R: 0, U: 0, C: 0 };
+
+            const safePassports = Array.isArray(passports) ? passports : [];
+
+            safePassports.forEach(p => {
+              if (!p) return;
+
+              // --- A. 强力扫描版：统计故事与星系 ---
+              if (p.stories && Array.isArray(p.stories)) {
+                const galaxySet = new Set<string>();
+
+                p.stories.forEach(s => {
+                  if (!s) return;
+
+                  // 只要有 ID，我们就认为这颗星星存在（或者有任何文字内容）
+                  const hasAnyContent = (s.title && String(s.title).trim() !== "") ||
+                    (s.content && String(s.content).trim() !== "") ||
+                    (s.date && String(s.date).trim() !== "");
+
+                  if (hasAnyContent) {
+                    totalLitStars += 1;
+
+                    // 更加兼容的 ID 解析逻辑
+                    if (s.id) {
+                      const idStr = String(s.id);
+                      const gIdx = idStr.includes('-') ? idStr.split('-')[0] : idStr;
+                      galaxySet.add(gIdx);
+                    }
+                  }
+                });
+                totalCompletedGalaxies += galaxySet.size;
+              }
+
+              // --- B. 统计属性 (增加函数存在性检查) ---
+              try {
+                if (p.selectedParts && typeof calculateStats === 'function' && typeof getDominantStat === 'function') {
+                  const pStats = calculateStats(p.selectedParts, p.stats);
+                  const dom = getDominantStat(pStats);
+                  if (dom && traits[dom as keyof typeof traits] !== undefined) {
+                    traits[dom as keyof typeof traits]++;
+                  }
+                }
+              } catch (e) {
+                console.error("Stats check failed:", e);
+              }
+
+              // --- C. 统计稀有度 ---
+              if (p.rarity && rarities[p.rarity as keyof typeof rarities] !== undefined) {
+                rarities[p.rarity as keyof typeof rarities]++;
+              }
+            });
+
+            const T = {
+              title: { cn: '深空终端', en: 'DEEP SPACE', se: 'DJUPRYMD TERMINAL' },
+              sub: { cn: '加密数据区', en: 'ENCRYPTED DATA', se: 'KRYPTERAD DATA' },
+              citizens: { cn: '居民总数', en: 'CITIZENS', se: 'MEDBORGARE' },
+              stories: { cn: '已点亮星星', en: 'LIT STARS', se: 'TÄNDA STJÄRNOR' },
+              galaxies: { cn: '发现星系', en: 'GALAXIES', se: 'GALAXER' },
+              time: { cn: '在线时长', en: 'UPTIME', se: 'DRIFTTID' },
+              trait: { cn: '性格图谱分布', en: 'TRAITS', se: 'EGENSKAPER' },
+              rarity: { cn: '稀有度谱系', en: 'RARITY', se: 'SÄLLSYNTHET' },
+              close: { cn: '断开连接', en: 'DISCONNECT', se: 'KOPPLA FRÅN' },
+              L: { cn: '传说 (L)', en: 'LEGENDARY', se: 'LEGENDARISK' },
+              E: { cn: '史诗 (E)', en: 'EPIC', se: 'EPISK' },
+              R: { cn: '稀有 (R)', en: 'RARE', se: 'SÄLLSYNT' },
+              U: { cn: '优秀 (U)', en: 'UNCOMMON', se: 'OVANLIG' },
+              C: { cn: '普通 (C)', en: 'COMMON', se: 'VANLIG' },
+              MOD: { cn: '勇敢 (MOD)', en: 'MOD', se: 'MOD' },
+              BUS: { cn: '淘气 (BUS)', en: 'BUS', se: 'BUS' },
+              KLUR: { cn: '智慧 (KLUR)', en: 'KLUR', se: 'KLURIGHET' }
+            };
+
+            const formatTime = (secs: number) => {
+              const s = typeof secs === 'number' ? secs : 0;
+              return `${Math.floor(s / 60)}m ${s % 60}s`;
+            };
+
+            const renderDonut = (data: { label: string, value: number, color: string }[]) => {
+              let offset = 0;
+              const total = Math.max(safePassports.length, 1);
+              return (
+                <div className="relative w-28 h-28">
+                  <svg viewBox="0 0 42 42" className="w-full h-full -rotate-90">
+                    <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#222" strokeWidth="4" />
+                    {data.map((slice, i) => {
+                      if (slice.value === 0) return null;
+                      const percent = (slice.value / total) * 100;
+                      const strokeDasharray = `${percent} ${100 - percent}`;
+                      const strokeDashoffset = -offset;
+                      offset += percent;
                       return (
-                        <button
-                          key={theme.id}
-                          onClick={() => { setCurrentTheme(theme); setOpenHeaderMenu(null); }}
-                          className={`
-                            relative w-9 h-9 rounded-full transition-all duration-300
-                            ${isSelected
-                              ? 'scale-110 ring-2 ring-black ring-offset-2'
-                              : 'hover:scale-110 hover:shadow-md active:scale-95'}
-                          `}
-                          style={{ backgroundColor: theme.bg }}
-                        >
-                          {/* 选中时的内部勾选标记 */}
-                          {isSelected && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className={`w-1.5 h-1.5 rounded-full ${theme.id === 'dark' ? 'bg-white' : 'bg-black opacity-30'}`} />
-                            </div>
-                          )}
-
-                          {/* 悬停时的光泽层 */}
-                          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent to-white/30 pointer-events-none" />
-                        </button>
+                        <circle key={i} cx="21" cy="21" r="15.915" fill="transparent" stroke={slice.color}
+                          strokeWidth="5" strokeDasharray={strokeDasharray} strokeDashoffset={strokeDashoffset}
+                          className="transition-all duration-700 ease-out"
+                        />
                       );
                     })}
-                  </div>
+                  </svg>
                 </div>
-              )}
-            </div>
-
-            <h2 className={`text-3xl md:text-4xl font-black drop-shadow-[2px_2px_0_black] stroke-black transition-colors duration-500 ${currentTheme.text}`} style={{ WebkitTextStroke: '1.5px black' }}>
-              {lang === 'cn' ? '档案室' : 'ARCHIVES'}
-            </h2>
-          </div>
-        </div>
-
-        {/* Empty State */}
-        {passports.length === 0 && (
-          <div className="flex-1 flex flex-col items-center justify-center bg-white/50 border-[4px] border-dashed border-gray-400 rounded-3xl p-10">
-            <div className="text-6xl mb-4">📂</div>
-            <p className="font-hand text-2xl text-gray-600">
-              {lang === 'cn' ? '还没有签发的护照...' : 'No passports issued yet...'}
-            </p>
-            <p className="font-hand text-xl text-gray-500 mt-2">
-              {lang === 'cn' ? '快去创建一个角色并保存吧！' : 'Go create a character and save it!'}
-            </p>
-          </div>
-        )}
-
-        {/* Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {sortedPassports.map(p => {
-            const pStats = calculateStats(p.selectedParts, p.stats);
-            const domStat = getDominantStat(pStats);
-
-            // 1. 定义变量 rarityBarColors，映射稀有度到对应的颜色类
-            const rarityBarColors = {
-              C: 'bg-stone-200/60 border-stone-300',      // 普通：灰白纸
-              U: 'bg-emerald-100/70 border-emerald-200', // 罕见：淡绿
-              R: 'bg-sky-100/70 border-sky-200',         // 稀有：淡蓝
-              E: 'bg-purple-200/80 border-purple-300',   // 史诗：淡紫
-              L: 'bg-amber-300 border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]' // 传说：金色
+              );
             };
+
             return (
-              <div
-                key={p.id}
-                onClick={() => { setSelectedId(p.id); setIsFlipped(false); setActiveTab('profile'); }}
-                className={`group cursor-pointer bg-white p-3 pb-6 border-[3px] border-black rounded-xl transition-all relative
-                   ${currentTheme.isLight
-                    ? 'shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.2)]'
-                    : 'shadow-[4px_4px_0_black] hover:-translate-y-1 hover:shadow-[6px_6px_0_black]'}
-                 `}
-              >
-                {/* --- [大师级修改 1：把胶带颜色改为稀有度颜色] --- */}
-                {/* 这样不同等级的照片，顶部的胶带颜色是不一样的，非常直观！ */}
-                <div className={`absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 rotate-1 shadow-sm border-l border-r border-white/50 
-                  ${rarityBarColors[p.rarity || 'C']}`}
-                />
-
-                {/* Thumbnail (Polaroid Style) */}
-                <div className="aspect-square border-2 border-black rounded-lg overflow-hidden mb-3 relative bg-white">
-                  <ArtBackground dominantStat={domStat} seed={p.id} />
-
-                  {/* --- [修改点：档案室小照片印章] --- */}
-                  <div className="absolute top-1 right-2 z-20 transform rotate-12 pointer-events-none">
-                    <RaritySeal rarity={p.rarity || 'C'} />
-                  </div>
-
-                  {/* --- [新增：收藏锁定小星星] --- */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation(); // 阻止点击卡片触发详情
-                      onUpdatePassport(p.id, 'isFavorite', !p.isFavorite);
-                    }}
-                    className="absolute top-2 left-2 z-30 transition-transform hover:scale-125 drop-shadow-md"
-                  >
-                    <svg viewBox="0 0 24 24" fill={p.isFavorite ? "#FFD700" : "none"} stroke={p.isFavorite ? "#FFD700" : "currentColor"} className={`w-6 h-6 ${p.isFavorite ? 'drop-shadow-[0_0_4px_rgba(255,215,0,0.8)]' : 'text-black opacity-30 hover:opacity-80 hover:text-white'}`} strokeWidth="2.5" strokeLinejoin="round">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                    </svg>
-                  </button>
-
-                  <div className="absolute inset-0 z-10 flex justify-center items-end">
-                    <div className="transform scale-[0.85] translate-y-[15px] origin-bottom transition-transform group-hover:scale-[0.9]">
-                      {/* 这里的 Avatar 保持你原来的 */}
-                      <Avatar selectedParts={p.selectedParts} dominantStat={domStat} transparent={true} className="border-none shadow-none" />
+              <div key="stats-modal" className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setIsStatsOpen(false)} />
+                <div className="relative bg-[#0a0a0c] border border-blue-500/30 rounded-[2.5rem] w-full max-w-3xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.9)] animate-in zoom-in-95 duration-300 font-rounded text-white">
+                  <div className="p-8 md:p-12 flex flex-col gap-8">
+                    <div className="flex justify-between items-start border-b border-white/10 pb-6">
+                      <div>
+                        <h3 className="text-3xl md:text-4xl font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-200">
+                          {T.title[l]}
+                        </h3>
+                        <p className="text-[10px] opacity-30 font-mono tracking-[0.3em] mt-2">{T.sub[l]} // STABLE_v3.0</p>
+                      </div>
+                      <div className="bg-red-500/10 border border-red-500/50 px-3 py-1.5 rounded-lg text-[10px] text-red-400 animate-pulse font-black flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-red-500" /> ONLINE
+                      </div>
                     </div>
+
+                    <div className="grid grid-cols-4 gap-4">
+                      <div className="bg-white/5 p-5 rounded-2xl flex flex-col items-center">
+                        <span className="text-[9px] opacity-40 uppercase mb-2">{T.citizens[l]}</span>
+                        <span className="text-2xl font-black">{safePassports.length}</span>
+                      </div>
+                      <div className="bg-white/5 p-5 rounded-2xl flex flex-col items-center">
+                        <span className="text-[9px] opacity-40 uppercase mb-2">{T.stories[l]}</span>
+                        <span className="text-2xl font-black text-green-400">{totalLitStars}</span>
+                      </div>
+                      <div className="bg-white/5 p-5 rounded-2xl flex flex-col items-center">
+                        <span className="text-[9px] opacity-40 uppercase mb-2">{T.galaxies[l]}</span>
+                        <span className="text-2xl font-black text-purple-400">{totalCompletedGalaxies}</span>
+                      </div>
+                      <div className="bg-white/5 p-5 rounded-2xl flex flex-col items-center">
+                        <span className="text-[9px] opacity-40 uppercase mb-2">{T.time[l]}</span>
+                        <span className="text-2xl font-black text-blue-400">{formatTime(sessionTime)}</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-black/40 rounded-[2rem] p-8 border border-white/5">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="text-[10px] font-black opacity-40 uppercase tracking-widest mb-4">{T.trait[l]}</div>
+                          <ul className="space-y-2 text-[10px] font-bold">
+                            <li className="flex justify-between items-center"><span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#ef4444]" /> {T.MOD[l]}</span><span>{traits.mod}</span></li>
+                            <li className="flex justify-between items-center"><span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#f59e0b]" /> {T.BUS[l]}</span><span>{traits.bus}</span></li>
+                            <li className="flex justify-between items-center"><span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#3b82f6]" /> {T.KLUR[l]}</span><span>{traits.klurighet}</span></li>
+                          </ul>
+                        </div>
+                        {renderDonut([
+                          { label: 'MOD', value: traits.mod, color: '#ef4444' },
+                          { label: 'BUS', value: traits.bus, color: '#f59e0b' },
+                          { label: 'KLUR', value: traits.klurighet, color: '#3b82f6' }
+                        ])}
+                      </div>
+
+                      <div className="flex items-center justify-between gap-4 md:border-l border-white/10 md:pl-8">
+                        <div className="flex-1">
+                          <div className="text-[10px] font-black opacity-40 uppercase tracking-widest mb-4">{T.rarity[l]}</div>
+                          <ul className="space-y-1.5 text-[9px] font-bold">
+                            {['L', 'E', 'R', 'U', 'C'].map(rk => (
+                              <li key={rk} className="flex justify-between items-center">
+                                <span className="text-white/80">{T[rk as 'L'][l]}</span>
+                                <span>{rarities[rk as keyof typeof rarities]}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        {renderDonut([
+                          { label: 'L', value: rarities.L, color: '#fbbf24' },
+                          { label: 'E', value: rarities.E, color: '#c084fc' },
+                          { label: 'R', value: rarities.R, color: '#3b82f6' },
+                          { label: 'U', value: rarities.U, color: '#22c55e' },
+                          { label: 'C', value: rarities.C, color: '#94a3b8' }
+                        ])}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setIsStatsOpen(false)}
+                      className="w-full py-5 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-2xl font-black text-sm tracking-[0.3em] border border-blue-400/30 active:scale-[0.98] transition-transform"
+                    >
+                      {T.close[l]}
+                    </button>
                   </div>
                 </div>
-
-                {/* Name & ID */}
-                <div className="text-center">
-                  <h3 className="font-bold font-rounded text-lg leading-none uppercase truncate px-1">{p.name}</h3>
-                  <p className="font-mono text-[10px] text-gray-400 mt-1 truncate">{p.id}</p>
-                </div>
-
-                {/* Delete Button (Hover only) - Hidden for permanent residents */}
-                {!p.isFavorite && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setDeleteId(p.id); }}
-                    className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full border-2 border-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 z-10 shadow-sm"
-                    title="Delete"
-                  >
-                    ×
-                  </button>
-                )}
               </div>
             );
-          })}
-        </div>
+          })()
+        }
       </div>
     );
   }

@@ -708,48 +708,79 @@ export const getWeightedRandomPart = (parts: any[]) => {
   return parts[0];
 };
 
+// 3. 导出角色称号函数 (根据 stats 的主导属性和数值来定称号)
+export const getCharacterTitle = (stats: CharacterStats, lang: Language): string => {
+  const { mod, bus, klurighet } = stats;
+
+  const titles = {
+    cn: {
+      brave: "无畏的开拓者",
+      mischief: "捣蛋大魔王",
+      wise: "首席大智者",
+      allRound: "文武双全的游侠",
+      default: "见习宇航员"
+    },
+    en: {
+      brave: "Fearless Explorer",
+      mischief: "Chaos Master",
+      wise: "Chief Sage",
+      allRound: "Versatile Ranger",
+      default: "Junior Astronaut"
+    },
+    se: {
+      brave: "Modig Pionjär",
+      mischief: "Busig Mästare",
+      wise: "Visdomens Ledare",
+      allRound: "Mångsidig Jägare",
+      default: "Astronaut-lärling"
+    }
+  };
+
+  const current = titles[lang] || titles.en;
+
+  if (mod >= 8) return current.brave;
+  if (bus >= 8) return current.mischief;
+  if (klurighet >= 8) return current.wise;
+  if (mod >= 5 && klurighet >= 5) return current.allRound;
+  
+  return current.default;
+};
+
 // 在文件末尾添加判定函数
 export const calculateFinalRarity = (
   selectedParts: Record<string, string>, 
-  selectedPlanetParts: Record<string, string>, // 新增：星球部件
+  selectedPlanetParts: Record<string, string>, 
   stats: CharacterStats
 ): Rarity => {
-  // 1. 获取所有部件定义
+  // 1. 获取所有的 9 件装备 (5 件角色 + 4 件星球)
   const charParts = Object.values(selectedParts).map(id => PARTS_DB[id]).filter(Boolean);
   const planetParts = Object.values(selectedPlanetParts).map(id => PARTS_DB[id]).filter(Boolean);
+  const allParts = [...charParts, ...planetParts];
   
-  // 2. 核心数值：原始属性总和
-  let totalScore = stats.mod + stats.bus + stats.klurighet;
+  // 2. 核心模块 A：基础属性分 (Max: 27)
+  let baseScore = stats.mod + stats.bus + stats.klurighet;
 
-  // --- 大师级秘籍：星球共鸣加分 ---
-  // 规则：星球部件中，每有一件 R 给总分 +2，每有一件 E/L 给总分 +4
-  planetParts.forEach(part => {
-    if (part.rarity === 'R') totalScore += 2;
-    if (part.rarity === 'E' || part.rarity === 'L') totalScore += 4;
+  // 3. 核心模块 B：装备华丽度分 (Max: 35 + 28 = 63)
+  // 按照我们设计的权重：U=1, R=3, E=5, L=7
+  allParts.forEach(part => {
+    if (part.rarity === 'U') baseScore += 1;
+    if (part.rarity === 'R') baseScore += 3;
+    if (part.rarity === 'E') baseScore += 5;
+    if (part.rarity === 'L') baseScore += 7;
   });
 
-  // 3. 统计各等级部件数量 (包含角色和星球，全方位的华丽度)
-  const allParts = [...charParts, ...planetParts];
-  const countL = allParts.filter(p => p.rarity === 'L').length;
-  const countEOrHigher = allParts.filter(p => p.rarity === 'E' || p.rarity === 'L').length;
-  const countROrHigher = allParts.filter(p => p.rarity === 'R' || p.rarity === 'E' || p.rarity === 'L').length;
+  // 4. 浮动机制：给最终总分加入 0.95 ~ 1.05 的随机浮动 (这会让卡在 74 分的玩家有机会爆上 75 分的 L 级，增加抽卡刺激感)
+  const luckyFactor = 0.95 + Math.random() * 0.1;
+  const finalScore = baseScore * luckyFactor;
 
-  // --- 判定阶梯 (使用了加分后的 totalScore) ---
+  // 5. 【特例判定】：天选之零 (全 C 且 属性最低)
+  const hasOnlyCommon = allParts.every(p => !p.rarity || p.rarity === 'C');
+  if ((stats.mod + stats.bus + stats.klurighet) <= 3 && hasOnlyCommon) return 'L'; 
 
-  // 【Legendary】 极难：总分(含加分) >= 35 且 至少 6 件 L 部件 (角色+星球共计)
-  if (totalScore >= 35 && countL >= 6) return 'L';
-
-  // 【Epic】 总分 >= 28 且 至少 4 件 E 及以上
-  if (totalScore >= 28 && countEOrHigher >= 4) return 'E';
-
-  // 【Rare】 总分 >= 18 且 至少 3 件 R 及以上
-  if (totalScore >= 18 && countROrHigher >= 3) return 'R';
-
-  // 【Uncommon】 总分 >= 12 且 至少 1 件 R 及以上
-  if (totalScore >= 12 && countROrHigher >= 1) return 'U';
-
-  // 【天选之零】 如果原始分数极低且没有任何高级部件
-  if ((stats.mod + stats.bus + stats.klurighet) <= 3 && countROrHigher === 0) return 'L'; 
-
+  // 6. 严格阶梯判定 (基于 90分满分体系)
+  if (finalScore >= 75) return 'L';
+  if (finalScore >= 55) return 'E';
+  if (finalScore >= 35) return 'R';
+  if (finalScore >= 18) return 'U';
   return 'C';
 };
