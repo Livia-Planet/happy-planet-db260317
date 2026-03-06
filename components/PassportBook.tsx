@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { PassportData, Language, StoryEntry } from '../types';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
@@ -6,6 +7,15 @@ import { calculateStats, generateFlavorText, getDominantStat, TRANSLATIONS, getS
 import { RadarChart } from './RadarChart';
 import { StoryTab } from './StoryTab';
 import { RelationMap } from './RelationMap';
+
+const IconWarning = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+    {/* 粗圆的感叹号棒 */}
+    <path d="M12 8V13" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+    {/* 粗圆的点 */}
+    <path d="M12 17.01V17" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 
 // === 统计弹窗专用图标 ===
 const IconAstroStats = ({ className }: { className?: string }) => (
@@ -603,13 +613,17 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                       <p className="font-mono text-[10px] text-gray-400 mt-1 truncate tracking-widest">{p.id}</p>
                     </div>
 
-                    {/* 删除按钮 */}
+                    {/* 列表页右上角的红叉 */}
                     {!p.isFavorite && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); setDeleteId(p.id); }}
-                        className="absolute -top-3 -right-3 w-8 h-8 bg-red-500 text-white rounded-full border-2 border-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 z-10 shadow-sm font-bold"
-                        title="Delete"
-                      > × </button>
+                        onClick={(e) => {
+                          e.stopPropagation();   // 仅仅阻止进入详情页即可
+                          setDeleteId(p.id);     // 直接触发删除ID
+                        }}
+                        className="absolute -top-3 -right-3 w-9 h-9 bg-red-500 text-white rounded-full border-2 border-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-125 z-[100] shadow-lg font-black text-xl cursor-pointer"
+                      >
+                        ×
+                      </button>
                     )}
                   </div>
                 );
@@ -817,6 +831,71 @@ export const PassportBook: React.FC<PassportBookProps> = ({
             );
           })()
         }
+
+        {/* ======================================================= */}
+        {/* 💥 补上的这块：档案列表视角的二次确认删除弹窗！ */}
+        {/* ======================================================= */}
+        {deleteId && createPortal(
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+            {/* 遮罩层 */}
+            <div
+              className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-300"
+              onClick={() => setDeleteId(null)}
+            />
+
+            {/* 弹窗主体 */}
+            <div className="relative bg-white border-[4px] border-black p-8 rounded-[3rem] max-w-sm w-full shadow-[10px_10px_0_rgba(0,0,0,1)] transform animate-in zoom-in-95 duration-200">
+              <div className="text-center">
+
+                {/* 警告图标 + 标签 */}
+                <div className="flex flex-col items-center mb-6">
+                  <div className="w-16 h-16 bg-yellow-400 text-black rounded-full flex items-center justify-center border-[3px] border-black -rotate-6 shadow-[4px_4px_0_black] z-10">
+                    <IconWarning className="w-10 h-10" />
+                  </div>
+                  <div className="bg-black text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-[0.2em] -mt-2 rotate-3 z-20">
+                    {lang === 'cn' ? '警告' : lang === 'se' ? 'VARNING' : 'WARNING'}
+                  </div>
+                </div>
+
+                {/* 标题 */}
+                <h3 className="text-2xl font-black font-rounded uppercase text-black mb-2">
+                  {lang === 'cn' ? '确认删除？' : lang === 'se' ? 'RADERA?' : 'DELETE?'}
+                </h3>
+
+                {/* 正文 */}
+                <p className="text-gray-500 font-medium mb-8 leading-relaxed px-2">
+                  {lang === 'cn'
+                    ? '此操作无法撤销，该角色的星际档案将永久消失！'
+                    : lang === 'se'
+                      ? 'Detta går inte att ångra. Karaktärens stjärndata kommer att raderas för alltid!'
+                      : 'This action is permanent. The character data will be lost forever!'}
+                </p>
+
+                {/* 按钮组 */}
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setDeleteId(null)}
+                    className="flex-1 py-4 border-2 border-black rounded-2xl font-bold hover:bg-gray-100 active:scale-95 transition-all text-black uppercase text-xs tracking-widest"
+                  >
+                    {lang === 'cn' ? '再想想' : lang === 'se' ? 'AVBRYT' : 'CANCEL'}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      onDelete(deleteId);
+                      setDeleteId(null);
+                    }}
+                    className="flex-1 py-4 bg-red-500 text-white border-2 border-black rounded-2xl font-black shadow-[4px_4px_0_black] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:scale-95 transition-all uppercase text-xs tracking-widest"
+                  >
+                    {lang === 'cn' ? '确定删除' : lang === 'se' ? 'RADERA' : 'DELETE'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
       </div>
     );
   }
@@ -1513,6 +1592,67 @@ export const PassportBook: React.FC<PassportBookProps> = ({
             onClose={() => setIsMapOpen(false)}
             lang={lang}
           />
+        )}
+
+        {deleteId && createPortal(
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+            {/* 遮罩层 */}
+            <div
+              className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-300"
+              onClick={() => setDeleteId(null)}
+            />
+
+            {/* 弹窗主体 */}
+            <div className="relative bg-white border-[4px] border-black p-8 rounded-[3rem] max-w-sm w-full shadow-[10px_10px_0_rgba(0,0,0,1)] transform animate-in zoom-in-95 duration-200">
+              <div className="text-center">
+
+                {/* 警告图标 + 标签 */}
+                <div className="flex flex-col items-center mb-6">
+                  <div className="w-16 h-16 bg-yellow-400 text-black rounded-full flex items-center justify-center border-[3px] border-black -rotate-6 shadow-[4px_4px_0_black] z-10">
+                    <IconWarning className="w-10 h-10" />
+                  </div>
+                  <div className="bg-black text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-[0.2em] -mt-2 rotate-3 z-20">
+                    {lang === 'cn' ? '警告' : lang === 'se' ? 'VARNING' : 'WARNING'}
+                  </div>
+                </div>
+
+                {/* 标题 */}
+                <h3 className="text-2xl font-black font-rounded uppercase text-black mb-2">
+                  {lang === 'cn' ? '确认删除？' : lang === 'se' ? 'RADERA?' : 'DELETE?'}
+                </h3>
+
+                {/* 正文 */}
+                <p className="text-gray-500 font-medium mb-8 leading-relaxed px-2">
+                  {lang === 'cn'
+                    ? '此操作无法撤销，该角色的星际档案将永久消失！'
+                    : lang === 'se'
+                      ? 'Detta går inte att ångra. Karaktärens stjärndata kommer att raderas för alltid!'
+                      : 'This action is permanent. The character data will be lost forever!'}
+                </p>
+
+                {/* 按钮组 */}
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setDeleteId(null)}
+                    className="flex-1 py-4 border-2 border-black rounded-2xl font-bold hover:bg-gray-100 active:scale-95 transition-all text-black uppercase text-xs tracking-widest"
+                  >
+                    {lang === 'cn' ? '再想想' : lang === 'se' ? 'AVBRYT' : 'CANCEL'}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      onDelete(deleteId);
+                      setDeleteId(null);
+                    }}
+                    className="flex-1 py-4 bg-red-500 text-white border-2 border-black rounded-2xl font-black shadow-[4px_4px_0_black] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:scale-95 transition-all uppercase text-xs tracking-widest"
+                  >
+                    {lang === 'cn' ? '确定删除' : lang === 'se' ? 'RADERA' : 'DELETE'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
         )}
 
       </div>
