@@ -63,9 +63,44 @@ const INITIAL_DATA: CharacterData = {
   }
 };
 
+// ==========================================
+// 记忆点：统一本地存储 Key
+// ==========================================
+const STORAGE_KEYS = {
+  PASSPORTS: 'happyPlanet_passports',
+  TOKENS: 'happyPlanet_tokens',
+  DRAFT: 'happyPlanet_draft'
+};
+
 const App: React.FC = () => {
-  // === STATE ===
-  const [characterData, setCharacterData] = useState<CharacterData>(INITIAL_DATA);
+  // ==========================================
+  // 记忆点：状态懒加载 (从硬盘恢复现场)
+  // ==========================================
+  
+  // 1. 恢复：当前捏脸草稿
+  const [characterData, setCharacterData] = useState<CharacterData>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.DRAFT);
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.warn(e); }
+    }
+    return INITIAL_DATA;
+  });
+
+  // 2. 恢复：胡萝卜币
+  const [carrotCoins, setCarrotCoins] = useState<number>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.TOKENS);
+    return saved !== null ? parseInt(saved, 10) : 30;
+  });
+
+  // 3. 恢复：档案库
+  const [savedPassports, setSavedPassports] = useState<PassportData[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.PASSPORTS);
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.warn(e); }
+    }
+    return [];
+  });
+
   const [isFlipped, setIsFlipped] = useState(false);
   const [currentLang, setCurrentLang] = useState<Language>('se');
   const [activeTab, setActiveTab] = useState<TabType>('body');
@@ -77,7 +112,7 @@ const App: React.FC = () => {
   const [flash, setFlash] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   
-  // 【新增】安全升维控制状态
+  // 安全升维控制状态
   const [isIssuing, setIsIssuing] = useState(false); 
   const [shakeBtn, setShakeBtn] = useState<string | null>(null);
 
@@ -85,15 +120,12 @@ const App: React.FC = () => {
   const [displayBpm, setDisplayBpm] = useState(80);
   const [particles, setParticles] = useState<any[]>([]);
 
-  // new currency state
-  const [carrotCoins, setCarrotCoins] = useState(30);
   const [bigBangActive, setBigBangActive] = useState(false);
   const [bigBangTrigger, setBigBangTrigger] = useState(0); 
   const [actionFeedback, setActionFeedback] = useState<{bigbang?: string; issue?: string}>({});
 
   const { spendCarrots, gainCarrots } = useAnimateTokens();
   const [viewMode, setViewMode] = useState<'editor' | 'passport'>('editor');
-  const [savedPassports, setSavedPassports] = useState<PassportData[]>([]);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [issuedPassport, setIssuedPassport] = useState<PassportData | null>(null);
 
@@ -118,7 +150,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // 预加载所有高级音效 (修复了路径，去掉/sounds/)
+    // 预加载所有高级音效
     audioCtx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     const preload = async () => {
       if (!audioCtx.current) return;
@@ -138,18 +170,45 @@ const App: React.FC = () => {
     preload();
   }, []);
 
+  // ==========================================
+  // 记忆点：副作用自动保存 & 预设角色多语言同步
+  // ==========================================
+
+  // 自动保存草稿
   useEffect(() => {
-    const stored = localStorage.getItem('happyPlanet_passports');
-    const parsed = stored ? JSON.parse(stored) : [];
-    const presetIds = ALL_PRESETS.map(p => p.id.toUpperCase());
-    const others = parsed.filter((p: PassportData) => {
-      const upId = p.id.toUpperCase();
-      return !presetIds.includes(upId) && upId !== 'HP-BOBU-B' && upId !== 'HP-00000000-BOBU';
+    localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(characterData));
+  }, [characterData]);
+
+  // 自动保存胡萝卜币
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.TOKENS, carrotCoins.toString());
+  }, [carrotCoins]);
+
+  // 自动保存档案库
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.PASSPORTS, JSON.stringify(savedPassports));
+  }, [savedPassports]);
+
+  // 多语言切换时，安全更新内置四天王（Bobu/Duddu/Polly/Plott）的传记，不覆盖用户数据
+  useEffect(() => {
+    setSavedPassports(prev => {
+      const presetIds = ALL_PRESETS.map(p => p.id.toUpperCase());
+      const others = prev.filter(p => {
+        const upId = p.id.toUpperCase();
+        return !presetIds.includes(upId) && upId !== 'HP-BOBU-B' && upId !== 'HP-00000000-BOBU';
+      });
+      
+      const syncedPresets = ALL_PRESETS.map(preset => {
+        let bio = DEFAULT_BIOS.general[currentLang];
+        if (preset.id.includes('BOBU')) bio = DEFAULT_BIOS.bobu[currentLang];
+        else if (preset.id.includes('DUDDU')) bio = DEFAULT_BIOS.duddu[currentLang];
+        else if (preset.id.includes('POLLY')) bio = DEFAULT_BIOS.polly[currentLang];
+        else if (preset.id.includes('PLUTTENPLOTT')) bio = DEFAULT_BIOS.pluttenplott[currentLang];
+        return { ...preset, bio };
+      });
+      
+      return [...syncedPresets, ...others];
     });
-    const syncedPresets = ALL_PRESETS.map(preset => ({
-      ...preset, bio: preset.id.includes('BOBU') ? DEFAULT_BIOS.bobu[currentLang] : DEFAULT_BIOS.duddu[currentLang]
-    }));
-    setSavedPassports([...syncedPresets, ...others]);
   }, [currentLang]);
 
   // 同步当前音乐的 BPM
@@ -180,16 +239,12 @@ const App: React.FC = () => {
 
   // === ACTION: 获得奖励闭环 ===
   const handleReward = useCallback((amount: number, sourceId: string) => {
-    // 1. 发射胡萝卜动画
     gainCarrots(sourceId, amount);
-    
-    // 2. 延迟 700ms (等胡萝卜飞到钱包) 后增加余额并播放清脆的音效
     setTimeout(() => {
       setCarrotCoins(prev => prev + amount);
       if (audioCtx.current && buffers.current.coins) {
         playBuffer(buffers.current.coins, audioCtx.current, 0.4);
       }
-      // 弹出提示
       setToastMsg(currentLang === 'cn' ? `🚀 故事记录成功！奖励 ${amount} 🥕` : `🚀 Story Saved! Reward: ${amount} 🥕`);
       setTimeout(() => setToastMsg(null), 3000);
     }, 700);
@@ -206,7 +261,6 @@ const App: React.FC = () => {
       return;
     }
 
-    // 0. 支付胡萝卜
     if (audioCtx.current && buffers.current.coins) playBuffer(buffers.current.coins, audioCtx.current, 0.5);
     spendCarrots('btn-issue', 5);
     setCarrotCoins(prev => prev - 5);
@@ -214,24 +268,19 @@ const App: React.FC = () => {
 
     await delay(600);
 
-    // 1. 启动"升维"氛围（BPM 飙升 + 背景暗化）
     const originalBpm = PLAYLIST[currentTrackIndex].bpm;
     setDisplayBpm(260);
     setFlash(true);
-    setIsIssuing(true); // 让背景变暗，突出即将出现的弹窗
+    setIsIssuing(true); 
     
     if (audioCtx.current && buffers.current.camera) playBuffer(buffers.current.camera, audioCtx.current, 1.2);
     setTimeout(() => setFlash(false), 150);
 
-    // 2. 蓄力停顿：增加期待感
     await delay(500);
 
-    // 3. 生成数据并保存
     const newId = generateUniqueId(Date.now());
     let bioText = characterData.name.toUpperCase() === 'BOBU.B' ? DEFAULT_BIOS.bobu[currentLang] : DEFAULT_BIOS.general[currentLang];
         
-    /** --- [大师级修改点：加入稀有度判定] --- **/
-    // 根据当前选中的部件和属性，计算最终稀有度
     const finalRarity = calculateFinalRarity(characterData.selectedParts, characterData.selectedPlanetParts, currentStats);
 
     const newPassport: PassportData = { 
@@ -239,21 +288,16 @@ const App: React.FC = () => {
       id: newId, 
       bio: bioText, 
       stats: { ...currentStats }, 
-      rarity: finalRarity, // <-- 将计算出的稀有度存入档案
+      rarity: finalRarity, 
       savedAt: Date.now() 
     };
-    /** ---------------------------------- **/
     
-    // 保存到列表和本地存储
-    const updatedPassports = [newPassport, ...savedPassports];
-    setSavedPassports(updatedPassports);
-    localStorage.setItem('happyPlanet_passports', JSON.stringify(updatedPassports));
+    // 保存逻辑：依赖底层的 useEffect 自动同步 localStorage
+    setSavedPassports(prev => [newPassport, ...prev]);
 
-    // 4. 【关键】仅打开弹窗，不再在 App.tsx 背景里设置 isStamping 或 particles
     setIssuedPassport(newPassport);
     setIsSuccessOpen(true);
 
-    // 5. 恢复背景心跳
     setTimeout(() => {
       setDisplayBpm(originalBpm);
     }, 1000);
@@ -307,14 +351,10 @@ const App: React.FC = () => {
   };
 
   const handleUpdatePassportData = (id: string, field: keyof PassportData, value: any) => {
-    const updated = savedPassports.map(p => p.id === id ? { ...p, [field]: value } : p);
-    setSavedPassports(updated);
-    localStorage.setItem('happyPlanet_passports', JSON.stringify(updated));
+    setSavedPassports(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
   };
   const handleDeletePassport = (id: string) => {
-    const updated = savedPassports.filter(p => p.id !== id);
-    setSavedPassports(updated);
-    localStorage.setItem('happyPlanet_passports', JSON.stringify(updated));
+    setSavedPassports(prev => prev.filter(p => p.id !== id));
   };
 
   return (
@@ -369,7 +409,7 @@ const App: React.FC = () => {
         .animate-spend-hit { animation: spend-hit 0.2s ease-out; }
       `}</style>
 
-      {/* 🌠 SpaceBackground Decoration Layer - 必须传 displayBpm，背景才会跟着炸裂！ */}
+      {/* 🌠 SpaceBackground Decoration Layer */}
       <SpaceBackground bpm={displayBpm} themeColor={PLAYLIST[currentTrackIndex].themeColor} meteorDensity={PLAYLIST[currentTrackIndex].meteorDensity} />
       {viewMode === 'passport' && <div className="fixed inset-0 bg-[#2c3e50] z-0 pointer-events-none"></div>}
 
