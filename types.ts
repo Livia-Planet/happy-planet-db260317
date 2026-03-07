@@ -2,6 +2,26 @@
 export type PartCategory = 'body' | 'ears' | 'face' | 'hair' | 'access';
 export type PlanetCategory = 'base' | 'surface' | 'atmosphere' | 'companion';
 export type Language = 'se' | 'en' | 'cn';
+// --- 成就系统类型 ---
+export type MedalSize = 'sm' | 'md' | 'lg' | 'xl'; // 对应 铜、银、金、白金
+
+export interface AchievementDef {
+  id: string;
+  icon: string; // Emoji 或简短文字
+  imageUrl?: string;
+  title: Record<Language, string>;
+  desc: Record<Language, string>;
+  size: MedalSize;
+  color: string; // 奖牌的主题色 (Tailwind class, e.g., 'bg-yellow-400')
+}
+
+// 记录在 LocalStorage 里的贴纸数据
+export interface UnlockedMedal {
+  id: string;
+  x: number;
+  y: number;
+  unlockedAt: number;
+}
 
 export interface CharacterStats {
   mod: number;       // Courage (Red)
