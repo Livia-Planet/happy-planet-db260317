@@ -661,25 +661,33 @@ export const PLUTTENPLOTT_PRESET: PassportData = {
 export const ALL_PRESETS = [BOBU_PRESET, DUDDU_PRESET, POLLY_PRESET, PLUTTENPLOTT_PRESET];
 
 // === NEW: STORY REWARD ALGORITHM ===
-export const calculateStoryReward = (text: string): number => {
-  const content = text.trim();
-  const len = content.length;
+export const calculateStoryReward = (content: string): number => {
+  if (!content) return 0;
 
-  // 1. 太短不给奖励
-  if (len < 5) return 0;
+  // 1. 清理空格和换行
+  const cleanContent = content.trim();
+  const len = cleanContent.length;
+  if (len === 0) return 0;
 
-  // 2. 防作弊：计算唯一字符占比 (Unique Characters Ratio)
-  // 防止玩家输入 "啊啊啊啊啊啊啊啊" 来刷字数
-  const uniqueChars = new Set(content.split('')).size;
+  // 2. 识别是否为西文字符（瑞典语/英语）
+  // 如果包含大量字母，我们认为它是瑞典语或英语
+  const isWestern = /[a-zA-ZåäöÅÄÖ]/.test(cleanContent);
+
+  // 3. 动态防作弊阈值
+  const uniqueChars = new Set(cleanContent.split('')).size;
   const diversityRatio = uniqueChars / len;
 
-  // 如果多样性极低，直接判定为乱填，只给 1 颗（保底奖励）
-  if (diversityRatio < 0.2) return 1;
+  // 调低西文的查重阈值 (0.05 就够了，因为字母表很小)，中文保持 0.2
+  const threshold = isWestern ? 0.05 : 0.2;
 
-  // 3. 根据字数梯度阶梯奖励
-  if (len < 20) return 1;    // 短句奖励 1 颗
-  if (len < 60) return 5;    // 中等日记奖励 5 颗
-  return 10;                 // 认真创作的长故事奖励 10 颗
+  if (diversityRatio < threshold) return 1;
+
+  // 4. 根据长度阶梯奖励 (西文通常字符数更多，所以把门槛稍微抬高一点点)
+  const effectiveLen = isWestern ? len / 2 : len; // 把西文长度折半来对比中文权重
+
+  if (effectiveLen < 15) return 1;   // 短句
+  if (effectiveLen < 50) return 5;   // 中等
+  return 10;                         // 认真长文
 };
 
 // --- 抽卡稀有度逻辑 ---
@@ -695,7 +703,7 @@ const RARITY_WEIGHTS: Record<string, number> = {
 // 2. 导出权重随机函数 (注意加了 export)
 export const getWeightedRandomPart = (parts: any[]) => {
   if (parts.length === 0) return null;
-  
+
   const totalWeight = parts.reduce((sum, part) => {
     // 兼容性处理：如果没有设置 rarity，默认给 C
     const rarity = (part.rarity || 'C') as string;
@@ -703,7 +711,7 @@ export const getWeightedRandomPart = (parts: any[]) => {
   }, 0);
 
   let random = Math.random() * totalWeight;
-  
+
   for (const part of parts) {
     const rarity = (part.rarity || 'C') as string;
     const weight = RARITY_WEIGHTS[rarity] || 0;
@@ -747,21 +755,21 @@ export const getCharacterTitle = (stats: CharacterStats, lang: Language): string
   if (bus >= 8) return current.mischief;
   if (klurighet >= 8) return current.wise;
   if (mod >= 5 && klurighet >= 5) return current.allRound;
-  
+
   return current.default;
 };
 
 // 在文件末尾添加判定函数
 export const calculateFinalRarity = (
-  selectedParts: Record<string, string>, 
-  selectedPlanetParts: Record<string, string>, 
+  selectedParts: Record<string, string>,
+  selectedPlanetParts: Record<string, string>,
   stats: CharacterStats
 ): Rarity => {
   // 1. 获取所有的 9 件装备 (5 件角色 + 4 件星球)
   const charParts = Object.values(selectedParts).map(id => PARTS_DB[id]).filter(Boolean);
   const planetParts = Object.values(selectedPlanetParts).map(id => PARTS_DB[id]).filter(Boolean);
   const allParts = [...charParts, ...planetParts];
-  
+
   // 2. 核心模块 A：基础属性分 (Max: 27)
   let baseScore = stats.mod + stats.bus + stats.klurighet;
 
@@ -780,7 +788,7 @@ export const calculateFinalRarity = (
 
   // 5. 【特例判定】：天选之零 (全 C 且 属性最低)
   const hasOnlyCommon = allParts.every(p => !p.rarity || p.rarity === 'C');
-  if ((stats.mod + stats.bus + stats.klurighet) <= 3 && hasOnlyCommon) return 'L'; 
+  if ((stats.mod + stats.bus + stats.klurighet) <= 3 && hasOnlyCommon) return 'L';
 
   // 6. 严格阶梯判定 (基于 90分满分体系)
   if (finalScore >= 75) return 'L';

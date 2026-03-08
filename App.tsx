@@ -45,7 +45,7 @@ const INITIAL_DATA: CharacterData = {
     ears: 'ears_mimosa',
     face: 'mouth_open',
     hair: 'hair_yellow',
-    hair_b: 'hair_b_braids_yellow',
+    hair_b: 'hair_braids_yellow',
     access: 'access_none'
   },
   selectedPlanetParts: {

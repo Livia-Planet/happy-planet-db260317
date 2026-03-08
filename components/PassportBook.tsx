@@ -17,6 +17,35 @@ const IconWarning = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// 符合兔子星球黑粗线条风格的文件夹贴纸
+const FolderSticker = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {/* 文件夹后盖 */}
+    <path
+      d="M2 7C2 5.89543 2.89543 5 4 5H9L11 7H20C21.1046 7 22 7.89543 22 9V17C22 18.1046 21.1046 19 20 19H4C2.89543 19 2 18.1046 2 17V7Z"
+      fill="white"
+      stroke="black"
+      strokeWidth="3.5"
+      strokeLinejoin="round"
+    />
+    {/* 文件夹前页：稍微错位，营造立体感 */}
+    <path
+      d="M2 11C2 9.89543 2.89543 9 4 9H20C21.1046 9 22 9.89543 22 11V17C22 18.1046 21.1046 19 20 19H4C2.89543 19 2 18.1046 2 17V11Z"
+      fill="#F9FAFB"
+      stroke="black"
+      strokeWidth="3.5"
+      strokeLinejoin="round"
+    />
+    {/* 装饰线条：像个档案标签 */}
+    <line x1="7" y1="14" x2="11" y2="14" stroke="black" strokeWidth="3" strokeLinecap="round" />
+  </svg>
+);
+
 // === 统计弹窗专用图标 ===
 const IconAstroStats = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -554,7 +583,14 @@ export const PassportBook: React.FC<PassportBookProps> = ({
         {
           passports.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center bg-white/30 backdrop-blur-md border-[4px] border-dashed border-black/30 rounded-[3rem] p-10 mt-10 shadow-lg">
-              <div className="text-6xl mb-4 opacity-70">📂</div>
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                {/* 调大尺寸，并稍微旋转一下，更有手绘感 */}
+                <FolderSticker className="w-32 h-32 mb-6 -rotate-3 filter grayscale-[0.5] opacity-60" />
+                <h3 className={`font-black text-2xl uppercase tracking-widest ${currentTheme.text}`}>
+                  {lang === 'cn' ? '暂无档案' : 'Empty Archives'}
+                </h3>
+                {/* ... */}
+              </div>
               <p className="font-hand text-2xl text-black/70 font-bold">{lang === 'cn' ? '还没有签发的护照...' : 'No passports issued yet...'}</p>
               <p className="font-hand text-xl text-black/50 mt-2">{lang === 'cn' ? '快去创建一个角色并保存吧！' : 'Go create a character and save it!'}</p>
             </div>
