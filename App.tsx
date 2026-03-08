@@ -205,7 +205,8 @@ export const App: React.FC = () => {
     if (savedPassports.length >= 5) unlock('space_reporter');
 
     // 13. 全能选手 (属性平衡)
-    if (stats.mod === stats.bus && stats.bus === stats.klurighet && stats.mod > 0) unlock('all_rounder');
+    // 只有当三项属性相等，且都达到了 5 点以上（说明换了很多厉害装备且依然保持平衡）才解锁
+    if (stats.mod === stats.bus && stats.bus === stats.klurighet && stats.mod >= 5) unlock('all_rounder');
 
     // 14. 午夜电波 (0-4点)
     const hour = new Date().getHours();
@@ -221,6 +222,11 @@ export const App: React.FC = () => {
     // 最终执行更新
     if (hasNew && lastUnlockedId) {
       setUnlockedMedals(newMedals);
+      // === 新增：播放徽章音效 ===
+      if (audioCtx.current && buffers.current.achievement) {
+        playBuffer(buffers.current.achievement, audioCtx.current, 0.5);
+      }
+      // ========================
       if (ACHIEVEMENTS_DB[lastUnlockedId]) {
         setNewlyUnlocked(ACHIEVEMENTS_DB[lastUnlockedId]);
       }
@@ -237,14 +243,15 @@ export const App: React.FC = () => {
     const preload = async () => {
       if (!audioCtx.current) return;
       try {
-        const [cameraB, stampB, coinsB, errorB, successB] = await Promise.all([
+        const [cameraB, stampB, coinsB, errorB, successB, achievementB] = await Promise.all([
           loadAudioBuffer('/camera.wav', audioCtx.current),
           loadAudioBuffer('/stamp.wav', audioCtx.current),
           loadAudioBuffer('/coins.ogg', audioCtx.current),
           loadAudioBuffer('/error.wav', audioCtx.current),
           loadAudioBuffer('/success.ogg', audioCtx.current),
+          loadAudioBuffer('/achievement.wav', audioCtx.current),
         ]);
-        buffers.current = { camera: cameraB, stamp: stampB, coins: coinsB, error: errorB, success: successB };
+        buffers.current = { camera: cameraB, stamp: stampB, coins: coinsB, error: errorB, success: successB, achievement: achievementB };
       } catch (err) { }
     };
     preload();
@@ -274,11 +281,20 @@ export const App: React.FC = () => {
   }, []);
 
   const handleReward = useCallback((amount: number, sourceId: string) => {
+    // 1. gainCarrots 会触发喷射动画
+    // 只要 gainCarrots 内部逻辑是根据 amount 来决定喷多少个，它就会自动变壮观
     gainCarrots(sourceId, amount);
+
     setTimeout(() => {
+      // 2. 这里是真正加钱的地方，amount 是多少就加多少
       setCarrotCoins(prev => prev + amount);
-      if (audioCtx.current && buffers.current.coins) playBuffer(buffers.current.coins, audioCtx.current, 0.4);
-      setToastMsg(currentLang === 'cn' ? `🚀 故事记录成功！奖励 ${amount} 🥕` : `🚀 Story Saved! Reward: ${amount} 🥕`);
+
+      // 3. 提示文字也会根据 amount 变化
+      const msg = currentLang === 'cn'
+        ? `🚀 故事记录成功！奖励 ${amount} 🥕`
+        : (currentLang === 'se' ? `🚀 Berättelse sparad! Belöning: ${amount} 🥕` : `🚀 Story Saved! Reward: ${amount} 🥕`);
+
+      setToastMsg(msg);
       setTimeout(() => setToastMsg(null), 3000);
     }, 700);
   }, [gainCarrots, currentLang]);

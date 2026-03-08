@@ -111,14 +111,33 @@ export const Controls: React.FC<ControlsProps> = ({
   const currentTabs = isBackView ? BACK_TABS : FRONT_TABS;
 
   // Calculate Pagination Data
+  
   // --- 专业逻辑：当处于“头发”选项卡时，同时抓取前发(hair)和后发(hair_b)的零件 ---
   const allParts = React.useMemo(() => {
     if (activeTab === 'hair') {
-      // 合并两个分类，这样后脑勺的辫子也会出现在“头发”列表里
-      return [...getPartList('hair'), ...getPartList('hair_b')];
+      // 1. 获取两部分数据
+      const rawHair = getPartList('hair');
+      const rawHairB = getPartList('hair_b');
+
+      // 2. 强制合并，并利用 Map 根据 id 去重
+      const combined = [...rawHair, ...rawHairB];
+      const uniquePartsMap = new Map();
+
+      combined.forEach(part => {
+        // 如果这个 id 还没存进 Map 里，就存进去
+        if (!uniquePartsMap.has(part.id)) {
+          uniquePartsMap.set(part.id, part);
+        }
+      });
+
+      // 3. 把去重后的 Map 值转回数组
+      return Array.from(uniquePartsMap.values());
     }
+
+    // 如果不是头发 Tab，正常返回
     return getPartList(activeTab);
   }, [activeTab]);
+
   const totalPages = Math.ceil(allParts.length / ITEMS_PER_PAGE);
   const currentParts = allParts.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE);
 

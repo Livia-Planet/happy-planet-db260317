@@ -12,6 +12,14 @@ const stats = (m: number, b: number, k: number) => ({ mod: m, bus: b, klurighet:
 // L (Legendary): 极其罕见的（比如发光、特殊材质）
 export const PARTS_DB: Record<string, PartDefinition> = {
   // === EARS (Layer 2) ===
+  'ears_none': {
+    id: 'ears_none',
+    category: 'ears',
+    name: 'None',
+    stats: stats(1, 0, 0),
+    rarity: 'C',
+    images: {}
+  },
   'ears_default': {
     id: 'ears_default',
     category: 'ears',
@@ -271,7 +279,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
   'access_robot': {
     id: 'access_robot',
     category: 'access',
-    name: 'Robot Accessory',
+    name: 'Robot Mask',
     stats: stats(3, 2, 2),
     rarity: 'L',
     offsetY: 0,

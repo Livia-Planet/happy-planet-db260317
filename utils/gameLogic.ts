@@ -154,6 +154,7 @@ export const TRANSLATIONS = {
   },
   parts: {
     // EARS (New)
+    'ears_none': { en: 'None', se: 'Inget', cn: '无' },
     'ears_default': { en: 'Round Ears', se: 'Runda Öron', cn: '圆耳朵' },
     'ears_elf': { en: 'Elf Ears', se: 'Alvöron', cn: '精灵耳' },
     'ears_tech': { en: 'Robo Receivers', se: 'Robo-öron', cn: '机器耳' },
@@ -166,6 +167,7 @@ export const TRANSLATIONS = {
     'ears_rose': { en: 'Rose Red', se: 'Rosröd', cn: '玫瑰红' },
 
     // BODY
+    'body_none': { en: 'None', se: 'Inget', cn: '无' },
     'body_classic': { en: 'Classic Cream', se: 'Klassisk Grädde', cn: '经典奶油' },
     'body_tech': { en: 'Cyber Grey', se: 'Cybergrå', cn: '赛博灰' },
     'body_gold': { en: 'Golden Star', se: 'Guldstjärna', cn: '金色星星' },
@@ -183,19 +185,24 @@ export const TRANSLATIONS = {
     'mouth_smile': { en: 'Smile', se: 'Leende', cn: '微笑' },
     'mouth_open': { en: 'Laugh', se: 'Skratt', cn: '大笑' },
     'mouth_line': { en: 'Serious', se: 'Allvarlig', cn: '严肃' },
+    'face_makeup': { en: 'Confident Makeup', se: 'Självsäker Makeup', cn: '自信妆容' },
 
     // HAIR
     'hair_none': { en: 'None', se: 'Inget', cn: '无' },
     'hair_yellow': { en: 'Yellow Hair', se: 'Gult hår', cn: '黄头发' },
     'hair_black': { en: 'Black Hair', se: 'Svart hår', cn: '黑发' },
+    'hair_fashion': { en: 'Fashion Hair', se: 'Trendigt Hår', cn: '时尚短发' },
     'hair_b_none': { en: 'None', se: 'Inget', cn: '无' },
     'hair_braids_yellow': { en: 'Yellow Braids', se: 'Gula flätor', cn: '黄色辫子' },
+    'hair_longhair_fashion': { en: 'Fashion Long Hair', se: 'Trendigt Långt Hår', cn: '时尚长发' },
 
     // ACCESSORIES
     'access_none': { en: 'None', se: 'Inget', cn: '无' },
     'access_beret': { en: 'Artist Beret', se: 'Konstnärsbarett', cn: '画家帽' },
     'access_helmet': { en: 'Hero Helmet', se: 'Hjälthjälm', cn: '英雄头盔' },
     'access_crown': { en: 'Paper Crown', se: 'Papperskrona', cn: '纸皇冠' },
+    'access_Tophat': { en: 'Tophat', se: 'Hög Hatt', cn: '圆顶礼帽' },
+    'access_robot': { en: 'Robot Mask', se: 'Robotmask', cn: '机器人面具' },
 
     // PLANET
     'planet_base_none': { en: 'None', se: 'Inget', cn: '无' },
@@ -663,31 +670,35 @@ export const ALL_PRESETS = [BOBU_PRESET, DUDDU_PRESET, POLLY_PRESET, PLUTTENPLOT
 // === NEW: STORY REWARD ALGORITHM ===
 export const calculateStoryReward = (content: string): number => {
   if (!content) return 0;
-
-  // 1. 清理空格和换行
   const cleanContent = content.trim();
-  const len = cleanContent.length;
-  if (len === 0) return 0;
+  const charLen = cleanContent.length;
+  if (charLen === 0) return 0;
 
-  // 2. 识别是否为西文字符（瑞典语/英语）
-  // 如果包含大量字母，我们认为它是瑞典语或英语
+  // 1. 识别是否为西文 (瑞典语/英语)
   const isWestern = /[a-zA-ZåäöÅÄÖ]/.test(cleanContent);
 
-  // 3. 动态防作弊阈值
+  // 2. 计算“有效工作量”得分
+  let score = 0;
+  if (isWestern) {
+    // 西文按单词数算 (用空格切分)
+    const wordCount = cleanContent.split(/\s+/).filter(w => w.length > 0).length;
+    score = wordCount;
+  } else {
+    // 中文按字符数算
+    score = charLen;
+  }
+
+  // 3. 改进防作弊：不再用比例，而是看唯一字符的绝对数量
+  // 只要长度超过20，但不同字符少于10个，判定为乱填
   const uniqueChars = new Set(cleanContent.split('')).size;
-  const diversityRatio = uniqueChars / len;
+  if (charLen > 20 && uniqueChars < 10) return 1;
 
-  // 调低西文的查重阈值 (0.05 就够了，因为字母表很小)，中文保持 0.2
-  const threshold = isWestern ? 0.05 : 0.2;
-
-  if (diversityRatio < threshold) return 1;
-
-  // 4. 根据长度阶梯奖励 (西文通常字符数更多，所以把门槛稍微抬高一点点)
-  const effectiveLen = isWestern ? len / 2 : len; // 把西文长度折半来对比中文权重
-
-  if (effectiveLen < 15) return 1;   // 短句
-  if (effectiveLen < 50) return 5;   // 中等
-  return 10;                         // 认真长文
+  // 4. 1/5/10/20/50 阶梯奖励逻辑
+  if (score < 10) return 1;    // 寥寥数语
+  if (score < 50) return 5;    // 小段随笔 (你的第一篇大约在此)
+  if (score < 150) return 10;  // 认真日记
+  if (score < 300) return 20;  // 精彩小故事
+  return 50;                   // 史诗级巨著 (你的第二篇妥妥拿50！)
 };
 
 // --- 抽卡稀有度逻辑 ---
