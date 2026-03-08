@@ -45,7 +45,8 @@ const INITIAL_DATA: CharacterData = {
     ears: 'ears_mimosa',
     face: 'mouth_open',
     hair: 'hair_yellow',
-    access: 'access_braids_yellow'
+    hair_b: 'hair_b_braids_yellow',
+    access: 'access_none'
   },
   selectedPlanetParts: {
     base: 'planet_base_red',
@@ -330,7 +331,7 @@ export const App: React.FC = () => {
       setActionFeedback({ bigbang: '-1' });
       updateData(prev => {
         const newSelectedParts = { ...prev.selectedParts };
-        ['body', 'ears', 'face', 'hair', 'access'].forEach(cat => {
+        ['body', 'ears', 'face', 'hair', 'hair_b', 'access'].forEach(cat => {
           const picked = getWeightedRandomPart(getPartList(cat as PartCategory));
           if (picked) newSelectedParts[cat as PartCategory] = picked.id;
         });

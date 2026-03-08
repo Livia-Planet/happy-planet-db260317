@@ -188,10 +188,11 @@ export const TRANSLATIONS = {
     'hair_none': { en: 'None', se: 'Inget', cn: '无' },
     'hair_yellow': { en: 'Yellow Hair', se: 'Gult hår', cn: '黄头发' },
     'hair_black': { en: 'Black Hair', se: 'Svart hår', cn: '黑发' },
+    'hair_b_none': { en: 'None', se: 'Inget', cn: '无' },
+    'hair_braids_yellow': { en: 'Yellow Braids', se: 'Gula flätor', cn: '黄色辫子' },
 
     // ACCESSORIES
     'access_none': { en: 'None', se: 'Inget', cn: '无' },
-    'access_braids_yellow': { en: 'Yellow Braids', se: 'Gula flätor', cn: '黄辫子' },
     'access_beret': { en: 'Artist Beret', se: 'Konstnärsbarett', cn: '画家帽' },
     'access_helmet': { en: 'Hero Helmet', se: 'Hjälthjälm', cn: '英雄头盔' },
     'access_crown': { en: 'Paper Crown', se: 'Papperskrona', cn: '纸皇冠' },
@@ -407,7 +408,7 @@ const FLAVOR_TEXT_DB = {
       en: "Loves mischief and laughter!"
     },
     high: {
-      se: "En riktig busunge with glitter in blicken!",
+      se: "En riktig busunge med glitter in blicken!",
       cn: "超级调皮大王，眼睛里闪烁着小星星！",
       en: "A true rascal with a twinkle in the eye!"
     }
@@ -511,7 +512,8 @@ export const BOBU_PRESET: PassportData = {
     ears: 'ears_mimosa',
     face: 'mouth_open',
     hair: 'hair_yellow',
-    access: 'access_braids_yellow'
+    hair_b: 'hair_braids_yellow',
+    access: 'access_none'
   },
   selectedPlanetParts: {
     base: 'planet_base_red',
@@ -549,6 +551,7 @@ export const DUDDU_PRESET: PassportData = {
     ears: 'ears_camel',
     face: 'eyes_dot',
     hair: 'hair_none',
+    hair_b: 'hair_none',
     access: 'access_helmet'
   },
   selectedPlanetParts: {
@@ -587,6 +590,7 @@ export const POLLY_PRESET: PassportData = {
     ears: 'ears_white',
     face: 'mouth_smile',
     hair: 'hair_none',
+    hair_b: 'hair_none',
     access: 'access_beret'
   },
   selectedPlanetParts: {
@@ -625,6 +629,7 @@ export const PLUTTENPLOTT_PRESET: PassportData = {
     ears: 'ears_amber',
     face: 'eyes_glasses',
     hair: 'hair_black',
+    hair_b: 'hair_none',
     access: 'access_none'
   },
   selectedPlanetParts: {

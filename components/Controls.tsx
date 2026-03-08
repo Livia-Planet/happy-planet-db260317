@@ -80,12 +80,12 @@ export const Controls: React.FC<ControlsProps> = ({
     // truncate surname to 1 char
     if (cleaned.includes('.')) {
       const [first, last] = cleaned.split('.');
-      cleaned = `${first.slice(0, 12)}.${last.slice(0,1)}`;
+      cleaned = `${first.slice(0, 12)}.${last.slice(0, 1)}`;
     }
     return cleaned.toUpperCase();
   };
 
-  const handleNameInput =(val: string) => {
+  const handleNameInput = (val: string) => {
     // 只允许字母、数字和点，且转为大写
     const cleaned = val.replace(/[^A-Za-z0-9\.]/g, '').toUpperCase();
     updateName(cleaned);
@@ -111,7 +111,14 @@ export const Controls: React.FC<ControlsProps> = ({
   const currentTabs = isBackView ? BACK_TABS : FRONT_TABS;
 
   // Calculate Pagination Data
-  const allParts = getPartList(activeTab);
+  // --- 专业逻辑：当处于“头发”选项卡时，同时抓取前发(hair)和后发(hair_b)的零件 ---
+  const allParts = React.useMemo(() => {
+    if (activeTab === 'hair') {
+      // 合并两个分类，这样后脑勺的辫子也会出现在“头发”列表里
+      return [...getPartList('hair'), ...getPartList('hair_b')];
+    }
+    return getPartList(activeTab);
+  }, [activeTab]);
   const totalPages = Math.ceil(allParts.length / ITEMS_PER_PAGE);
   const currentParts = allParts.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE);
 
@@ -187,7 +194,9 @@ export const Controls: React.FC<ControlsProps> = ({
                 const partName = getPartName(part.id, lang);
                 // Force micro font size for character parts
                 const nameFontSize = isBackView ? 'text-xs' : 'text-[10px]';
-                const isSelected = (isBackView ? data.selectedPlanetParts[activeTab as PlanetCategory] : data.selectedParts[activeTab as PartCategory]) === part.id;
+                const isSelected = isBackView
+                  ? data.selectedPlanetParts[activeTab as PlanetCategory] === part.id
+                  : data.selectedParts[part.category as PartCategory] === part.id;
 
                 return (
                   <button
@@ -196,7 +205,8 @@ export const Controls: React.FC<ControlsProps> = ({
                       if (isBackView) {
                         updatePlanetPart(activeTab as PlanetCategory, part.id);
                       } else {
-                        updatePart(activeTab as PartCategory, part.id);
+                        // 关键修复：让前发进前发的坑，后发进后发的坑！
+                        updatePart(part.category as PartCategory, part.id);
                       }
                     }}
                     className={`
@@ -268,8 +278,8 @@ export const Controls: React.FC<ControlsProps> = ({
                   key={idx}
                   onClick={() => setCurrentPage(idx)}
                   className={`transition-all duration-300 rounded-full border border-black ${currentPage === idx
-                      ? 'w-7 h-2.5 bg-livia-yellow' // Active: Capsule
-                      : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'      // Inactive: Dot
+                    ? 'w-7 h-2.5 bg-livia-yellow' // Active: Capsule
+                    : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'      // Inactive: Dot
                     }`}
                   aria-label={`Go to page ${idx + 1}`}
                 />

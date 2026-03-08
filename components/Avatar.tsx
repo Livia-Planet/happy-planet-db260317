@@ -70,7 +70,8 @@ export const Avatar: React.FC<AvatarProps> = ({ selectedParts, dominantStat, cla
       const ears = PARTS_DB[selectedParts.ears];
       const body = PARTS_DB[selectedParts.body];
       const face = PARTS_DB[selectedParts.face];
-      const hair = PARTS_DB[selectedParts.hair];
+      const hairFront = PARTS_DB[selectedParts.hair];
+      const hairBack = PARTS_DB[selectedParts.hair_b];
       const access = PARTS_DB[selectedParts.access];
 
       // --- LAYER 0: ACCESSORIES BACK (e.g. Helmet Back) ---
@@ -78,9 +79,10 @@ export const Avatar: React.FC<AvatarProps> = ({ selectedParts, dominantStat, cla
         await drawLayer(access.images.back, 0, 0);
       }
 
-      // --- LAYER 1: HAIR BACK (e.g. Braids) ---
-      if (hair?.images.back) {
-        await drawLayer(hair.images.back, 0, 0);
+      {/* 在身体/耳朵的后面 (Layer 1) 渲染后发 */ }
+      // --- LAYER 1: BACK HAIR ---
+      if (hairBack?.images.back) {
+        await drawLayer(hairBack.images.back, 0, 0);
       }
 
       // --- LAYER 2: EARS ---
@@ -98,9 +100,10 @@ export const Avatar: React.FC<AvatarProps> = ({ selectedParts, dominantStat, cla
         await drawLayer(face.images.main, 0, 0);
       }
 
-      // --- LAYER 5: HAIR FRONT ---
-      if (hair?.images.front) {
-        await drawLayer(hair.images.front, 0, 0);
+      {/* 在脸的前面 (Layer 5) 渲染前发 */ }
+      // --- LAYER 5: FRONT HAIR ---
+      if (hairFront?.images.front) {
+        await drawLayer(hairFront.images.front, 0, 0);
       }
 
       // --- LAYER 6: ACCESSORIES FRONT ---

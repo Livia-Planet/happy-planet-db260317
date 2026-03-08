@@ -1,5 +1,5 @@
 
-export type PartCategory = 'body' | 'ears' | 'face' | 'hair' | 'access';
+export type PartCategory = 'body' | 'ears' | 'face' | 'hair' | 'hair_b' | 'access';
 export type PlanetCategory = 'base' | 'surface' | 'atmosphere' | 'companion';
 export type Language = 'se' | 'en' | 'cn';
 // --- 成就系统类型 ---
