@@ -14,11 +14,12 @@ import { getPartList } from './data/parts';
 import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS, generateStarName, getWeightedRandomPart, calculateFinalRarity } from './utils/gameLogic';
 import { AchievementUnlockModal } from './components/AchievementUnlockModal';
 import { DevTools } from './components/DevTools';
-
+// 引入加载屏幕
+import { LoadingScreen } from './components/LoadingScreen';
 // 引入成就系统核心
 import { ACHIEVEMENTS_DB } from './data/achievements';
 import { DraggableMedal } from './components/DraggableMedal';
-
+import { MagicCursor } from './components/MagicCursor';
 // --- 专业的零延迟音效加载函数 ---
 const loadAudioBuffer = async (url: string, context: AudioContext) => {
   const response = await fetch(url);
@@ -66,6 +67,8 @@ const STORAGE_KEYS = {
 };
 
 export const App: React.FC = () => {
+  // [新增] 用于控制加载页面的显示与隐藏
+  const [isReady, setIsReady] = useState(false);
   // ==========================================
   // 1. 所有的基础 State (先声明，绝不报错)
   // ==========================================
@@ -374,149 +377,121 @@ export const App: React.FC = () => {
   return (
     <div className={`min-h-screen transition-colors duration-700 ${isFlipped && viewMode === 'editor' ? 'bg-gray-900' : 'bg-livia-bg'} text-gray-900 p-4 md:p-8 font-rounded selection:bg-livia-yellow selection:text-black relative overflow-x-hidden ${bigBangActive ? 'animate-shake blur-sm' : ''}`}>
 
-      <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity duration-700 pointer-events-none z-[90] ${isIssuing ? 'opacity-100' : 'opacity-0'}`} />
-      {flash && <div className="fixed inset-0 bg-white opacity-0 animate-flash pointer-events-none z-[9999]"></div>}
-      <ParticleOverlay trigger={bigBangTrigger} color={isIssuing ? '#FFD700' : '#FFD93D'} />
+      {/* 🪄 注入超级魔棒组件 */}
+      <MagicCursor />
 
-      {toastMsg && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[9999] animate-bounce-in pointer-events-none">
-          <div className="bg-livia-yellow text-black px-8 py-4 rounded-2xl border-[4px] border-black shadow-[6px_6px_0_black] -rotate-2">
-            <span className="font-rounded font-black text-xl tracking-wide">{toastMsg}</span>
-          </div>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes flash { 0% { opacity: 0; } 20% { opacity: 0.8; } 100% { opacity: 0; } }
-        .animate-flash { animation: flash 0.15s ease-out forwards; }
-        @keyframes bounce-in { 0% { opacity: 0; transform: translate(-50%, -20px) scale(0.8); } 50% { opacity: 1; transform: translate(-50%, 5px) scale(1.05); } 100% { opacity: 1; transform: translate(-50%, 0) scale(1); } }
-        .animate-bounce-in { animation: bounce-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        @keyframes shake-quick { 0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)} }
-        .animate-shake { animation: shake-quick 0.3s linear; }
-        @keyframes shake-err { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
-        .animate-shake-err { animation: shake-err 0.3s linear; }
-        @keyframes glow-orange { 0%, 100% { box-shadow: 0 0 5px rgba(255, 140, 66, 0.4); border-color: #000; } 50% { box-shadow: 0 0 20px rgba(255, 140, 66, 0.8); border-color: #FF8C42; } }
-        @keyframes glow-gold { 0%, 100% { box-shadow: 0 0 8px rgba(255, 215, 0, 0.4); border-color: #000; transform: scale(1); } 50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.9); border-color: #FFD700; transform: scale(1.03); } }
-        .btn-orange-glow { animation: glow-orange 2s infinite ease-in-out; }
-        .btn-gold-glow { animation: glow-gold 1.5s infinite ease-in-out; }
-      `}</style>
-
-      {/* 🌠 动态贴纸墙 / 奖章背景层 */}
-      {showMedals && (
-        <div className="fixed inset-0 pointer-events-none z-[5] overflow-hidden">
-          <div className="relative w-full h-full pointer-events-auto">
-            {Object.entries(unlockedMedals).map(([id, medalData]) => {
-              const def = ACHIEVEMENTS_DB?.[id];
-              if (!def) return null; // 安全验证，没找到字典里的配置就不渲染
-              return (
-                <DraggableMedal
-                  key={id}
-                  medal={medalData}
-                  def={def}
-                  currentLang={currentLang}
-                  onPositionChange={handleMedalMove}
-                />
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 🌠 SpaceBackground */}
-      <SpaceBackground bpm={displayBpm} themeColor={PLAYLIST[currentTrackIndex].themeColor} meteorDensity={PLAYLIST[currentTrackIndex].meteorDensity} />
-      {viewMode === 'passport' && <div className="fixed inset-0 bg-[#2c3e50] z-0 pointer-events-none"></div>}
-
-      {/* Top Right Controls */}
-      <div className="absolute top-4 right-4 flex gap-3 z-50 items-center">
-        <div id="carrot-wallet" className="flex items-center gap-1 font-bold">
-          <CarrotCoinIcon className="w-6 h-6" />
-          <span className="text-lg">{carrotCoins}</span>
-        </div>
-        <AudioPlayer lang={currentLang} currentTrackIndex={currentTrackIndex} onTrackChange={setCurrentTrackIndex} />
-        <LanguageSelector currentLang={currentLang} onLanguageChange={setCurrentLang} />
-
-        {/* 奖牌显隐控制开关 */}
-        <button onClick={() => setShowMedals(!showMedals)} className={`relative w-12 h-12 bg-white border-[3px] border-black rounded-lg flex items-center justify-center transition-all ${showMedals ? 'shadow-[3px_3px_0_black]' : 'shadow-none translate-y-[3px] opacity-60'}`} title="Toggle Medals">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="8" r="6" />
-            <path d="M8.5 13.5L7 22l5-2.5L17 22l-1.5-8.5" />
-            {!showMedals && <line x1="4" y1="4" x2="20" y2="20" strokeWidth="3" />}
-          </svg>
-        </button>
-
-        <button onClick={() => setViewMode('passport')} className="w-12 h-12 bg-white border-[3px] border-black rounded-lg shadow-[3px_3px_0_black] flex items-center justify-center hover:translate-y-[1px] hover:shadow-[2px_2px_0_black] active:translate-y-[3px] active:shadow-none transition-all" title="Archives">
-          <ArchivesIcon className="w-6 h-6" />
-        </button>
-      </div>
-
-      {viewMode === 'editor' && (
+      {/* 【逻辑 A】如果没有准备好，强制只显示加载页 */}
+      {!isReady ? (
+        <LoadingScreen onComplete={() => setIsReady(true)} lang={currentLang} />
+      ) : (
+        /* 【逻辑 B】只有 isReady 为 true 时，才渲染原来的所有内容 */
         <>
-          <header className={`max-w-4xl mx-auto mb-6 text-center mt-12 md:mt-0 relative z-10 transition-opacity duration-500 ${isIssuing ? 'opacity-0' : 'opacity-100'}`}>
-            <h1 className={`text-4xl md:text-6xl font-black tracking-tight drop-shadow-[2px_2px_0_rgba(0,0,0,1)] stroke-black transition-colors duration-500 ${isFlipped ? 'text-livia-blue' : 'text-livia-orange'}`} style={{ WebkitTextStroke: '2px black' }}>{TRANSLATIONS.appTitle[currentLang]}</h1>
-            <p className={`mt-2 font-hand text-xl md:text-2xl transition-colors duration-500 ${isFlipped ? 'text-gray-300' : 'text-gray-700'}`}>{currentLang === 'cn' ? "官方居民定制器" : "Official Resident Customizer"}</p>
-          </header>
+          <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity duration-700 pointer-events-none z-[90] ${isIssuing ? 'opacity-100' : 'opacity-0'}`} />
+          {flash && <div className="fixed inset-0 bg-white opacity-0 animate-flash pointer-events-none z-[9999]"></div>}
+          <ParticleOverlay trigger={bigBangTrigger} color={isIssuing ? '#FFD700' : '#FFD93D'} />
 
-          <main className="max-w-4xl mx-auto flex flex-col md:flex-row items-center md:items-start justify-center gap-10">
-            <div className={`flex flex-col items-center relative transition-all duration-700 ease-in-out ${isIssuing ? 'z-[110] scale-105 md:scale-110 drop-shadow-2xl' : 'z-10'}`}>
-              <Card data={characterData} stats={currentStats} flavorText={flavorText} isFlipped={isFlipped} onFlip={toggleFlip} lang={currentLang} showStamp={false} stampAngle={-15} particles={[]} hideRarity={true} />
-
-              <div className={`mt-6 text-center transition-opacity duration-500 ${isIssuing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-                <button onClick={toggleFlip} className={`font-hand text-lg transition-all duration-300 px-6 py-2 rounded-full ${isFlipped ? 'bg-white/10 text-white backdrop-blur-md border border-white/20 hover:bg-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)]' : 'text-gray-900 underline hover:text-livia-orange'}`}>
-                  {isFlipped ? `${TRANSLATIONS.buttons.showFront[currentLang]} ↩` : `${TRANSLATIONS.buttons.showBack[currentLang]} ↪`}
-                </button>
+          {toastMsg && (
+            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[9999] animate-bounce-in pointer-events-none">
+              <div className="bg-livia-yellow text-black px-8 py-4 rounded-2xl border-[4px] border-black shadow-[6px_6px_0_black] -rotate-2">
+                <span className="font-rounded font-black text-xl tracking-wide">{toastMsg}</span>
               </div>
             </div>
+          )}
 
-            <div className={`flex flex-col gap-6 items-center md:items-start relative z-10 transition-opacity duration-500 ${isIssuing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-              <Controls data={characterData} derivedStats={currentStats} activeTab={activeTab} isBackView={isFlipped} onTabChange={setActiveTab} updateName={handleUpdateName} updatePart={handleUpdatePart} updatePlanetPart={handleUpdatePlanetPart} lang={currentLang} />
+          <style>{`
+            @keyframes flash { 0% { opacity: 0; } 20% { opacity: 0.8; } 100% { opacity: 0; } }
+            .animate-flash { animation: flash 0.15s ease-out forwards; }
+            @keyframes bounce-in { 0% { opacity: 0; transform: translate(-50%, -20px) scale(0.8); } 50% { opacity: 1; transform: translate(-50%, 5px) scale(1.05); } 100% { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+            .animate-bounce-in { animation: bounce-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+            @keyframes shake-quick { 0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)} }
+            .animate-shake { animation: shake-quick 0.3s linear; }
+            @keyframes shake-err { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+            .animate-shake-err { animation: shake-err 0.3s linear; }
+            @keyframes glow-orange { 0%, 100% { box-shadow: 0 0 5px rgba(255, 140, 66, 0.4); border-color: #000; } 50% { box-shadow: 0 0 20px rgba(255, 140, 66, 0.8); border-color: #FF8C42; } }
+            @keyframes glow-gold { 0%, 100% { box-shadow: 0 0 8px rgba(255, 215, 0, 0.4); border-color: #000; transform: scale(1); } 50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.9); border-color: #FFD700; transform: scale(1.03); } }
+            .btn-orange-glow { animation: glow-orange 2s infinite ease-in-out; }
+            .btn-gold-glow { animation: glow-gold 1.5s infinite ease-in-out; }
+          `}</style>
 
-              <div className="w-full max-w-[340px] flex flex-col gap-4 pb-8">
-                <div className="flex gap-4 w-full">
-                  <div className="flex-1 relative flex flex-col items-center">
-                    <button id="btn-bigbang" onClick={handleBigBang} className={`w-full flex items-center justify-center gap-2 px-3 py-3 font-bold border-[3px] rounded-lg transition-all ${carrotCoins >= 1 ? 'bg-purple-500 text-white border-black shadow-[5px_5px_0_black] hover:shadow-[3px_3px_0_black] active:shadow-[1px_1px_0_black] btn-orange-glow' : 'bg-gray-200 border-gray-400 text-gray-500 grayscale opacity-80 cursor-not-allowed'} ${shakeBtn === 'btn-bigbang' ? 'animate-shake-err border-red-500' : ''}`}>
-                      <DiceIcon className="w-5 h-5 text-white" />
-                      <span className="text-xs font-black tracking-widest">BIG BANG</span>
-                    </button>
-                  </div>
-                  <div className="flex-1 relative flex flex-col items-center">
-                    <button id="btn-issue" onClick={handleIssue} className={`w-full flex items-center justify-center gap-2 px-3 py-3 font-bold border-[3px] rounded-lg transition-all ${carrotCoins >= 5 ? 'bg-green-500 text-white border-black shadow-[5px_5px_0_black] hover:shadow-[3px_3px_0_black] active:shadow-[1px_1px_0_black] btn-gold-glow' : 'bg-gray-200 border-gray-400 text-gray-500 grayscale opacity-80 cursor-not-allowed'} ${shakeBtn === 'btn-issue' ? 'animate-shake-err border-red-500' : ''}`}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-5 h-5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
-                      <span className="text-xs font-black tracking-widest">ISSUE</span>
+          {/* 🌠 动态贴纸墙 */}
+          {showMedals && (
+            <div className="fixed inset-0 pointer-events-none z-[5] overflow-hidden">
+              <div className="relative w-full h-full pointer-events-auto">
+                {Object.entries(unlockedMedals).map(([id, medalData]) => {
+                  const def = ACHIEVEMENTS_DB?.[id];
+                  if (!def) return null;
+                  return (
+                    <DraggableMedal key={id} medal={medalData} def={def} currentLang={currentLang} onPositionChange={handleMedalMove} />
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <SpaceBackground bpm={displayBpm} themeColor={PLAYLIST[currentTrackIndex].themeColor} meteorDensity={PLAYLIST[currentTrackIndex].meteorDensity} />
+          {viewMode === 'passport' && <div className="fixed inset-0 bg-[#2c3e50] z-0 pointer-events-none"></div>}
+
+          {/* Top Right Controls */}
+          <div className="absolute top-4 right-4 flex gap-3 z-50 items-center">
+            <div id="carrot-wallet" className="flex items-center gap-1 font-bold">
+              <CarrotCoinIcon className="w-6 h-6" />
+              <span className="text-lg">{carrotCoins}</span>
+            </div>
+            <AudioPlayer lang={currentLang} currentTrackIndex={currentTrackIndex} onTrackChange={setCurrentTrackIndex} />
+            <LanguageSelector currentLang={currentLang} onLanguageChange={setCurrentLang} />
+            <button onClick={() => setShowMedals(!showMedals)} className={`relative w-12 h-12 bg-white border-[3px] border-black rounded-lg flex items-center justify-center transition-all ${showMedals ? 'shadow-[3px_3px_0_black]' : 'shadow-none translate-y-[3px] opacity-60'}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6" /><path d="M8.5 13.5L7 22l5-2.5L17 22l-1.5-8.5" />{!showMedals && <line x1="4" y1="4" x2="20" y2="20" strokeWidth="3" />}</svg>
+            </button>
+            <button onClick={() => setViewMode('passport')} className="w-12 h-12 bg-white border-[3px] border-black rounded-lg shadow-[3px_3px_0_black] flex items-center justify-center active:translate-y-[3px] active:shadow-none transition-all">
+              <ArchivesIcon className="w-6 h-6" />
+            </button>
+          </div>
+
+          {viewMode === 'editor' && (
+            <>
+              <header className={`max-w-4xl mx-auto mb-6 text-center mt-12 md:mt-0 relative z-10 transition-opacity duration-500 ${isIssuing ? 'opacity-0' : 'opacity-100'}`}>
+                <h1 className={`text-4xl md:text-6xl font-black tracking-tight drop-shadow-[2px_2px_0_rgba(0,0,0,1)] stroke-black transition-colors duration-500 ${isFlipped ? 'text-livia-blue' : 'text-livia-orange'}`} style={{ WebkitTextStroke: '2px black' }}>{TRANSLATIONS.appTitle[currentLang]}</h1>
+                <p className={`mt-2 font-hand text-xl md:text-2xl transition-colors duration-500 ${isFlipped ? 'text-gray-300' : 'text-gray-700'}`}>{currentLang === 'cn' ? "官方居民定制器" : "Official Resident Customizer"}</p>
+              </header>
+
+              <main className="max-w-4xl mx-auto flex flex-col md:flex-row items-center md:items-start justify-center gap-10">
+                <div className={`flex flex-col items-center relative transition-all duration-700 ease-in-out ${isIssuing ? 'z-[110] scale-105 md:scale-110 drop-shadow-2xl' : 'z-10'}`}>
+                  <Card data={characterData} stats={currentStats} flavorText={flavorText} isFlipped={isFlipped} onFlip={toggleFlip} lang={currentLang} showStamp={false} stampAngle={-15} particles={[]} hideRarity={true} />
+                  <div className={`mt-6 text-center transition-opacity duration-500 ${isIssuing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                    <button onClick={toggleFlip} className={`font-hand text-lg transition-all duration-300 px-6 py-2 rounded-full ${isFlipped ? 'bg-white/10 text-white backdrop-blur-md border border-white/20 hover:bg-white/20' : 'text-gray-900 underline hover:text-livia-orange'}`}>
+                      {isFlipped ? `${TRANSLATIONS.buttons.showFront[currentLang]} ↩` : `${TRANSLATIONS.buttons.showBack[currentLang]} ↪`}
                     </button>
                   </div>
                 </div>
-              </div>
+
+                <div className={`flex flex-col gap-6 items-center md:items-start relative z-10 transition-opacity duration-500 ${isIssuing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                  <Controls data={characterData} derivedStats={currentStats} activeTab={activeTab} isBackView={isFlipped} onTabChange={setActiveTab} updateName={handleUpdateName} updatePart={handleUpdatePart} updatePlanetPart={handleUpdatePlanetPart} lang={currentLang} />
+                  <div className="w-full max-w-[340px] flex flex-col gap-4 pb-8">
+                    <div className="flex gap-4 w-full">
+                      <button id="btn-bigbang" onClick={handleBigBang} className={`flex-1 flex items-center justify-center gap-2 px-3 py-3 font-bold border-[3px] rounded-lg transition-all ${carrotCoins >= 1 ? 'bg-purple-500 text-white border-black shadow-[5px_5px_0_black] btn-orange-glow' : 'bg-gray-200 grayscale opacity-80 cursor-not-allowed'}`}>
+                        <DiceIcon className="w-5 h-5 text-white" /><span className="text-xs font-black tracking-widest">BIG BANG</span>
+                      </button>
+                      <button id="btn-issue" onClick={handleIssue} className={`flex-1 flex items-center justify-center gap-2 px-3 py-3 font-bold border-[3px] rounded-lg transition-all ${carrotCoins >= 5 ? 'bg-green-500 text-white border-black shadow-[5px_5px_0_black] btn-gold-glow' : 'bg-gray-200 grayscale opacity-80 cursor-not-allowed'}`}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-5 h-5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg><span className="text-xs font-black tracking-widest">ISSUE</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </main>
+            </>
+          )}
+
+          {viewMode === 'passport' && (
+            <div className="relative z-10 pt-16 pb-20">
+              <PassportBook passports={savedPassports} onBack={() => setViewMode('editor')} onUpdatePassport={handleUpdatePassportData} onDelete={handleDeletePassport} lang={currentLang} onReward={handleReward} />
             </div>
-          </main>
+          )}
+
+          <SuccessOverlay isOpen={isSuccessOpen} passportData={issuedPassport} lang={currentLang} onClose={() => { setIsSuccessOpen(false); setIsIssuing(false); setViewMode('passport'); }} playStampSound={() => { }} />
+          <AchievementUnlockModal isOpen={newlyUnlocked !== null} achievement={newlyUnlocked} lang={currentLang} onClose={() => setNewlyUnlocked(null)} />
+          {process.env.NODE_ENV === 'development' && <DevTools />}
         </>
       )}
-
-      {viewMode === 'passport' && (
-        <div className="relative z-10 pt-16 pb-20">
-          <PassportBook passports={savedPassports} onBack={() => setViewMode('editor')} onUpdatePassport={handleUpdatePassportData} onDelete={handleDeletePassport} lang={currentLang} onReward={handleReward} />
-        </div>
-      )}
-
-      <SuccessOverlay
-        isOpen={isSuccessOpen}
-        passportData={issuedPassport}
-        lang={currentLang}
-        onClose={() => {
-          setIsSuccessOpen(false); setIsIssuing(false); setViewMode('passport');
-        }}
-        playStampSound={() => { }}
-      />
-
-      {/* 🏆 新增：成就盲盒解锁弹窗 */}
-      <AchievementUnlockModal
-        isOpen={newlyUnlocked !== null}
-        achievement={newlyUnlocked}
-        lang={currentLang}
-        onClose={() => setNewlyUnlocked(null)}
-      />
-
-      {/* 🪄 开发者魔法工具箱：放在这里 */}
-      {process.env.NODE_ENV === 'development' && <DevTools />}
 
     </div>
   );
