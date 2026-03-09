@@ -27,6 +27,54 @@ const getTabLabelKey = (id: string) => {
   }
 };
 
+const getPartPreviewColor = (id: string) => {
+  const lowerId = id.toLowerCase();
+
+  // --- BASE (星球基色) ---
+  if (lowerId.includes('base_red')) return '#EF4444';    // 岩浆红
+  if (lowerId.includes('base_blue')) return '#3B82F6';   // 冰川蓝
+  if (lowerId.includes('base_green')) return '#10B981';  // 森林绿
+  if (lowerId.includes('base_yellow')) return '#F59E0B'; // 柠檬黄
+  if (lowerId.includes('base_purple')) return '#8B5CF6'; // 气态紫
+  if (lowerId.includes('base_white')) return '#F8FAFC';  // 冰封白
+  if (lowerId.includes('base_black')) return '#1E293B';  // 奇点黑
+  if (lowerId.includes('base_gold')) return '#FCD34D';   // 黄金色
+
+  // --- SURFACE (地表特征) ---
+  if (lowerId.includes('surf_craters')) return '#94A3B8'; // 陨石坑 (深灰)
+  if (lowerId.includes('surf_swirls')) return '#E2E8F0';  // 气旋 (浅灰白)
+  if (lowerId.includes('surf_cracks')) return '#451a03';  // 裂纹 (深褐)
+  if (lowerId.includes('surf_lava')) return '#F97316';    // 橙红岩浆
+  if (lowerId.includes('surf_crystal')) return '#2DD4BF'; // 水晶青
+  if (lowerId.includes('surf_cities')) return '#FEF08A';  // 灯火黄
+  if (lowerId.includes('surf_rings')) return '#CBD5E1';   // 云带
+  if (lowerId.includes('surf_fossils')) return '#D1D5DB'; // 遗骸 (骨色)
+
+  // --- ATMOSPHERE (大气/周边) ---
+  if (lowerId.includes('atmo_rings')) return '#E9D5FF';   // 土星环 (淡紫)
+  if (lowerId.includes('atmo_glow')) return '#A5B4FC';    // 光晕 (淡蓝)
+  if (lowerId.includes('atmo_aurora')) return '#4ADE80';  // 极光 (亮绿)
+  if (lowerId.includes('atmo_clouds')) return '#FFFFFF';  // 浓云 (纯白)
+  if (lowerId.includes('atmo_debris')) return '#475569';  // 小行星 (灰褐)
+  if (lowerId.includes('atmo_shield')) return '#60A5FA';  // 护盾 (半透蓝)
+  if (lowerId.includes('atmo_nebula')) return '#C084FC';  // 星云 (粉紫)
+  if (lowerId.includes('atmo_electric')) return '#FDE047';// 离子电光 (亮黄)
+
+  // --- COMPANION (伴星/物体) ---
+  if (lowerId.includes('comp_moon')) return '#E2E8F0';     // 月球
+  if (lowerId.includes('comp_ufo')) return '#86EFAC';      // UFO (荧光绿)
+  if (lowerId.includes('comp_rocket')) return '#FB7185';   // 火箭 (鲜红)
+  if (lowerId.includes('comp_whale')) return '#6366F1';    // 巨鲸 (深蓝)
+  if (lowerId.includes('comp_satellite')) return '#94A3B8';// 卫星 (金属灰)
+  if (lowerId.includes('comp_dyson')) return '#FBBF24';    // 戴森球 (能量金)
+  if (lowerId.includes('comp_comet')) return '#BAE6FD';    // 彗星 (冰蓝)
+  if (lowerId.includes('comp_station')) return '#64748B';  // 空间站 (深钢色)
+
+  // --- 默认情况 ---
+  if (lowerId.includes('none')) return 'transparent';      // 无
+  return '#CBD5E1'; // 兜底灰色
+};
+
 export const Controls: React.FC<ControlsProps> = ({
   data,
   derivedStats,
@@ -111,7 +159,7 @@ export const Controls: React.FC<ControlsProps> = ({
   const currentTabs = isBackView ? BACK_TABS : FRONT_TABS;
 
   // Calculate Pagination Data
-  
+
   // --- 专业逻辑：当处于“头发”选项卡时，同时抓取前发(hair)和后发(hair_b)的零件 ---
   const allParts = React.useMemo(() => {
     if (activeTab === 'hair') {
@@ -239,19 +287,16 @@ export const Controls: React.FC<ControlsProps> = ({
                   >
                     {/* Visual Preview for Planet Parts (Simple Dots/Icons) */}
                     {isBackView && (
-                      <div className={`w-5 h-5 rounded-full border border-black mb-1
-                        ${part.id.includes('red') ? 'bg-red-500' : ''}
-                        ${part.id.includes('blue') ? 'bg-blue-500' : ''}
-                        ${part.id.includes('green') ? 'bg-emerald-500' : ''}
-                        ${part.id.includes('yellow') ? 'bg-amber-500' : ''}
-                        ${part.id.includes('none') ? 'bg-gray-100' : ''}
-                        ${part.id.includes('craters') ? 'bg-gray-400' : ''}
-                        ${part.id.includes('swirls') ? 'bg-gray-400' : ''}
-                        ${part.id.includes('rings') ? 'bg-indigo-200' : ''}
-                        ${part.id.includes('glow') ? 'bg-purple-200' : ''}
-                        ${part.id.includes('moon') ? 'bg-gray-300' : ''}
-                        ${part.id.includes('ufo') ? 'bg-green-300' : ''}
-                      `} />
+                      <div
+                        className={`w-5 h-5 rounded-full border border-black mb-1 shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)] ${part.id.includes('none') ? 'border-dashed opacity-50' : ''}`}
+                        style={{
+                          backgroundColor: getPartPreviewColor(part.id),
+                          // 如果是“无”，可以加个斜杠视觉效果
+                          backgroundImage: part.id.includes('none')
+                            ? 'linear-gradient(45deg, transparent 45%, #ff0000 45%, #ff0000 55%, transparent 55%)'
+                            : 'none'
+                        }}
+                      />
                     )}
 
                     <div className="flex flex-col items-center justify-center w-full gap-1">

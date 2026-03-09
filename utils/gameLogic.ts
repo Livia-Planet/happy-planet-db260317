@@ -204,21 +204,50 @@ export const TRANSLATIONS = {
     'access_Tophat': { en: 'Tophat', se: 'Hög Hatt', cn: '圆顶礼帽' },
     'access_robot': { en: 'Robot Mask', se: 'Robotmask', cn: '机器人面具' },
 
-    // PLANET
+    // === PLANET TRANSLATIONS ===
+    // BASE
     'planet_base_none': { en: 'None', se: 'Inget', cn: '无' },
     'planet_base_red': { en: 'Magma Red', se: 'Magmaröd', cn: '岩浆红' },
     'planet_base_blue': { en: 'Ice Blue', se: 'Isblå', cn: '冰川蓝' },
     'planet_base_green': { en: 'Forest', se: 'Skog', cn: '森林绿' },
     'planet_base_yellow': { en: 'Lemon', se: 'Citron', cn: '柠檬黄' },
+    'planet_base_purple': { en: 'Gas Giant', se: 'Gasjätte', cn: '气态巨行星' },
+    'planet_base_white': { en: 'Ice World', se: 'Isplanet', cn: '冰封世界' },
+    'planet_base_black': { en: 'Singularity', se: 'Singularitet', cn: '奇点黑' },
+    'planet_base_gold': { en: 'Golden Core', se: 'Gyllene Kärna', cn: '黄金内核' },
+
+    // SURFACE
     'planet_surf_none': { en: 'None', se: 'Inget', cn: '无' },
     'planet_surf_craters': { en: 'Craters', se: 'Kratrar', cn: '陨石坑' },
     'planet_surf_swirls': { en: 'Swirls', se: 'Virvlar', cn: '气旋' },
+    'planet_surf_cracks': { en: 'Tectonic Cracks', se: 'Tektoniska Sprickor', cn: '地壳裂纹' },
+    'planet_surf_lava': { en: 'Lava Flows', se: 'Lavaflöden', cn: '岩浆河流' },
+    'planet_surf_crystal': { en: 'Crystal Forest', se: 'Kristallskog', cn: '水晶丛林' },
+    'planet_surf_cities': { en: 'City Lights', se: 'Stadsljus', cn: '文明灯火' },
+    'planet_surf_rings': { en: 'Cloud Bands', se: 'Molnband', cn: '云带纹理' },
+    'planet_surf_fossils': { en: 'Ancient Remains', se: 'Uråldriga Rester', cn: '远古遗骸' },
+
+    // ATMOSPHERE
     'planet_atmo_none': { en: 'None', se: 'Inget', cn: '无' },
     'planet_atmo_rings': { en: 'Saturn Rings', se: 'Saturnusringar', cn: '土星环' },
     'planet_atmo_glow': { en: 'Cosmic Glow', se: 'Kosmiskt Sken', cn: '宇宙光晕' },
+    'planet_atmo_aurora': { en: 'Neon Aurora', se: 'Norrsken', cn: '霓虹极光' },
+    'planet_atmo_clouds': { en: 'Dense Clouds', se: 'Täta Moln', cn: '浓云' },
+    'planet_atmo_debris': { en: 'Asteroid Belt', se: 'Asteroidbälte', cn: '小行星带' },
+    'planet_atmo_shield': { en: 'Plasma Shield', se: 'Plasmasköld', cn: '等离子护盾' },
+    'planet_atmo_nebula': { en: 'Space Dust', se: 'Rymdstoft', cn: '星际尘埃' },
+    'planet_atmo_electric': { en: 'Ion Storm', se: 'Jonstorm', cn: '离子风暴' },
+
+    // COMPANION
     'planet_comp_none': { en: 'None', se: 'Inget', cn: '无' },
     'planet_comp_moon': { en: 'Moon', se: 'Måne', cn: '月球' },
     'planet_comp_ufo': { en: 'UFO', se: 'UFO', cn: '飞碟' },
+    'planet_comp_rocket': { en: 'Pioneer Rocket', se: 'Pionjärraket', cn: '先驱者火箭' },
+    'planet_comp_whale': { en: 'Cosmic Whale', se: 'Kosmisk Val', cn: '星空巨鲸' },
+    'planet_comp_satellite': { en: 'Old Satellite', se: 'Gammal Satellit', cn: '古董卫星' },
+    'planet_comp_dyson': { en: 'Dyson Swarm', se: 'Dysonsvärm', cn: '戴森球群' },
+    'planet_comp_comet': { en: 'Ice Comet', se: 'Iskomet', cn: '冰核彗星' },
+    'planet_comp_station': { en: 'Orbit Station', se: 'Omloppsstation', cn: '环绕空间站' },
   } as Record<string, Record<Language, string>>
 };
 
