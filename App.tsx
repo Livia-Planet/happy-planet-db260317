@@ -13,6 +13,7 @@ import { CharacterData, PartCategory, PlanetCategory, Language, PassportData, Un
 import { getPartList } from './data/parts';
 import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS, generateStarName, getWeightedRandomPart, calculateFinalRarity } from './utils/gameLogic';
 import { AchievementUnlockModal } from './components/AchievementUnlockModal';
+import { DevTools } from './components/DevTools';
 
 // 引入成就系统核心
 import { ACHIEVEMENTS_DB } from './data/achievements';
@@ -513,6 +514,10 @@ export const App: React.FC = () => {
         lang={currentLang}
         onClose={() => setNewlyUnlocked(null)}
       />
+
+      {/* 🪄 开发者魔法工具箱：放在这里 */}
+      {process.env.NODE_ENV === 'development' && <DevTools />}
+
     </div>
   );
 };
