@@ -95,7 +95,7 @@ export const App: React.FC = () => {
     if (saved) { try { return JSON.parse(saved); } catch { return {}; } }
     return {};
   });
-  const [showMedals, setShowMedals] = useState(true);
+  const [medalMode, setMedalMode] = useState<'floating' | 'sorted' | 'hidden'>('floating');
   // ------------------------------------
 
   const [isFlipped, setIsFlipped] = useState(false);
@@ -275,6 +275,39 @@ export const App: React.FC = () => {
   const handleUpdatePart = (cat: PartCategory, id: string) => updateData(prev => ({ ...prev, selectedParts: { ...prev.selectedParts, [cat]: id } }));
   const handleUpdatePlanetPart = (cat: PlanetCategory, id: string) => updateData(prev => ({ ...prev, selectedPlanetParts: { ...prev.selectedPlanetParts, [cat]: id } }));
   const toggleFlip = () => { const next = !isFlipped; setIsFlipped(next); setActiveTab(next ? 'base' : 'body'); };
+  // 🌟 核心：三段式勋章模式切换（避开中间，靠左右排队）
+  const handleToggleMedalMode = () => {
+    if (medalMode === 'floating') {
+      // 1. 从漂浮 -> 排队：计算两边的网格坐标
+      const newMedals = { ...unlockedMedals };
+      const medalIds = Object.keys(newMedals);
+
+      const gap = 110; // 每个勋章的垂直间距
+      const leftX = 30; // 左列的 X 坐标
+      const rightX = typeof window !== 'undefined' ? window.innerWidth - 130 : 800; // 右列的 X 坐标
+
+      medalIds.forEach((id, index) => {
+        // 偶数排左边，奇数排右边，自动往下延伸
+        const isLeft = index % 2 === 0;
+        const rowIndex = Math.floor(index / 2);
+
+        const targetX = isLeft ? leftX : rightX;
+        const targetY = 100 + rowIndex * gap; // 从顶部 100px 开始往下排
+
+        newMedals[id] = { ...newMedals[id], x: targetX, y: targetY };
+      });
+
+      setUnlockedMedals(newMedals);
+      setMedalMode('sorted');
+
+    } else if (medalMode === 'sorted') {
+      // 2. 从排队 -> 隐藏
+      setMedalMode('hidden');
+    } else {
+      // 3. 从隐藏 -> 漂浮
+      setMedalMode('floating');
+    }
+  };
 
   // 拖拽记录位置
   const handleMedalMove = useCallback((id: string, x: number, y: number) => {
@@ -413,15 +446,22 @@ export const App: React.FC = () => {
             .btn-gold-glow { animation: glow-gold 1.5s infinite ease-in-out; }
           `}</style>
 
-          {/* 🌠 动态贴纸墙 */}
-          {showMedals && (
+          {/* 🌠 动态贴纸墙 / 奖章背景层 */}
+          {medalMode !== 'hidden' && (
             <div className="fixed inset-0 pointer-events-none z-[5] overflow-hidden">
               <div className="relative w-full h-full pointer-events-auto">
                 {Object.entries(unlockedMedals).map(([id, medalData]) => {
                   const def = ACHIEVEMENTS_DB?.[id];
                   if (!def) return null;
                   return (
-                    <DraggableMedal key={id} medal={medalData} def={def} currentLang={currentLang} onPositionChange={handleMedalMove} />
+                    <DraggableMedal
+                      key={id}
+                      medal={medalData}
+                      def={def}
+                      currentLang={currentLang}
+                      onPositionChange={handleMedalMove}
+                      isSorted={medalMode === 'sorted'} // 👈 给组件发送排队指令
+                    />
                   );
                 })}
               </div>
@@ -439,8 +479,20 @@ export const App: React.FC = () => {
             </div>
             <AudioPlayer lang={currentLang} currentTrackIndex={currentTrackIndex} onTrackChange={setCurrentTrackIndex} />
             <LanguageSelector currentLang={currentLang} onLanguageChange={setCurrentLang} />
-            <button onClick={() => setShowMedals(!showMedals)} className={`relative w-12 h-12 bg-white border-[3px] border-black rounded-lg flex items-center justify-center transition-all ${showMedals ? 'shadow-[3px_3px_0_black]' : 'shadow-none translate-y-[3px] opacity-60'}`}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6" /><path d="M8.5 13.5L7 22l5-2.5L17 22l-1.5-8.5" />{!showMedals && <line x1="4" y1="4" x2="20" y2="20" strokeWidth="3" />}</svg>
+            {/* 奖牌显隐控制开关 (三段式) */}
+            <button onClick={handleToggleMedalMode} className={`relative w-12 h-12 bg-white border-[3px] border-black rounded-lg flex items-center justify-center transition-all ${medalMode !== 'hidden' ? 'shadow-[3px_3px_0_black]' : 'shadow-none translate-y-[3px] opacity-60'}`} title="Toggle Medals Mode">
+              {/* 漂浮模式图标 (圆形+轨道) */}
+              {medalMode === 'floating' && (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6" /><path d="M8.5 13.5L7 22l5-2.5L17 22l-1.5-8.5" /></svg>
+              )}
+              {/* 排队模式图标 (网格) */}
+              {medalMode === 'sorted' && (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /></svg>
+              )}
+              {/* 隐藏模式图标 (禁用划线) */}
+              {medalMode === 'hidden' && (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6" /><path d="M8.5 13.5L7 22l5-2.5L17 22l-1.5-8.5" /><line x1="4" y1="4" x2="20" y2="20" strokeWidth="3" /></svg>
+              )}
             </button>
             <button onClick={() => setViewMode('passport')} className="w-12 h-12 bg-white border-[3px] border-black rounded-lg shadow-[3px_3px_0_black] flex items-center justify-center active:translate-y-[3px] active:shadow-none transition-all">
               <ArchivesIcon className="w-6 h-6" />

@@ -6,20 +6,18 @@ interface Props {
     def: AchievementDef;
     onPositionChange: (id: string, x: number, y: number) => void;
     currentLang: Language;
+    isSorted?: boolean; // 👈 新增：告诉组件现在是不是在排队模式 (加了问号兼容旧代码)
 }
 
 const SIZE_MAP = {
-    sm: 60,
-    md: 80,
-    lg: 100,
-    xl: 130,
+    sm: 60, md: 80, lg: 100, xl: 130,
 };
 
-export const DraggableMedal: React.FC<Props> = ({ medal, def, onPositionChange, currentLang }) => {
+export const DraggableMedal: React.FC<Props> = ({ medal, def, onPositionChange, currentLang, isSorted = false }) => {
     const domRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
 
-    // 物理引擎状态
+    // 物理引擎状态 (完全保持原样)
     const physics = useRef({
         x: medal.x,
         y: medal.y,
@@ -37,17 +35,32 @@ export const DraggableMedal: React.FC<Props> = ({ medal, def, onPositionChange, 
         const loop = () => {
             if (!isDragging && domRef.current) {
                 const p = physics.current;
-                p.x += p.vx;
-                p.y += p.vy;
-                p.rot += p.rotV;
 
-                const maxX = window.innerWidth - p.radius * 2;
-                const maxY = window.innerHeight - p.radius * 2;
+                if (isSorted) {
+                    // 🪄 魔法磁力吸附：只在排队模式开启！
+                    // 0.15 的系数决定了吸附的“弹性”和“速度”，数值越小越丝滑
+                    p.x += (medal.x - p.x) * 0.15;
+                    p.y += (medal.y - p.y) * 0.15;
+                    p.rot += (0 - p.rot) * 0.15;
 
-                if (p.x <= 0) { p.x = 0; p.vx *= -1; }
-                if (p.x >= maxX) { p.x = maxX; p.vx *= -1; }
-                if (p.y <= 0) { p.y = 0; p.vy *= -1; }
-                if (p.y >= maxY) { p.y = maxY; p.vy *= -1; }
+                    // 暗中蓄力：保持微小的动量，这样一旦切回“漂浮”模式，它们就会炸开
+                    p.vx = (Math.random() - 0.5) * 3;
+                    p.vy = (Math.random() - 0.5) * 3;
+                    p.rotV = (Math.random() - 0.5) * 3;
+                } else {
+                    // 🪐 原汁原味的太空漂浮物理 (完全保留你的原始代码！)
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.rot += p.rotV;
+
+                    const maxX = window.innerWidth - p.radius * 2;
+                    const maxY = window.innerHeight - p.radius * 2;
+
+                    if (p.x <= 0) { p.x = 0; p.vx *= -1; }
+                    if (p.x >= maxX) { p.x = maxX; p.vx *= -1; }
+                    if (p.y <= 0) { p.y = 0; p.vy *= -1; }
+                    if (p.y >= maxY) { p.y = maxY; p.vy *= -1; }
+                }
 
                 domRef.current.style.transform = `translate3d(${p.x}px, ${p.y}px, 0) rotate(${p.rot}deg)`;
             }
@@ -56,7 +69,7 @@ export const DraggableMedal: React.FC<Props> = ({ medal, def, onPositionChange, 
 
         rafId.current = requestAnimationFrame(loop);
         return () => cancelAnimationFrame(rafId.current!);
-    }, [isDragging]);
+    }, [isDragging, isSorted, medal.x, medal.y]); // 加入依赖项
 
     const handlePointerDown = (e: React.PointerEvent) => {
         e.stopPropagation();
@@ -80,9 +93,14 @@ export const DraggableMedal: React.FC<Props> = ({ medal, def, onPositionChange, 
         if (!isDragging) return;
         e.target.releasePointerCapture(e.pointerId);
         setIsDragging(false);
-        physics.current.vx = (Math.random() - 0.5) * 2;
-        physics.current.vy = (Math.random() - 0.5) * 2;
-        onPositionChange(medal.id, physics.current.x, physics.current.y);
+
+        // 核心改动：如果是漂浮模式，松手时保存位置并赋予动力
+        if (!isSorted) {
+            physics.current.vx = (Math.random() - 0.5) * 2;
+            physics.current.vy = (Math.random() - 0.5) * 2;
+            onPositionChange(medal.id, physics.current.x, physics.current.y);
+        }
+        // 如果是排队模式，松手后什么都不做，物理引擎(loop)会自动把它吸回原位！
     };
 
     return (
@@ -99,7 +117,6 @@ export const DraggableMedal: React.FC<Props> = ({ medal, def, onPositionChange, 
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
         >
-            {/* 1. 拖拽时的透明信息浮层 (已接入三语) */}
             <div
                 className={`absolute top-[-70px] left-1/2 -translate-x-1/2 w-max max-w-[200px] bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-2xl border border-white/20 text-center pointer-events-none transition-all duration-300 ${isDragging ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
                 style={{ transform: `translateX(-50%) rotate(${-physics.current.rot}deg)` }}
@@ -108,7 +125,6 @@ export const DraggableMedal: React.FC<Props> = ({ medal, def, onPositionChange, 
                 <p className="text-gray-300 text-xs mt-0.5">{def.desc[currentLang]}</p>
             </div>
 
-            {/* 2. 渲染手绘图片 或 默认圆圈 */}
             {def.imageUrl ? (
                 <img
                     src={def.imageUrl}
