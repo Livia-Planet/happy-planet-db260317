@@ -155,9 +155,8 @@ export const TRANSLATIONS = {
   parts: {
     // EARS (New)
     'ears_none': { en: 'None', se: 'Inget', cn: '无' },
-    'ears_default': { en: 'Round Ears', se: 'Runda Öron', cn: '圆耳朵' },
-    'ears_elf': { en: 'Elf Ears', se: 'Alvöron', cn: '精灵耳' },
-    'ears_tech': { en: 'Robo Receivers', se: 'Robo-öron', cn: '机器耳' },
+    'ears_classic': { en: 'Classic Cream', se: 'Klassisk Grädde', cn: '经典奶油' },
+    'ears_dark': { en: 'Dark Coffee', se: 'Mörk Kaffe', cn: '黑暗咖啡' },
     // EARS Colors
     'ears_mimosa': { en: 'Mimosa Yellow', se: 'Mimosa-gul', cn: '含羞草色' },
     'ears_amber': { en: 'Amber', se: 'Bärnsten', cn: '琥珀色' },
@@ -169,8 +168,7 @@ export const TRANSLATIONS = {
     // BODY
     'body_none': { en: 'None', se: 'Inget', cn: '无' },
     'body_classic': { en: 'Classic Cream', se: 'Klassisk Grädde', cn: '经典奶油' },
-    'body_tech': { en: 'Cyber Grey', se: 'Cybergrå', cn: '赛博灰' },
-    'body_gold': { en: 'Golden Star', se: 'Guldstjärna', cn: '金色星星' },
+    'body_dark': { en: 'Dark Coffee', se: 'Mörk Kaffe', cn: '黑暗咖啡' },
     'body_mimosa': { en: 'Mimosa Yellow', se: 'Mimosa-gul', cn: '含羞草色' },
     'body_amber': { en: 'Amber', se: 'Bärnsten', cn: '琥珀色' },
     'body_pastel': { en: 'Pastel Yellow', se: 'Pastellgul', cn: '粉黄色' },
@@ -186,6 +184,9 @@ export const TRANSLATIONS = {
     'mouth_open': { en: 'Laugh', se: 'Skratt', cn: '大笑' },
     'mouth_line': { en: 'Serious', se: 'Allvarlig', cn: '严肃' },
     'face_makeup': { en: 'Confident Makeup', se: 'Självsäker Makeup', cn: '自信妆容' },
+    'face_innocent': { en: 'Innocent Blush', se: 'Oskyldig Rodnad', cn: '天真腮红' },
+    'face_craving': { en: 'Craving Face', se: 'Sugen Ansikte', cn: '馋了' },
+
 
     // HAIR
     'hair_none': { en: 'None', se: 'Inget', cn: '无' },
@@ -200,7 +201,7 @@ export const TRANSLATIONS = {
     'access_none': { en: 'None', se: 'Inget', cn: '无' },
     'access_beret': { en: 'Artist Beret', se: 'Konstnärsbarett', cn: '画家帽' },
     'access_helmet': { en: 'Hero Helmet', se: 'Hjälthjälm', cn: '英雄头盔' },
-    'access_crown': { en: 'Paper Crown', se: 'Papperskrona', cn: '纸皇冠' },
+    'access_babycap': { en: 'Baptismal Cap', se: 'Döpshatt', cn: '洗礼帽' },
     'access_Tophat': { en: 'Tophat', se: 'Hög Hatt', cn: '圆顶礼帽' },
     'access_robot': { en: 'Robot Mask', se: 'Robotmask', cn: '机器人面具' },
 

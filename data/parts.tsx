@@ -16,33 +16,25 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     id: 'ears_none',
     category: 'ears',
     name: 'None',
-    stats: stats(1, 0, 0),
+    stats: stats(0, 0, 0),
     rarity: 'C',
     images: {}
   },
-  'ears_default': {
-    id: 'ears_default',
+  'ears_classic': {
+    id: 'ears_classic',
     category: 'ears',
-    name: 'Round Ears',
+    name: 'Classic Cream',
     stats: stats(1, 1, 1),
     rarity: 'C',
-    images: { main: '/parts/ears_default.png' }
+    images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-ears-classic%20cream.png' }
   },
-  'ears_elf': {
-    id: 'ears_elf',
+  'ears_dark': {
+    id: 'ears_dark',
     category: 'ears',
-    name: 'Elf Ears',
-    stats: stats(0, 1, 2),
+    name: 'Dark Coffee',
+    stats: stats(1, 0, 0),
     rarity: 'C',
-    images: { main: '/parts/ears_elf.png' }
-  },
-  'ears_tech': {
-    id: 'ears_tech',
-    category: 'ears',
-    name: 'Robo Receivers',
-    stats: stats(0, 0, 3),
-    rarity: 'C',
-    images: { main: '/parts/ears_tech.png' }
+    images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-ears-dark%20coffee.png' }
   },
   // --- Ear Colors (Matching Body) ---
   'ears_mimosa': { id: 'ears_mimosa', category: 'ears', name: 'Mimosa Yellow', stats: stats(1, 3, 1), rarity: 'E', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-07-ears.png' } },
@@ -57,8 +49,8 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     id: 'body_none',
     category: 'body',
     name: 'None',
-    stats: stats(1, 3, 2),
-    rarity: 'L',
+    stats: stats(0, 0, 0),
+    rarity: 'C',
     images: {}
   },
   'body_classic': {
@@ -67,24 +59,17 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     name: 'Classic Cream',
     stats: stats(1, 1, 1),
     rarity: 'C',
-    images: { main: '/parts/body_classic.png' }
+    images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-body-classic%20cream.png' }
   },
-  'body_tech': {
-    id: 'body_tech',
+  'body_dark': {
+    id: 'body_dark',
     category: 'body',
-    name: 'Cyber Grey',
-    stats: stats(0, 0, 2),
+    name: 'Dark Coffee',
+    stats: stats(0, 1, 0),
     rarity: 'C',
-    images: { main: '/parts/body_tech.png' }
+    images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-body-dark%20coffee.png' }
   },
-  'body_gold': {
-    id: 'body_gold',
-    category: 'body',
-    name: 'Golden Star',
-    stats: stats(1, 1, 0),
-    rarity: 'C',
-    images: { main: '/parts/body_gold.png' }
-  },
+
   // --- Colors ---
   'body_mimosa': { id: 'body_mimosa', category: 'body', name: 'Mimosa Yellow', stats: stats(1, 3, 1), rarity: 'E', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-05-body.png' } },
   'body_amber': { id: 'body_amber', category: 'body', name: 'Amber', stats: stats(1, 1, 3), rarity: 'L', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Plott400x400-body.png' } },
@@ -116,7 +101,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     name: 'Determination',
     stats: stats(1, 0, 0),
     rarity: 'R',
-    images: { main: '/parts/eyes_angry.png' }
+    images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-face-determination.png' }
   },
   'mouth_smile': {
     id: 'mouth_smile',
@@ -149,6 +134,22 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     stats: stats(1, 1, 1),
     rarity: 'E',
     images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Issi400x400-face.png' }
+  },
+    'face_innocent': {
+    id: 'face_innocent',
+    category: 'face',
+    name: 'Innocent Face',
+    stats: stats(0, 0, 1),
+    rarity: 'C',
+    images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-face-Innocent%20blush.png' }
+  },
+    'face_craving': {
+    id: 'face_craving',
+    category: 'face',
+    name: 'Craving Face',
+    stats: stats(1, 0, 0),
+    rarity: 'R',
+    images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-face-craving.png' }
   },
 
   // === HAIR (Layer 1 Back, Layer 5 Front) ===
@@ -265,15 +266,15 @@ export const PARTS_DB: Record<string, PartDefinition> = {
       back: '/parts/head_tophat_back.png'
     }
   },
-  'access_crown': {
-    id: 'access_crown',
+  'access_babycap': {
+    id: 'access_babycap',
     category: 'access',
-    name: 'Paper Crown',
+    name: 'baptismal cap',
     stats: stats(2, 3, 1),
-    rarity: 'L',
+    rarity: 'E',
     offsetY: -10,
     images: {
-      front: '/parts/head_crown_front.png'
+      front: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-gear-baptismal%20cap.png'
     }
   },
   'access_robot': {
