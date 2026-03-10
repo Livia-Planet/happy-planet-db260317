@@ -92,8 +92,15 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete, lang }
         // 4. 并行执行：预加载图片 + 强制最低等待时间 (1500ms)
         const minWaitPromise = new Promise(resolve => setTimeout(resolve, 1500));
 
-        Promise.all([loadImages(), minWaitPromise]).then(() => {
-            // 加载满格后，停顿 0.4 秒给玩家看一下 100%
+        // [新增保护机制]：10秒强制跳过超时闹钟
+        const safetyTimeout = new Promise(resolve => setTimeout(resolve, 10000));
+
+        // [改造机制]：使用 Promise.race，如果正常加载和超时闹钟谁先跑完，就执行谁
+        Promise.race([
+            Promise.allSettled([loadImages(), minWaitPromise]),
+            safetyTimeout
+        ]).then(() => {
+            // 加载满格（或超时）后，停顿 0.4 秒给玩家看一下 100%
             setTimeout(() => {
                 setIsFadingOut(true); // 触发退场动画
                 setTimeout(onComplete, 400); // 彻底移除组件

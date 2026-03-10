@@ -382,19 +382,39 @@ export const App: React.FC = () => {
     setTimeout(() => {
       setCarrotCoins(prev => prev - 1);
       setActionFeedback({ bigbang: '-1' });
-      updateData(prev => {
-        const newSelectedParts = { ...prev.selectedParts };
-        ['body', 'ears', 'face', 'hair', 'hair_b', 'access'].forEach(cat => {
-          const picked = getWeightedRandomPart(getPartList(cat as PartCategory));
-          if (picked) newSelectedParts[cat as PartCategory] = picked.id;
-        });
-        const newPlanetParts = { ...prev.selectedPlanetParts };
-        ['base', 'surface', 'atmosphere', 'companion'].forEach(cat => {
-          const picked = getWeightedRandomPart(getPartList(cat as PlanetCategory));
-          if (picked) newPlanetParts[cat as PlanetCategory] = picked.id;
-        });
-        return { ...prev, selectedParts: newSelectedParts, selectedPlanetParts: newPlanetParts };
+
+      // 1. 先在外部独立计算出这次随机抽到的所有新部件
+      const newSelectedParts = { ...characterData.selectedParts };
+      ['body', 'ears', 'face', 'hair', 'hair_b', 'access'].forEach(cat => {
+        const picked = getWeightedRandomPart(getPartList(cat as PartCategory));
+        if (picked) newSelectedParts[cat as PartCategory] = picked.id;
       });
+
+      const newPlanetParts = { ...characterData.selectedPlanetParts };
+      ['base', 'surface', 'atmosphere', 'companion'].forEach(cat => {
+        const picked = getWeightedRandomPart(getPartList(cat as PlanetCategory));
+        if (picked) newPlanetParts[cat as PlanetCategory] = picked.id;
+      });
+
+      // 2. 将算好的结果塞入 updateData 进行保存
+      updateData(prev => ({
+        ...prev,
+        selectedParts: newSelectedParts,
+        selectedPlanetParts: newPlanetParts
+      }));
+
+      // 3. 计算这次抽出来的“战力”和“最终稀有度”
+      const newStats = calculateStats(newSelectedParts);
+      const finalRarity = calculateFinalRarity(newSelectedParts, newPlanetParts, newStats);
+
+      // 4. 🏆 非酋核心逻辑：只管计数，不负责发奖！
+      // 你的 App 顶部 useEffect 已经在盯着 badLuckStreak 了，满了 10 次它会自动发奖
+      if (finalRarity === 'C' || finalRarity === 'U') {
+        setBadLuckStreak(prev => prev + 1); // 运气差，连黑次数 +1
+      } else {
+        setBadLuckStreak(0); // 只要出了 Rare 及以上，连黑中断，计数器归零
+      }
+
       setBigBangTrigger(prev => prev + 1);
       setBigBangActive(true);
       setTimeout(() => { setBigBangActive(false); setTimeout(() => setActionFeedback({}), 300); }, 300);
