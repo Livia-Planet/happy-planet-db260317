@@ -15,12 +15,12 @@ import { getPartList } from './data/parts';
 import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS, generateStarName, getWeightedRandomPart, calculateFinalRarity } from './utils/gameLogic';
 import { AchievementUnlockModal } from './components/AchievementUnlockModal';
 import { DevTools } from './components/DevTools';
-// 引入加载屏幕
 import { LoadingScreen } from './components/LoadingScreen';
-// 引入成就系统核心
 import { ACHIEVEMENTS_DB } from './data/achievements';
 import { DraggableMedal } from './components/DraggableMedal';
 import { MagicCursor } from './components/MagicCursor';
+import { FarmScreen } from './components/FarmScreen';
+
 // --- 专业的零延迟音效加载函数 ---
 const loadAudioBuffer = async (url: string, context: AudioContext) => {
   const response = await fetch(url);
@@ -59,7 +59,6 @@ const INITIAL_DATA: CharacterData = {
   }
 };
 
-// 集中管理所有 LocalStorage Keys，新增 MEDALS
 const STORAGE_KEYS = {
   PASSPORTS: 'happyPlanet_passports',
   TOKENS: 'happyPlanet_tokens',
@@ -68,11 +67,8 @@ const STORAGE_KEYS = {
 };
 
 export const App: React.FC = () => {
-  // [新增] 用于控制加载页面的显示与隐藏
   const [isReady, setIsReady] = useState(false);
-  // ==========================================
-  // 1. 所有的基础 State (先声明，绝不报错)
-  // ==========================================
+
   const [characterData, setCharacterData] = useState<CharacterData>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.DRAFT);
     if (saved) { try { return JSON.parse(saved); } catch { return INITIAL_DATA; } }
@@ -90,14 +86,12 @@ export const App: React.FC = () => {
     return [];
   });
 
-  // --- 这是我们成就系统的专属 State ---
   const [unlockedMedals, setUnlockedMedals] = useState<Record<string, UnlockedMedal>>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.MEDALS);
     if (saved) { try { return JSON.parse(saved); } catch { return {}; } }
     return {};
   });
   const [medalMode, setMedalMode] = useState<'floating' | 'sorted' | 'hidden'>('floating');
-  // ------------------------------------
 
   const [isFlipped, setIsFlipped] = useState(false);
   const [currentLang, setCurrentLang] = useState<Language>('se');
@@ -106,11 +100,9 @@ export const App: React.FC = () => {
 
   const [flash, setFlash] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
-  // 👇 新增：记录当前刚刚解锁的徽章，如果不为 null，就会弹出盲盒！
   const [newlyUnlocked, setNewlyUnlocked] = useState<AchievementDef | null>(null);
 
   const [isIssuing, setIsIssuing] = useState(false);
-  // 🌟 加上这一行：控制“签发成功”弹窗的显示
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [shakeBtn, setShakeBtn] = useState<string | null>(null);
   const [displayBpm, setDisplayBpm] = useState(80);
@@ -120,21 +112,65 @@ export const App: React.FC = () => {
   const [actionFeedback, setActionFeedback] = useState<{ bigbang?: string; issue?: string }>({});
 
   const { spendCarrots, gainCarrots } = useAnimateTokens();
-  const [viewMode, setViewMode] = useState<ViewMode>('start'); // 改为 start 作为初始视图
-  const [hunger, setHunger] = useState<number>(100); // 新增饱食度状态
-  const [mood, setMood] = useState<number>(100); // 新增心情值
+  const [viewMode, setViewMode] = useState<ViewMode>('start');
+  const [hunger, setHunger] = useState<number>(100);
+  const [mood, setMood] = useState<number>(100);
   const [issuedPassport, setIssuedPassport] = useState<PassportData | null>(null);
 
-  // --- 成就系统专用状态 ---
-  const [bigBangHistory, setBigBangHistory] = useState<number[]>([]); // 记录 Big Bang 的点击时间戳
-  const [badLuckStreak, setBadLuckStreak] = useState(0); // 连续不出 Rare 的次数
-  const [tabSwitchCount, setTabSwitchCount] = useState(0); // 切换分类次数
-  const [hasRenamed, setHasRenamed] = useState(false); // 是否改过名字
-  const [hasChangedPlanet, setHasChangedPlanet] = useState(false); // 是否换过星球
-  const [usedLangs, setUsedLangs] = useState<Set<Language>>(new Set([currentLang])); // 使用过的语言集合
+  const [bigBangHistory, setBigBangHistory] = useState<number[]>([]);
+  const [badLuckStreak, setBadLuckStreak] = useState(0);
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
+  const [hasRenamed, setHasRenamed] = useState(false);
+  const [hasChangedPlanet, setHasChangedPlanet] = useState(false);
+  const [usedLangs, setUsedLangs] = useState<Set<Language>>(new Set([currentLang]));
 
+  // ==========================================
+  // 🎵 核心音频系统管理
+  // ==========================================
   const audioCtx = useRef<AudioContext | null>(null);
   const buffers = useRef<Record<string, AudioBuffer>>({});
+
+  // 统一的音效发射台（带休眠唤醒功能）
+  const playSound = useCallback((type: 'camera' | 'stamp' | 'coins' | 'error' | 'success' | 'achievement' | 'click') => {
+    if (!audioCtx.current) return;
+
+    // 强制唤醒被浏览器拦截的音频系统
+    if (audioCtx.current.state === 'suspended') {
+      audioCtx.current.resume();
+    }
+
+    const buffer = buffers.current[type];
+    if (buffer) {
+      // 细调各个音效的音量：点击声轻脆，拍照声大，成就声正常
+      const vol = type === 'camera' ? 1.0 : (type === 'click' ? 0.3 : 0.6);
+      playBuffer(buffer, audioCtx.current, vol);
+    }
+  }, []);
+
+  // 音效预加载 (严格补齐 7 个音效)
+  useEffect(() => {
+    audioCtx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const preload = async () => {
+      if (!audioCtx.current) return;
+      try {
+        const [cameraB, stampB, coinsB, errorB, successB, achievementB, clickB] = await Promise.all([
+          loadAudioBuffer('/camera.wav', audioCtx.current),
+          loadAudioBuffer('/stamp.wav', audioCtx.current),
+          loadAudioBuffer('/coins.ogg', audioCtx.current),
+          loadAudioBuffer('/error.wav', audioCtx.current),
+          loadAudioBuffer('/success.ogg', audioCtx.current),
+          loadAudioBuffer('/achievement.wav', audioCtx.current),
+          loadAudioBuffer('/click.wav', audioCtx.current), // 👈 click 完璧归赵！
+        ]);
+        buffers.current = {
+          camera: cameraB, stamp: stampB, coins: coinsB,
+          error: errorB, success: successB, achievement: achievementB, click: clickB
+        };
+      } catch (err) { console.error("Audio Load Error:", err); }
+    };
+    preload();
+  }, []);
+
 
   // ==========================================
   // 2. 所有的 Effect (存盘与监听)
@@ -142,128 +178,55 @@ export const App: React.FC = () => {
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(characterData)); }, [characterData]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.TOKENS, carrotCoins.toString()); }, [carrotCoins]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.PASSPORTS, JSON.stringify(savedPassports)); }, [savedPassports]);
-
-  // 保存奖章位置
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.MEDALS, JSON.stringify(unlockedMedals)); }, [unlockedMedals]);
-
-  // 同步 BPM
   useEffect(() => { setDisplayBpm(PLAYLIST[currentTrackIndex].bpm); }, [currentTrackIndex]);
 
-  // 🏆 终极成就监控：自动检测 16 个成就
+  // 🏆 成就监控
   useEffect(() => {
     let hasNew = false;
     let lastUnlockedId: string | null = null;
     const newMedals = { ...unlockedMedals };
-
-    // 获取当前属性值 (用于全能选手检测)
     const stats = calculateStats(characterData);
 
-    // 辅助函数：快速解锁
     const unlock = (id: string) => {
       if (!newMedals[id]) {
-        newMedals[id] = {
-          id,
-          x: Math.random() * (window.innerWidth - 100) + 50,
-          y: Math.random() * (window.innerHeight - 100) + 50,
-          unlockedAt: Date.now()
-        };
+        newMedals[id] = { id, x: Math.random() * (window.innerWidth - 100) + 50, y: Math.random() * (window.innerHeight - 100) + 50, unlockedAt: Date.now() };
         hasNew = true;
         lastUnlockedId = id;
       }
     };
 
-    // 1. 你好，宇宙
     if (savedPassports.length >= 1) unlock('first_blood');
-
-    // 2. 胡萝卜富翁
     if (carrotCoins >= 50) unlock('rich_rabbit');
-
-    // 3. 狂热赌徒 (总次数，这里借用 history 长度)
     if (bigBangHistory.length >= 10) unlock('big_bang_fan');
-
-    // 4. 十全十美
     if (savedPassports.length >= 10) unlock('collector_10');
-
-    // 5. 星际交际花
     const totalRelations = savedPassports.reduce((sum, p) => sum + (p.relationships?.length || 0), 0);
     if (totalRelations >= 1) unlock('social_butterfly');
-
-    // 6. 改名部部长
     if (hasRenamed) unlock('rename_expert');
-
-    // 7. 时尚达人
     if (tabSwitchCount >= 5) unlock('fashionista');
-
-    // 8. 搬家公司
     if (hasChangedPlanet) unlock('planet_hopper');
-
-    // 9. 第一桶金 (如果用户有任一档案标记了已领奖)
     if (savedPassports.some(p => p.hasReceivedStoryReward)) unlock('first_harvest');
-
-    // 10. 赌神 (1分钟内点10次)
     const now = Date.now();
     const recentClicks = bigBangHistory.filter(time => now - time < 60000);
     if (recentClicks.length >= 10) unlock('the_gambler');
-
-    // 11. 非酋的愤怒 (连黑 10 次)
     if (badLuckStreak >= 10) unlock('zero_luck');
-
-    // 12. 星际记者 (累计 5 篇日记)
-    // 假设你的 savedPassports 结构里有一个专门存日记数量的地方，或者这里简化为有5个档案
     if (savedPassports.length >= 5) unlock('space_reporter');
-
-    // 13. 全能选手 (属性平衡)
-    // 只有当三项属性相等，且都达到了 5 点以上（说明换了很多厉害装备且依然保持平衡）才解锁
     if (stats.mod === stats.bus && stats.bus === stats.klurighet && stats.mod >= 5) unlock('all_rounder');
-
-    // 14. 午夜电波 (0-4点)
     const hour = new Date().getHours();
     if (hour >= 0 && hour < 4) unlock('midnight_radio');
-
-    // 15. 多语种大师
     if (usedLangs.size >= 3) unlock('polyglot');
 
-    // 16. 天选之人 (检测当前角色是否有 L 等级部件)
-    // 注意：这个逻辑通常在 Big Bang 函数里触发，但这里也可以通过检查 character 的 rarity 触发
-    // 这里为了简便，假设在 Big Bang 逻辑里已经处理。
-
-    // 最终执行更新
     if (hasNew && lastUnlockedId) {
       setUnlockedMedals(newMedals);
-      // === 新增：播放徽章音效 ===
-      if (audioCtx.current && buffers.current.achievement) {
-        playBuffer(buffers.current.achievement, audioCtx.current, 0.5);
-      }
-      // ========================
+      playSound('achievement'); // 👈 完美对齐：成就解锁音效
       if (ACHIEVEMENTS_DB[lastUnlockedId]) {
         setNewlyUnlocked(ACHIEVEMENTS_DB[lastUnlockedId]);
       }
     }
   }, [
-    savedPassports, carrotCoins, bigBangHistory.length,
-    badLuckStreak, tabSwitchCount, hasRenamed,
-    hasChangedPlanet, usedLangs.size, characterData
+    savedPassports, carrotCoins, bigBangHistory.length, badLuckStreak, tabSwitchCount,
+    hasRenamed, hasChangedPlanet, usedLangs.size, characterData, playSound, unlockedMedals
   ]);
-
-  // 音效预加载
-  useEffect(() => {
-    audioCtx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const preload = async () => {
-      if (!audioCtx.current) return;
-      try {
-        const [cameraB, stampB, coinsB, errorB, successB, achievementB] = await Promise.all([
-          loadAudioBuffer('/camera.wav', audioCtx.current),
-          loadAudioBuffer('/stamp.wav', audioCtx.current),
-          loadAudioBuffer('/coins.ogg', audioCtx.current),
-          loadAudioBuffer('/error.wav', audioCtx.current),
-          loadAudioBuffer('/success.ogg', audioCtx.current),
-          loadAudioBuffer('/achievement.wav', audioCtx.current),
-        ]);
-        buffers.current = { camera: cameraB, stamp: stampB, coins: coinsB, error: errorB, success: successB, achievement: achievementB };
-      } catch (err) { }
-    };
-    preload();
-  }, []);
 
   // ==========================================
   // 3. 回调函数与逻辑
@@ -275,45 +238,40 @@ export const App: React.FC = () => {
     setCharacterData(prev => ({ ...updater(prev), lastModified: Date.now() }));
   };
 
-  const handleUpdateName = (name: string) => updateData(prev => ({ ...prev, name }));
-  const handleUpdatePart = (cat: PartCategory, id: string) => updateData(prev => ({ ...prev, selectedParts: { ...prev.selectedParts, [cat]: id } }));
-  const handleUpdatePlanetPart = (cat: PlanetCategory, id: string) => updateData(prev => ({ ...prev, selectedPlanetParts: { ...prev.selectedPlanetParts, [cat]: id } }));
-  const toggleFlip = () => { const next = !isFlipped; setIsFlipped(next); setActiveTab(next ? 'base' : 'body'); };
-  // 🌟 核心：三段式勋章模式切换（避开中间，靠左右排队）
+  const handleUpdateName = (name: string) => { updateData(prev => ({ ...prev, name })); };
+  const handleUpdatePart = (cat: PartCategory, id: string) => { playSound('click'); updateData(prev => ({ ...prev, selectedParts: { ...prev.selectedParts, [cat]: id } })); };
+  const handleUpdatePlanetPart = (cat: PlanetCategory, id: string) => { playSound('click'); updateData(prev => ({ ...prev, selectedPlanetParts: { ...prev.selectedPlanetParts, [cat]: id } })); };
+
+  const toggleFlip = () => {
+    playSound('click'); // 👈 点击翻转咔哒声
+    const next = !isFlipped;
+    setIsFlipped(next);
+    setActiveTab(next ? 'base' : 'body');
+  };
+
   const handleToggleMedalMode = () => {
+    playSound('click'); // 👈 切换徽章排队咔哒声
     if (medalMode === 'floating') {
-      // 1. 从漂浮 -> 排队：计算两边的网格坐标
       const newMedals = { ...unlockedMedals };
       const medalIds = Object.keys(newMedals);
-
-      const gap = 110; // 每个勋章的垂直间距
-      const leftX = 30; // 左列的 X 坐标
-      const rightX = typeof window !== 'undefined' ? window.innerWidth - 130 : 800; // 右列的 X 坐标
+      const gap = 110;
+      const leftX = 30;
+      const rightX = typeof window !== 'undefined' ? window.innerWidth - 130 : 800;
 
       medalIds.forEach((id, index) => {
-        // 偶数排左边，奇数排右边，自动往下延伸
         const isLeft = index % 2 === 0;
         const rowIndex = Math.floor(index / 2);
-
-        const targetX = isLeft ? leftX : rightX;
-        const targetY = 100 + rowIndex * gap; // 从顶部 100px 开始往下排
-
-        newMedals[id] = { ...newMedals[id], x: targetX, y: targetY };
+        newMedals[id] = { ...newMedals[id], x: isLeft ? leftX : rightX, y: 100 + rowIndex * gap };
       });
-
       setUnlockedMedals(newMedals);
       setMedalMode('sorted');
-
     } else if (medalMode === 'sorted') {
-      // 2. 从排队 -> 隐藏
       setMedalMode('hidden');
     } else {
-      // 3. 从隐藏 -> 漂浮
       setMedalMode('floating');
     }
   };
 
-  // 拖拽记录位置
   const handleMedalMove = useCallback((id: string, x: number, y: number) => {
     setUnlockedMedals(prev => {
       if (!prev[id]) return prev;
@@ -322,32 +280,27 @@ export const App: React.FC = () => {
   }, []);
 
   const handleReward = useCallback((amount: number, sourceId: string) => {
-    // 1. gainCarrots 会触发喷射动画
-    // 只要 gainCarrots 内部逻辑是根据 amount 来决定喷多少个，它就会自动变壮观
     gainCarrots(sourceId, amount);
-
     setTimeout(() => {
-      // 2. 这里是真正加钱的地方，amount 是多少就加多少
+      playSound('coins'); // 👈 得到金币的音效
       setCarrotCoins(prev => prev + amount);
-
-      // 3. 提示文字也会根据 amount 变化
       const msg = currentLang === 'cn'
         ? `🚀 故事记录成功！奖励 ${amount} 🥕`
         : (currentLang === 'se' ? `🚀 Berättelse sparad! Belöning: ${amount} 🥕` : `🚀 Story Saved! Reward: ${amount} 🥕`);
-
       setToastMsg(msg);
       setTimeout(() => setToastMsg(null), 3000);
     }, 700);
-  }, [gainCarrots, currentLang]);
+  }, [gainCarrots, currentLang, playSound]);
 
   const handleIssue = async () => {
     if (carrotCoins < 5) {
-      if (audioCtx.current && buffers.current.error) playBuffer(buffers.current.error, audioCtx.current, 0.6);
+      playSound('error'); // 👈 完美对齐：钱不够的报错声
       setShakeBtn('btn-issue'); setTimeout(() => setShakeBtn(null), 400);
       setActionFeedback({ issue: 'no_carrot' }); setTimeout(() => setActionFeedback({}), 1200);
       return;
     }
-    if (audioCtx.current && buffers.current.coins) playBuffer(buffers.current.coins, audioCtx.current, 0.5);
+
+    playSound('coins'); // 👈 完美对齐：扣除金币的硬币声
     spendCarrots('btn-issue', 5);
     setCarrotCoins(prev => prev - 5);
     setActionFeedback({ issue: '-5' });
@@ -358,7 +311,7 @@ export const App: React.FC = () => {
     setFlash(true);
     setIsIssuing(true);
 
-    if (audioCtx.current && buffers.current.camera) playBuffer(buffers.current.camera, audioCtx.current, 1.2);
+    playSound('camera'); // 👈 完美对齐：闪光灯拍照音效
     setTimeout(() => setFlash(false), 150);
     await delay(500);
 
@@ -369,25 +322,27 @@ export const App: React.FC = () => {
     const newPassport: PassportData = { ...characterData, id: newId, bio: bioText, stats: { ...currentStats }, rarity: finalRarity, savedAt: Date.now() };
     setSavedPassports(prev => [newPassport, ...prev]);
     setIssuedPassport(newPassport);
+
+    playSound('success'); // 👈 完美对齐：签发成功的庆祝音效
     setIsSuccessOpen(true);
     setTimeout(() => setDisplayBpm(originalBpm), 1000);
   };
 
   const handleBigBang = () => {
     if (carrotCoins < 1) {
-      if (audioCtx.current && buffers.current.error) playBuffer(buffers.current.error, audioCtx.current, 0.6);
+      playSound('error'); // 👈 报错声
       setShakeBtn('btn-bigbang'); setTimeout(() => setShakeBtn(null), 400);
       setActionFeedback({ bigbang: 'no_carrot' }); setTimeout(() => setActionFeedback({}), 1200);
       return;
     }
-    if (audioCtx.current && buffers.current.coins) playBuffer(buffers.current.coins, audioCtx.current, 0.4);
+
+    playSound('coins'); // 👈 扣费声
     spendCarrots('btn-bigbang', 1);
 
     setTimeout(() => {
       setCarrotCoins(prev => prev - 1);
       setActionFeedback({ bigbang: '-1' });
 
-      // 1. 先在外部独立计算出这次随机抽到的所有新部件
       const newSelectedParts = { ...characterData.selectedParts };
       ['body', 'ears', 'face', 'hair', 'hair_b', 'access'].forEach(cat => {
         const picked = getWeightedRandomPart(getPartList(cat as PartCategory));
@@ -400,23 +355,19 @@ export const App: React.FC = () => {
         if (picked) newPlanetParts[cat as PlanetCategory] = picked.id;
       });
 
-      // 2. 将算好的结果塞入 updateData 进行保存
       updateData(prev => ({
         ...prev,
         selectedParts: newSelectedParts,
         selectedPlanetParts: newPlanetParts
       }));
 
-      // 3. 计算这次抽出来的“战力”和“最终稀有度”
       const newStats = calculateStats(newSelectedParts);
       const finalRarity = calculateFinalRarity(newSelectedParts, newPlanetParts, newStats);
 
-      // 4. 🏆 非酋核心逻辑：只管计数，不负责发奖！
-      // 你的 App 顶部 useEffect 已经在盯着 badLuckStreak 了，满了 10 次它会自动发奖
       if (finalRarity === 'C' || finalRarity === 'U') {
-        setBadLuckStreak(prev => prev + 1); // 运气差，连黑次数 +1
+        setBadLuckStreak(prev => prev + 1);
       } else {
-        setBadLuckStreak(0); // 只要出了 Rare 及以上，连黑中断，计数器归零
+        setBadLuckStreak(0);
       }
 
       setBigBangTrigger(prev => prev + 1);
@@ -437,11 +388,9 @@ export const App: React.FC = () => {
       {/* 🪄 注入超级魔棒组件 */}
       <MagicCursor />
 
-      {/* 【逻辑 A】如果没有准备好，强制只显示加载页 */}
       {!isReady ? (
         <LoadingScreen onComplete={() => setIsReady(true)} lang={currentLang} />
       ) : (
-        /* 【逻辑 B】只有 isReady 为 true 时，才渲染原来的所有内容 */
         <>
           <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity duration-700 pointer-events-none z-[90] ${isIssuing ? 'opacity-100' : 'opacity-0'}`} />
           {flash && <div className="fixed inset-0 bg-white opacity-0 animate-flash pointer-events-none z-[9999]"></div>}
@@ -470,7 +419,6 @@ export const App: React.FC = () => {
             .btn-gold-glow { animation: glow-gold 1.5s infinite ease-in-out; }
           `}</style>
 
-          {/* 🌠 动态贴纸墙 / 奖章背景层 */}
           {medalMode !== 'hidden' && (
             <div className="fixed inset-0 pointer-events-none z-[5] overflow-hidden">
               <div className="relative w-full h-full pointer-events-auto">
@@ -484,7 +432,7 @@ export const App: React.FC = () => {
                       def={def}
                       currentLang={currentLang}
                       onPositionChange={handleMedalMove}
-                      isSorted={medalMode === 'sorted'} // 👈 给组件发送排队指令
+                      isSorted={medalMode === 'sorted'}
                     />
                   );
                 })}
@@ -495,28 +443,38 @@ export const App: React.FC = () => {
           <SpaceBackground bpm={displayBpm} themeColor={PLAYLIST[currentTrackIndex].themeColor} meteorDensity={PLAYLIST[currentTrackIndex].meteorDensity} />
           {viewMode === 'passport' && <div className="fixed inset-0 bg-[#2c3e50] z-0 pointer-events-none"></div>}
 
-          {/* ================= [新增] 门户页面 ================= */}
+          {/* 门户页面 */}
           {viewMode === 'start' && (
             <StartScreen
               characterData={characterData}
               carrotCoins={carrotCoins}
               hunger={hunger}
               lang={currentLang}
-              onNavigate={(mode: ViewMode) => setViewMode(mode)}
+              onNavigate={(mode: ViewMode) => {
+                playSound('click'); // 👈 完美对齐：点击首页导航的咔哒声，顺便唤醒音频系统！
+                setViewMode(mode);
+              }}
               medalMode={medalMode}
             />
           )}
 
-          {/* Top Right Controls (全局显示，悬浮在最上层) */}
+          {/* Top Right Controls */}
           <div className="absolute top-4 right-4 flex gap-3 z-50 items-center">
-
-            {/* 以下控件在任何页面(包括 Start 页面)都常驻显示！ */}
             <div id="carrot-wallet" className="bg-white/90 backdrop-blur-md px-3 py-1 border-[3px] border-black rounded-full shadow-[3px_3px_0_black] flex items-center gap-1 font-bold">
               <CarrotCoinIcon className="w-5 h-5" />
               <span className="text-lg">{carrotCoins}</span>
             </div>
-            <AudioPlayer lang={currentLang} currentTrackIndex={currentTrackIndex} onTrackChange={setCurrentTrackIndex} />
-            <LanguageSelector currentLang={currentLang} onLanguageChange={setCurrentLang} />
+
+            <AudioPlayer
+              lang={currentLang}
+              currentTrackIndex={currentTrackIndex}
+              onTrackChange={(i) => { playSound('click'); setCurrentTrackIndex(i); }}
+            />
+
+            <LanguageSelector
+              currentLang={currentLang}
+              onLanguageChange={(l) => { playSound('click'); setCurrentLang(l); }}
+            />
 
             <button onClick={handleToggleMedalMode} className={`relative w-12 h-12 bg-white border-[3px] border-black rounded-lg flex items-center justify-center transition-all ${medalMode !== 'hidden' ? 'shadow-[3px_3px_0_black]' : 'shadow-none translate-y-[3px] opacity-60'}`}>
               {medalMode === 'floating' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6"><circle cx="12" cy="8" r="6" /><path d="M8.5 13.5L7 22l5-2.5L17 22l-1.5-8.5" /></svg>}
@@ -524,9 +482,8 @@ export const App: React.FC = () => {
               {medalMode === 'hidden' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6"><circle cx="12" cy="8" r="6" /><path d="M8.5 13.5L7 22l5-2.5L17 22l-1.5-8.5" /><line x1="4" y1="4" x2="20" y2="20" strokeWidth="3" /></svg>}
             </button>
 
-            {/* 仅在“非首页”时，才显示返回首页的小房子按钮 */}
             {viewMode !== 'start' && (
-              <button onClick={() => setViewMode('start')} className="w-12 h-12 bg-white border-[3px] border-black rounded-lg shadow-[3px_3px_0_black] flex items-center justify-center active:translate-y-[3px] active:shadow-none transition-all mr-2">
+              <button onClick={() => { playSound('click'); setViewMode('start'); }} className="w-12 h-12 bg-white border-[3px] border-black rounded-lg shadow-[3px_3px_0_black] flex items-center justify-center active:translate-y-[3px] active:shadow-none transition-all mr-2">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-6 h-6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
               </button>
             )}
@@ -550,7 +507,17 @@ export const App: React.FC = () => {
                 </div>
 
                 <div className={`flex flex-col gap-6 items-center md:items-start relative z-10 transition-opacity duration-500 ${isIssuing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-                  <Controls data={characterData} derivedStats={currentStats} activeTab={activeTab} isBackView={isFlipped} onTabChange={setActiveTab} updateName={handleUpdateName} updatePart={handleUpdatePart} updatePlanetPart={handleUpdatePlanetPart} lang={currentLang} />
+                  <Controls
+                    data={characterData}
+                    derivedStats={currentStats}
+                    activeTab={activeTab}
+                    isBackView={isFlipped}
+                    onTabChange={(tab) => { playSound('click'); setActiveTab(tab); }} // 👈 分类切换声
+                    updateName={handleUpdateName}
+                    updatePart={handleUpdatePart}
+                    updatePlanetPart={handleUpdatePlanetPart}
+                    lang={currentLang}
+                  />
                   <div className="w-full max-w-[340px] flex flex-col gap-4 pb-8">
                     <div className="flex gap-4 w-full">
                       <button id="btn-bigbang" onClick={handleBigBang} className={`flex-1 flex items-center justify-center gap-2 px-3 py-3 font-bold border-[3px] rounded-lg transition-all ${carrotCoins >= 1 ? 'bg-purple-500 text-white border-black shadow-[5px_5px_0_black] btn-orange-glow' : 'bg-gray-200 grayscale opacity-80 cursor-not-allowed'}`}>
@@ -568,16 +535,59 @@ export const App: React.FC = () => {
 
           {viewMode === 'passport' && (
             <div className="relative z-10 pt-16 pb-20">
-              <PassportBook passports={savedPassports} onBack={() => setViewMode('editor')} onUpdatePassport={handleUpdatePassportData} onDelete={handleDeletePassport} lang={currentLang} onReward={handleReward} />
+              <PassportBook
+                passports={savedPassports}
+                onBack={() => { playSound('click'); setViewMode('editor'); }}
+                onUpdatePassport={handleUpdatePassportData}
+                onDelete={handleDeletePassport}
+                lang={currentLang}
+                onReward={handleReward}
+              />
             </div>
           )}
 
-          <SuccessOverlay isOpen={isSuccessOpen} passportData={issuedPassport} lang={currentLang} onClose={() => { setIsSuccessOpen(false); setIsIssuing(false); setViewMode('passport'); }} playStampSound={() => { }} />
-          <AchievementUnlockModal isOpen={newlyUnlocked !== null} achievement={newlyUnlocked} lang={currentLang} onClose={() => setNewlyUnlocked(null)} />
+          {viewMode === 'focus' && (
+            <FarmScreen
+              currentLang={currentLang}
+              carrotCoins={carrotCoins}
+              onUpdateCoins={(amount) => {
+                playSound('coins'); // 农场里获得/花费金币
+                setCarrotCoins(prev => prev + amount);
+              }}
+              savedPassports={savedPassports}
+              onNavigate={(mode: ViewMode) => {
+                playSound('click');
+                setViewMode(mode);
+              }}
+            />
+          )}
+
+          <SuccessOverlay
+            isOpen={isSuccessOpen}
+            passportData={issuedPassport}
+            lang={currentLang}
+            onClose={() => {
+              playSound('click'); // 关闭弹窗时咔哒声
+              setIsSuccessOpen(false);
+              setIsIssuing(false);
+              setViewMode('passport');
+            }}
+            playStampSound={() => playSound('stamp')} // 👈 完美对齐：盖章落下的音效！
+          />
+
+          <AchievementUnlockModal
+            isOpen={newlyUnlocked !== null}
+            achievement={newlyUnlocked}
+            lang={currentLang}
+            onClose={() => {
+              playSound('click'); // 关闭成就弹窗
+              setNewlyUnlocked(null);
+            }}
+          />
+
           {process.env.NODE_ENV === 'development' && <DevTools />}
         </>
       )}
-
     </div>
   );
 };
