@@ -9,7 +9,8 @@ import { RedX, CarrotCoinIcon, ArchivesIcon, DiceIcon } from './components/Icons
 import { ParticleOverlay } from './components/effects/ParticleOverlay';
 import { useAnimateTokens } from './hooks/useAnimateTokens';
 import { SuccessOverlay } from './components/effects/SuccessOverlay';
-import { CharacterData, PartCategory, PlanetCategory, Language, PassportData, UnlockedMedal, AchievementDef } from './types';
+import { CharacterData, PartCategory, PlanetCategory, Language, PassportData, UnlockedMedal, AchievementDef, ViewMode } from './types';
+import { StartScreen } from './components/StartScreen';
 import { getPartList } from './data/parts';
 import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS, generateStarName, getWeightedRandomPart, calculateFinalRarity } from './utils/gameLogic';
 import { AchievementUnlockModal } from './components/AchievementUnlockModal';
@@ -109,6 +110,8 @@ export const App: React.FC = () => {
   const [newlyUnlocked, setNewlyUnlocked] = useState<AchievementDef | null>(null);
 
   const [isIssuing, setIsIssuing] = useState(false);
+  // 🌟 加上这一行：控制“签发成功”弹窗的显示
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [shakeBtn, setShakeBtn] = useState<string | null>(null);
   const [displayBpm, setDisplayBpm] = useState(80);
 
@@ -117,8 +120,9 @@ export const App: React.FC = () => {
   const [actionFeedback, setActionFeedback] = useState<{ bigbang?: string; issue?: string }>({});
 
   const { spendCarrots, gainCarrots } = useAnimateTokens();
-  const [viewMode, setViewMode] = useState<'editor' | 'passport'>('editor');
-  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('start'); // 改为 start 作为初始视图
+  const [hunger, setHunger] = useState<number>(100); // 新增饱食度状态
+  const [mood, setMood] = useState<number>(100); // 新增心情值
   const [issuedPassport, setIssuedPassport] = useState<PassportData | null>(null);
 
   // --- 成就系统专用状态 ---
@@ -491,32 +495,41 @@ export const App: React.FC = () => {
           <SpaceBackground bpm={displayBpm} themeColor={PLAYLIST[currentTrackIndex].themeColor} meteorDensity={PLAYLIST[currentTrackIndex].meteorDensity} />
           {viewMode === 'passport' && <div className="fixed inset-0 bg-[#2c3e50] z-0 pointer-events-none"></div>}
 
-          {/* Top Right Controls */}
+          {/* ================= [新增] 门户页面 ================= */}
+          {viewMode === 'start' && (
+            <StartScreen
+              characterData={characterData}
+              carrotCoins={carrotCoins}
+              hunger={hunger}
+              lang={currentLang}
+              onNavigate={(mode: ViewMode) => setViewMode(mode)}
+              medalMode={medalMode}
+            />
+          )}
+
+          {/* Top Right Controls (全局显示，悬浮在最上层) */}
           <div className="absolute top-4 right-4 flex gap-3 z-50 items-center">
-            <div id="carrot-wallet" className="flex items-center gap-1 font-bold">
-              <CarrotCoinIcon className="w-6 h-6" />
+
+            {/* 以下控件在任何页面(包括 Start 页面)都常驻显示！ */}
+            <div id="carrot-wallet" className="bg-white/90 backdrop-blur-md px-3 py-1 border-[3px] border-black rounded-full shadow-[3px_3px_0_black] flex items-center gap-1 font-bold">
+              <CarrotCoinIcon className="w-5 h-5" />
               <span className="text-lg">{carrotCoins}</span>
             </div>
             <AudioPlayer lang={currentLang} currentTrackIndex={currentTrackIndex} onTrackChange={setCurrentTrackIndex} />
             <LanguageSelector currentLang={currentLang} onLanguageChange={setCurrentLang} />
-            {/* 奖牌显隐控制开关 (三段式) */}
-            <button onClick={handleToggleMedalMode} className={`relative w-12 h-12 bg-white border-[3px] border-black rounded-lg flex items-center justify-center transition-all ${medalMode !== 'hidden' ? 'shadow-[3px_3px_0_black]' : 'shadow-none translate-y-[3px] opacity-60'}`} title="Toggle Medals Mode">
-              {/* 漂浮模式图标 (圆形+轨道) */}
-              {medalMode === 'floating' && (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6" /><path d="M8.5 13.5L7 22l5-2.5L17 22l-1.5-8.5" /></svg>
-              )}
-              {/* 排队模式图标 (网格) */}
-              {medalMode === 'sorted' && (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /></svg>
-              )}
-              {/* 隐藏模式图标 (禁用划线) */}
-              {medalMode === 'hidden' && (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6" /><path d="M8.5 13.5L7 22l5-2.5L17 22l-1.5-8.5" /><line x1="4" y1="4" x2="20" y2="20" strokeWidth="3" /></svg>
-              )}
+
+            <button onClick={handleToggleMedalMode} className={`relative w-12 h-12 bg-white border-[3px] border-black rounded-lg flex items-center justify-center transition-all ${medalMode !== 'hidden' ? 'shadow-[3px_3px_0_black]' : 'shadow-none translate-y-[3px] opacity-60'}`}>
+              {medalMode === 'floating' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6"><circle cx="12" cy="8" r="6" /><path d="M8.5 13.5L7 22l5-2.5L17 22l-1.5-8.5" /></svg>}
+              {medalMode === 'sorted' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /></svg>}
+              {medalMode === 'hidden' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6"><circle cx="12" cy="8" r="6" /><path d="M8.5 13.5L7 22l5-2.5L17 22l-1.5-8.5" /><line x1="4" y1="4" x2="20" y2="20" strokeWidth="3" /></svg>}
             </button>
-            <button onClick={() => setViewMode('passport')} className="w-12 h-12 bg-white border-[3px] border-black rounded-lg shadow-[3px_3px_0_black] flex items-center justify-center active:translate-y-[3px] active:shadow-none transition-all">
-              <ArchivesIcon className="w-6 h-6" />
-            </button>
+
+            {/* 仅在“非首页”时，才显示返回首页的小房子按钮 */}
+            {viewMode !== 'start' && (
+              <button onClick={() => setViewMode('start')} className="w-12 h-12 bg-white border-[3px] border-black rounded-lg shadow-[3px_3px_0_black] flex items-center justify-center active:translate-y-[3px] active:shadow-none transition-all mr-2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-6 h-6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+              </button>
+            )}
           </div>
 
           {viewMode === 'editor' && (

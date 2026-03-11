@@ -43,3 +43,40 @@ export const DiceIcon: React.FC<IconProps> = ({ className }) => (
     <circle cx="16" cy="16" r="1.2" fill="currentColor" />
   </svg>
 );
+
+// === Start Screen 专属图标 ===
+
+// 1. 实验室 (LabIcon) - 烧瓶形状
+export const LabIcon: React.FC<IconProps> = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M10 2v7.31L3 18.5A2 2 0 0 0 4.73 22h14.54A2 2 0 0 0 21 18.5l-7-9.19V2" />
+    <path d="M8.5 2h7" />
+    <path d="M3 15h18" />
+  </svg>
+);
+
+// 2. 农场/专注 (FocusIcon) - 时钟番茄形状
+export const FocusIcon: React.FC<IconProps> = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+);
+
+// 3. 星际雷达 (RadarIcon) - 雷达波纹
+export const RadarIcon: React.FC<IconProps> = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 12A10 10 0 0 0 2 22" />
+    <path d="M12 12A5 5 0 0 0 7 22" />
+    <path d="M12 2v10" />
+    <circle cx="12" cy="12" r="2" />
+  </svg>
+);
+
+// 4. 航行日志 (BookIcon) - 借用书本形状
+export const BookIcon: React.FC<IconProps> = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+  </svg>
+);

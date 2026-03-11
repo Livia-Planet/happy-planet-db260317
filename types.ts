@@ -90,3 +90,14 @@ export interface StoryEntry {
   password?: string;
 }
 
+// --- 视图路由系统 ---
+// loading: 加载页 | start: 门户首页 | editor: 换装实验室 
+// focus: 丰饶农场(专注) | social: 星际雷达(社交) | passport: 航行日志
+export type ViewMode = 'loading' | 'start' | 'editor' | 'focus' | 'social' | 'passport';
+
+// --- 养成系统扩展 ---
+export interface PetStatus {
+  hunger: number;       // 饱食度 0-100
+  mood: number;         // 心情值 0-100
+  lastCheckIn: number;  // 上次同步时间戳
+}
