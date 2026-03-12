@@ -37,7 +37,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-ears-dark%20coffee.png' }
   },
   // --- Ear Colors (Matching Body) ---
-  'ears_mimosa': { id: 'ears_mimosa', category: 'ears', name: 'Mimosa Yellow', stats: stats(1, 3, 1), rarity: 'E', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-07-ears.png' } },
+  'ears_mimosa': { id: 'ears_mimosa', category: 'ears', name: 'Mimosa Yellow', stats: stats(1, 2, 0), rarity: 'E', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-07-ears.png' } },
   'ears_amber': { id: 'ears_amber', category: 'ears', name: 'Amber', stats: stats(1, 1, 3), rarity: 'L', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Plott400x400-ears.png' } },
   'ears_pastel': { id: 'ears_pastel', category: 'ears', name: 'Pastel Yellow', stats: stats(0, 3, 2), rarity: 'C', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Issi400x400-ears.png' } },
   'ears_camel': { id: 'ears_camel', category: 'ears', name: 'Camel', stats: stats(2, 0, 3), rarity: 'R', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Duddu400x400-ears.png' } },
@@ -71,7 +71,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
   },
 
   // --- Colors ---
-  'body_mimosa': { id: 'body_mimosa', category: 'body', name: 'Mimosa Yellow', stats: stats(1, 3, 1), rarity: 'E', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-05-body.png' } },
+  'body_mimosa': { id: 'body_mimosa', category: 'body', name: 'Mimosa Yellow', stats: stats(1, 1, 0), rarity: 'E', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-05-body.png' } },
   'body_amber': { id: 'body_amber', category: 'body', name: 'Amber', stats: stats(1, 1, 3), rarity: 'L', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Plott400x400-body.png' } },
   'body_pastel': { id: 'body_pastel', category: 'body', name: 'Pastel Yellow', stats: stats(0, 3, 2), rarity: 'C', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Issi400x400-body.png' } },
   'body_camel': { id: 'body_camel', category: 'body', name: 'Camel', stats: stats(2, 0, 3), rarity: 'R', images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Duddu400x400-body.png' } },
@@ -116,7 +116,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     category: 'face',
     name: 'Laugh',
     stats: stats(0, 1, 0),
-    rarity: 'E',
+    rarity: 'L',
     images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-04-facial%20features.png' }
   },
   'mouth_line': {
@@ -165,8 +165,8 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     id: 'hair_yellow',
     category: 'hair',
     name: 'Yellow Hair',
-    rarity: 'E',
-    stats: stats(2, 2, 4),
+    rarity: 'L',
+    stats: stats(3, 0, 1),
     images: {
       front: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-03-hair1.png'
     }
@@ -205,7 +205,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     id: 'hair_braids_yellow',
     category: 'hair_b',
     name: 'Yellow Braids',
-    stats: stats(1, 4, 2),
+    stats: stats(1, 3, 1),
     rarity: 'E',
     images: {
       back: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/Character%20Generator-Kaniner-06-hair2.png'
@@ -294,7 +294,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
 export const PLANET_PARTS_DB: Record<string, PartDefinition> = {
   // === BASE (星球基底: 决定星球主色调) ===
   'planet_base_none': { id: 'planet_base_none', category: 'base', name: 'None', stats: stats(0, 0, 0), rarity: 'C', images: { main: '' } },
-  'planet_base_red': { id: 'planet_base_red', category: 'base', name: 'Magma', stats: stats(2, 0, 0), rarity: 'C', images: { main: '/parts/p_b_red.png' } },
+  'planet_base_red': { id: 'planet_base_red', category: 'base', name: 'Magma', stats: stats(2, 0, 0), rarity: 'U', images: { main: '/parts/p_b_red.png' } },
   'planet_base_blue': { id: 'planet_base_blue', category: 'base', name: 'Ocean', stats: stats(0, 0, 2), rarity: 'C', images: { main: '/parts/p_b_blue.png' } },
   'planet_base_green': { id: 'planet_base_green', category: 'base', name: 'Jungle', stats: stats(0, 2, 0), rarity: 'C', images: { main: '/parts/p_b_green.png' } },
   'planet_base_yellow': { id: 'planet_base_yellow', category: 'base', name: 'Desert', stats: stats(1, 1, 0), rarity: 'U', images: { main: '/parts/p_b_yellow.png' } },
@@ -306,7 +306,7 @@ export const PLANET_PARTS_DB: Record<string, PartDefinition> = {
   // === SURFACE (地表: 叠加在Base上的纹理) ===
   'planet_surf_none': { id: 'planet_surf_none', category: 'surface', name: 'None', stats: stats(0, 0, 0), rarity: 'C', images: { main: '' } },
   'planet_surf_craters': { id: 'planet_surf_craters', category: 'surface', name: 'Craters', stats: stats(1, 0, 0), rarity: 'C', images: { main: '/parts/p_s_craters.png' } },
-  'planet_surf_swirls': { id: 'planet_surf_swirls', category: 'surface', name: 'Storms', stats: stats(0, 1, 0), rarity: 'C', images: { main: '/parts/p_s_swirls.png' } },
+  'planet_surf_swirls': { id: 'planet_surf_swirls', category: 'surface', name: 'Storms', stats: stats(0, 1, 0), rarity: 'U', images: { main: '/parts/p_s_swirls.png' } },
   'planet_surf_cracks': { id: 'planet_surf_cracks', category: 'surface', name: 'Cracks', stats: stats(0, 0, 1), rarity: 'U', images: { main: '/parts/p_s_cracks.png' } }, // 地壳裂缝
   'planet_surf_lava': { id: 'planet_surf_lava', category: 'surface', name: 'Lava', stats: stats(2, 1, 0), rarity: 'R', images: { main: '/parts/p_s_lava.png' } },
   'planet_surf_crystal': { id: 'planet_surf_crystal', category: 'surface', name: 'Crystal', stats: stats(0, 1, 4), rarity: 'E', images: { main: '/parts/p_s_crystal.png' } }, // 水晶丛
@@ -316,7 +316,7 @@ export const PLANET_PARTS_DB: Record<string, PartDefinition> = {
 
   // === ATMOSPHERE (大气层: 覆盖在最上层的光影) ===
   'planet_atmo_none': { id: 'planet_atmo_none', category: 'atmosphere', name: 'None', stats: stats(0, 0, 0), rarity: 'C', images: { main: '' } },
-  'planet_atmo_glow': { id: 'planet_atmo_glow', category: 'atmosphere', name: 'Glow', stats: stats(0, 0, 1), rarity: 'C', images: { main: '/parts/p_a_glow.png' } },
+  'planet_atmo_glow': { id: 'planet_atmo_glow', category: 'atmosphere', name: 'Glow', stats: stats(0, 0, 0), rarity: 'C', images: { main: '/parts/p_a_glow.png' } },
   'planet_atmo_rings': { id: 'planet_atmo_rings', category: 'atmosphere', name: 'Rings', stats: stats(0, 1, 2), rarity: 'R', images: { main: '/parts/p_a_rings.png' } },
   'planet_atmo_aurora': { id: 'planet_atmo_aurora', category: 'atmosphere', name: 'Aurora', stats: stats(0, 4, 2), rarity: 'E', images: { main: '/parts/p_a_aurora.png' } }, // 极光
   'planet_atmo_clouds': { id: 'planet_atmo_clouds', category: 'atmosphere', name: 'Clouds', stats: stats(0, 1, 0), rarity: 'C', images: { main: '/parts/p_a_clouds.png' } },
@@ -328,7 +328,7 @@ export const PLANET_PARTS_DB: Record<string, PartDefinition> = {
   // === COMPANION (随从: 绕行的小物体) ===
   'planet_comp_none': { id: 'planet_comp_none', category: 'companion', name: 'None', stats: stats(0, 0, 0), rarity: 'C', images: { main: '' } },
   'planet_comp_moon': { id: 'planet_comp_moon', category: 'companion', name: 'Moon', stats: stats(0, 0, 1), rarity: 'C', images: { main: '/parts/p_c_moon.png' } },
-  'planet_comp_ufo': { id: 'planet_comp_ufo', category: 'companion', name: 'UFO', stats: stats(0, 1, 1), rarity: 'R', images: { main: '/parts/p_c_ufo.png' } },
+  'planet_comp_ufo': { id: 'planet_comp_ufo', category: 'companion', name: 'UFO', stats: stats(0, 0, 0), rarity: 'R', images: { main: '/parts/p_c_ufo.png' } },
   'planet_comp_rocket': { id: 'planet_comp_rocket', category: 'companion', name: 'Rocket', stats: stats(1, 1, 0), rarity: 'U', images: { main: '/parts/p_c_rocket.png' } },
   'planet_comp_whale': { id: 'planet_comp_whale', category: 'companion', name: 'Whale', stats: stats(2, 2, 2), rarity: 'L', images: { main: '/parts/p_c_whale.png' } }, // 空间鲸鱼
   'planet_comp_satellite': { id: 'planet_comp_satellite', category: 'companion', name: 'Sat', stats: stats(0, 0, 3), rarity: 'U', images: { main: '/parts/p_c_sat.png' } }, // 人造卫星

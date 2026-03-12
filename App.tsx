@@ -20,6 +20,7 @@ import { ACHIEVEMENTS_DB } from './data/achievements';
 import { DraggableMedal } from './components/DraggableMedal';
 import { MagicCursor } from './components/MagicCursor';
 import { FarmScreen } from './components/FarmScreen';
+import { FloatingFocus } from './components/FloatingFocus'; // 👈 新增引入
 
 // --- 专业的零延迟音效加载函数 ---
 const loadAudioBuffer = async (url: string, context: AudioContext) => {
@@ -108,6 +109,9 @@ export const App: React.FC = () => {
     }
     return [];
   });
+
+  const [globalAlert, setGlobalAlert] = useState<string | null>(null); // 全局美化报错
+  const [focusPetId, setFocusPetId] = useState<string | null>(null);   // 全局悬浮专注
 
   // 👇 新增：农场槽位状态 (初始默认为 1 个位置)
   const [maxFarmSlots, setMaxFarmSlots] = useState<number>(() => {
@@ -421,7 +425,7 @@ export const App: React.FC = () => {
         // 尝试去农场：检查槽位
         if (currentAssignedCount >= maxFarmSlots) {
           playSound('error');
-          alert(currentLang === 'cn' ? '农场床位不足，请先解锁更多位置！' : 'Farm is full!');
+          setGlobalAlert(currentLang === 'cn' ? '农场槽位已满，\n请先回农场解锁更多位置吧！' : 'Farm is full!\nUnlock more slots in the Farm!');
           return prev;
         }
         playSound('success'); // 认领成功
@@ -646,7 +650,53 @@ export const App: React.FC = () => {
               onToggleFarm={handleToggleFarmStatus} // 👈 传给农场
               // 👇 新增这一行：让农场可以修改兔子的饥饿和亲密！
               onUpdatePassport={handleUpdatePassportData}
+              // 👇 给农场传递全局报错和触发专注的方法
+              setGlobalAlert={setGlobalAlert}
+              onStartGlobalFocus={(id) => setFocusPetId(id)}
+              playSound={playSound}
             />
+          )}
+
+          {/* 1. 全局悬浮专注球 */}
+          {focusPetId && savedPassports.find(p => p.id === focusPetId) && (
+            <FloatingFocus
+              pet={savedPassports.find(p => p.id === focusPetId)!}
+              onCancel={() => setFocusPetId(null)}
+              onComplete={() => {
+                playSound('success');
+                setCarrotCoins(prev => prev + 10);
+                const pet = savedPassports.find(p => p.id === focusPetId);
+                if (pet) {
+                  handleUpdatePassportData(pet.id, 'intimacy', Math.min(100, (pet.intimacy ?? 30) + 5));
+                }
+                setFocusPetId(null);
+                setToastMsg(currentLang === 'cn' ? '专注完成！+10 🥕' : 'Focus Complete! +10 🥕');
+                setTimeout(() => setToastMsg(null), 3000);
+              }}
+            />
+          )}
+
+          {/* 2. 全局多巴胺美化报错弹窗 */}
+          {globalAlert && (
+            <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
+              <div className="bg-white border-[6px] border-black p-8 rounded-[40px] shadow-[15px_15px_0_black] w-full max-w-[320px] flex flex-col items-center animate-bounce-in">
+                <div className="w-20 h-20 bg-[#FFB7B2] border-[4px] border-black rounded-full flex items-center justify-center mb-6 shadow-[inset_-3px_-3px_0_rgba(0,0,0,0.1)]">
+                  <span className="font-black text-4xl text-black">!</span>
+                </div>
+                <h3 className="font-black text-2xl mb-2 text-center uppercase tracking-tighter">
+                  {currentLang === 'cn' ? '等一下！' : 'OOPS!'}
+                </h3>
+                <p className="text-black/60 font-bold mb-8 text-center text-sm whitespace-pre-line leading-relaxed">
+                  {globalAlert}
+                </p>
+                <button
+                  onClick={() => { playSound('click'); setGlobalAlert(null); }}
+                  className="w-full py-4 bg-[#FFD700] border-[4px] border-black rounded-2xl font-black text-xl shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none transition-all"
+                >
+                  {currentLang === 'cn' ? '知道了' : 'GOT IT'}
+                </button>
+              </div>
+            </div>
           )}
 
           <SuccessOverlay

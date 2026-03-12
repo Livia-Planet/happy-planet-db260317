@@ -7,7 +7,7 @@ import { getDominantStat, calculateStats } from '../utils/gameLogic';
 
 const FarmIcons = {
     Hunger: () => (
-        <svg viewBox="0 0 24 24" fill="#D2691E" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+        <svg viewBox="0 0 24 24" fill="#D2691E" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10c0-1.33-.26-2.61-.73-3.77-.47-1.16-2.18-1.07-2.6.09-.44 1.23-1.8 1.94-3.08 1.57-1.28-.36-1.99-1.81-1.55-3.09.43-1.27-.47-2.73-1.8-2.73H12V2z" />
             <circle cx="8" cy="8" r="1.2" fill="black" />
             <circle cx="15" cy="10" r="1.2" fill="black" />
@@ -16,14 +16,8 @@ const FarmIcons = {
         </svg>
     ),
     Intimacy: () => (
-        <svg viewBox="0 0 24 24" fill="#FF90E8" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+        <svg viewBox="0 0 24 24" fill="#FF90E8" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-        </svg>
-    ),
-    Home: ({ className }: { className?: string }) => (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
         </svg>
     ),
     Focus: () => (
@@ -52,19 +46,12 @@ const FarmIcons = {
             <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
         </svg>
     ),
-    CarrotFood: () => (
-        <svg viewBox="0 0 24 24" fill="#FFA500" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-            <path d="M22.11 3.84a4.49 4.49 0 0 0-6.36 0l-9.9 9.9a2.12 2.12 0 0 0 0 3l3.35 3.35a2.12 2.12 0 0 0 3 0l9.91-9.91a4.49 4.49 0 0 0 0-6.34z" />
-            <path d="M3 6l3.5 3.5M6 3l3.5 3.5M3 3l3.5 3.5" stroke="#82E0AA" strokeWidth="3" />
-        </svg>
-    ),
     MilkFood: () => (
         <svg viewBox="0 0 24 24" fill="#FF90E8" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
             <path d="M6 8h12v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8z" fill="white" />
             <path d="M8 8V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4" />
         </svg>
     ),
-    // ✅ 修复 4：纯 SVG 的星星图标，告别 Emoji
     Star: () => (
         <svg viewBox="0 0 24 24" fill="#FFD700" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
             <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
@@ -83,7 +70,16 @@ interface FarmScreenProps {
     onUnlockSlot: () => void;
     onToggleFarm: (id: string) => void;
     onUpdatePassport: (id: string, field: keyof PassportData, value: any) => void;
+    setGlobalAlert: (msg: string) => void;
+    onStartGlobalFocus: (id: string) => void;
 }
+
+const EXPEDITION_OPTIONS = [
+    { minutes: 30, reward: 25, hungerCost: 10, label: { cn: '近地巡航', en: 'Low Orbit', se: 'Låg Omloppsbana' } },
+    { minutes: 90, reward: 50, hungerCost: 30, label: { cn: '星系边缘', en: 'Outer Rim', se: 'Yttre Randen' } },
+    { minutes: 240, reward: 100, hungerCost: 60, label: { cn: '深空潜航', en: 'Deep Space', se: 'Djuprymd' } },
+    { minutes: 480, reward: 150, hungerCost: 90, label: { cn: '未知虫洞', en: 'Wormhole', se: 'Maskhål' } }
+];
 
 export const FarmScreen: React.FC<FarmScreenProps> = ({
     currentLang,
@@ -95,70 +91,45 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
     maxFarmSlots,
     onUnlockSlot,
     onToggleFarm,
-    onUpdatePassport
+    onUpdatePassport,
+    setGlobalAlert,
+    onStartGlobalFocus
 }) => {
     const [activeTab, setActiveTab] = useState<'focus' | 'shop' | 'archives' | 'explore'>('focus');
-    const [isFocusing, setIsFocusing] = useState(false);
-    const [timeLeft, setTimeLeft] = useState(25 * 60);
-
-    // 🌟 选中的兔子与弹窗管理
     const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
-    const [customAlert, setCustomAlert] = useState<string | null>(null); // ✅ 修复 1：绝不使用系统 Alert！
 
     const activePets = useMemo(() => savedPassports.filter(p => p.isAssignedToFarm), [savedPassports]);
     const SLOT_UPGRADE_COSTS = [0, 50, 150, 500, 1000];
 
     useEffect(() => {
-        if (activePets.length > 0 && !selectedPetId) {
-            setSelectedPetId(activePets[0].id);
-        } else if (activePets.length === 0) {
-            setSelectedPetId(null);
-        }
+        if (activePets.length > 0 && !selectedPetId) setSelectedPetId(activePets[0].id);
+        else if (activePets.length === 0) setSelectedPetId(null);
     }, [activePets, selectedPetId]);
 
     const selectedPet = activePets.find(p => p.id === selectedPetId);
 
-    // 🕒 倒计时
+    const [, setTick] = useState(0);
     useEffect(() => {
-        let timer: any;
-        if (isFocusing && timeLeft > 0) {
-            timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
-        } else if (timeLeft === 0 && isFocusing) {
-            handleFocusComplete();
+        if (activeTab === 'explore') {
+            const interval = setInterval(() => setTick(t => t + 1), 60000);
+            return () => clearInterval(interval);
         }
-        return () => clearInterval(timer);
-    }, [isFocusing, timeLeft]);
-
-    const handleFocusComplete = () => {
-        playSound?.('success');
-        setIsFocusing(false);
-        setTimeLeft(25 * 60);
-        onUpdateCoins(10);
-        if (selectedPet) {
-            const currentIntimacy = selectedPet.intimacy ?? 30;
-            onUpdatePassport(selectedPet.id, 'intimacy', Math.min(100, currentIntimacy + 5));
-        }
-    };
-
-    // ✅ 修复 1：拦截所有的原声 Alert
-    const toggleFocus = () => {
-        if (activePets.length === 0) {
-            playSound?.('error');
-            setCustomAlert(currentLang === 'cn' ? '先去档案室领养一只 Bobu 吧！' : 'Adopt a Bobu first!');
-            return;
-        }
-        playSound?.('click');
-        setIsFocusing(!isFocusing);
-    };
+    }, [activeTab]);
 
     const handleBuyItem = (price: number, addHunger: number, addIntimacy: number) => {
         if (!selectedPet) {
             playSound?.('error');
-            setCustomAlert(currentLang === 'cn' ? '请先在农场点击选中一只 Bobu 来喂食！' : 'Click a Bobu to feed!');
+            setGlobalAlert(currentLang === 'cn' ? '请先在农场点击选中一只 Bobu 来喂食！' : 'Click a Bobu to feed!');
+            return;
+        }
+        if (selectedPet.isOnExpedition) {
+            playSound?.('error');
+            setGlobalAlert(currentLang === 'cn' ? '它正在宇宙深处探险呢，\n等回来再喂它吧！' : 'It is exploring!\nFeed it when it returns!');
             return;
         }
         if (carrotCoins < price) {
             playSound?.('error');
+            setGlobalAlert(currentLang === 'cn' ? '胡萝卜币不够啦，\n去专注工作赚一点吧！' : 'Not enough coins!\nFocus to earn more!');
             return;
         }
         playSound?.('coins');
@@ -168,81 +139,70 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
         const currentIntimacy = selectedPet.intimacy ?? 30;
         onUpdatePassport(selectedPet.id, 'hunger', Math.min(100, currentHunger + addHunger));
         onUpdatePassport(selectedPet.id, 'intimacy', Math.min(100, currentIntimacy + addIntimacy));
-        // 🌟 同步时间戳，防止刚喂完，离线引擎又扣除了
         onUpdatePassport(selectedPet.id, 'lastSyncTime', Date.now());
     };
 
-    const handleStartExpedition = () => {
+    const startExpedition = (opt: typeof EXPEDITION_OPTIONS[0]) => {
         if (!selectedPet) return;
-        if ((selectedPet.hunger ?? 80) < 30) {
+        if ((selectedPet.hunger ?? 80) < opt.hungerCost) {
             playSound?.('error');
-            setCustomAlert(currentLang === 'cn' ? '肚子太饿了，没力气飞！\n请先去商店买点吃的。' : 'Too hungry to fly!\nFeed it first!');
+            setGlobalAlert(currentLang === 'cn' ? `肚子太饿了，没力气飞那么远！\n需要 ${opt.hungerCost} 饥饿度。` : `Too hungry!\nNeeds ${opt.hungerCost} hunger.`);
             return;
         }
-        playSound?.('camera'); // 发射音效
-        onUpdatePassport(selectedPet.id, 'hunger', (selectedPet.hunger ?? 80) - 30);
+        playSound?.('camera');
+        onUpdatePassport(selectedPet.id, 'hunger', (selectedPet.hunger ?? 80) - opt.hungerCost);
         onUpdatePassport(selectedPet.id, 'isOnExpedition', true);
         onUpdatePassport(selectedPet.id, 'expeditionStartTime', Date.now());
+        onUpdatePassport(selectedPet.id, 'expeditionDuration', opt.minutes * 60 * 1000);
+        onUpdatePassport(selectedPet.id, 'expeditionReward', opt.reward); // ✅ 已修复
     };
 
     const handleClaimExpedition = () => {
         if (!selectedPet) return;
         playSound?.('success');
-        onUpdateCoins(50); // 奖励 50 币
+        const reward = selectedPet.expeditionReward || 50;
+        onUpdateCoins(reward);
         onUpdatePassport(selectedPet.id, 'isOnExpedition', false);
-        setCustomAlert(currentLang === 'cn' ? '探险圆满结束！\n带回了 50 个胡萝卜币！' : 'Expedition complete!\nBrought back 50 coins!');
+        setGlobalAlert(currentLang === 'cn' ? `探险圆满结束！\n带回了 ${reward} 个胡萝卜币！` : `Expedition complete!\nBrought back ${reward} coins!`);
     };
 
-    // 强制定时刷新以更新倒计时显示
-    const [, setTick] = useState(0);
-    useEffect(() => {
-        if (activeTab === 'explore') {
-            const interval = setInterval(() => setTick(t => t + 1), 60000); // 每分钟刷一次界面
-            return () => clearInterval(interval);
-        }
-    }, [activeTab]);
-
-    // ✅ 修复 1：核心拦截器，如果槽位满了，弹出自己的 UI，绝对不让系统 alert 介入
     const handleLocalToggleFarm = (p: PassportData) => {
         if (!p.isAssignedToFarm && activePets.length >= maxFarmSlots) {
             playSound?.('error');
-            setCustomAlert(currentLang === 'cn' ? '农场床位不足，\n请先解锁更多位置！' : 'Farm is full!\nUnlock more slots!');
+            setGlobalAlert(currentLang === 'cn' ? '农场床位不足，\n请先解锁更多位置！' : 'Farm is full!\nUnlock more slots!');
             return;
         }
         onToggleFarm(p.id);
     };
 
     const t = {
-        startFocus: currentLang === 'cn' ? '开始专注' : 'START FOCUS',
-        stopFocus: currentLang === 'cn' ? '放弃专注' : 'STOP FOCUS',
         emptyArchive: currentLang === 'cn' ? '实验室还没有生命诞生记录...' : 'No Bobu in archives...',
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex flex-col items-center bg-[#EAFFD0] overflow-hidden font-rounded text-black select-none">
+        <div className="fixed inset-0 z-40 flex flex-col items-center bg-[#EAFFD0] overflow-hidden font-rounded text-black select-none">
             <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
-                <SpaceBackground bpm={isFocusing ? 120 : 50} themeColor="#95E1D3" />
+                <SpaceBackground bpm={50} themeColor="#95E1D3" />
             </div>
 
-            {/* --- 顶部状态栏 --- */}
-            <header className="relative z-20 w-full p-6 flex justify-between items-start pointer-events-none">
+            {/* --- 顶部状态栏：✅ 恢复右侧按钮，左侧详情重构 --- */}
+            <header className="relative z-20 left-20 w-full p-6 flex justify-between items-start pointer-events-none">
 
-                {/* ✅ 修复 3 & 4：左上角高级面板，显示详细数据，并且全是 SVG */}
-                <div className="flex flex-col gap-3 min-h-[120px]">
+                {/* 🌟 详情面板 (左上角) */}
+                <div className="flex flex-col gap-2">
                     {selectedPet ? (
-                        <div className="bg-white/80 backdrop-blur-md border-[4px] border-black p-3 rounded-[24px] shadow-[4px_4px_0_black] flex flex-col gap-2 pointer-events-auto transition-all animate-bounce-in">
-                            <div className="flex items-center gap-2 bg-[#FFD700] px-3 py-1.5 rounded-xl border-[3px] border-black w-max shadow-[inset_-2px_-2px_0_rgba(0,0,0,0.1)]">
+                        <div className="bg-white/80 backdrop-blur-md border-[4px] border-black p-3 pt-2 rounded-[24px] shadow-[4px_4px_0_black] flex flex-col gap-2 pointer-events-auto transition-all animate-bounce-in min-w-[140px]">
+                            {/* 名字栏 */}
+                            <div className="flex items-center gap-1.5 w-max">
                                 <FarmIcons.Star />
-                                <span className="font-black text-sm uppercase tracking-wider">{selectedPet.starName}</span>
+                                <span className="font-black text-sm uppercase tracking-wider translate-y-0.5">{selectedPet.starName}</span>
                             </div>
-                            <StatBar icon={<FarmIcons.Hunger />} value={selectedPet.hunger ?? 80} color="bg-[#D2691E]" />
-                            <StatBar icon={<FarmIcons.Intimacy />} value={selectedPet.intimacy ?? 30} color="bg-[#FF90E8]" />
 
-                            {(selectedPet.hunger ?? 80) < 50 && (
-                                <span className="text-[10px] font-bold text-red-600 bg-white px-2 py-1 rounded-lg border-2 border-red-200 mt-1 animate-pulse text-center">
-                                    {currentLang === 'cn' ? '肚子咕咕叫，去买吃的！' : 'Hungry! Buy food!'}
-                                </span>
-                            )}
+                            {/* 属性条 */}
+                            <div className="flex flex-col gap-2 mt-1">
+                                <StatBar icon={<div className="w-4 h-4"><FarmIcons.Hunger /></div>} value={selectedPet.hunger ?? 80} color="bg-[#D2691E]" />
+                                <StatBar icon={<div className="w-4 h-4"><FarmIcons.Intimacy /></div>} value={selectedPet.intimacy ?? 30} color="bg-[#FF90E8]" />
+                            </div>
                         </div>
                     ) : (
                         <div className="font-black text-sm bg-white/80 px-4 py-2 rounded-xl border-[3px] border-black opacity-50 border-dashed">
@@ -250,23 +210,11 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                         </div>
                     )}
                 </div>
-
-                <div className="flex items-center gap-3 pointer-events-auto">
-                    <div className="h-12 bg-white border-[3px] border-black px-4 rounded-xl shadow-[3px_3px_0_black] flex items-center gap-2">
-                        <CarrotCoinIcon className="w-6 h-6" />
-                        <span className="font-black text-xl mt-0.5">{carrotCoins}</span>
-                    </div>
-                    <button
-                        onClick={() => { playSound?.('click'); onNavigate('start'); }}
-                        className="w-12 h-12 bg-white border-[3px] border-black rounded-xl shadow-[3px_3px_0_black] flex items-center justify-center hover:translate-y-[1px] hover:shadow-[2px_2px_0_black] active:translate-y-[3px] active:shadow-none transition-all"
-                    >
-                        <FarmIcons.Home className="w-6 h-6" />
-                    </button>
-                </div>
             </header>
 
             {/* --- 核心交互区 --- */}
-            <main className="relative z-10 flex-1 w-full flex flex-wrap items-center justify-center p-4 gap-8 md:gap-16">
+            {/* ✅ 修复 4：添加 -translate-y-12 整体往上推，防止被底栏挡住 */}
+            <main className="relative z-10 flex-1 w-full flex flex-wrap items-center justify-center p-4 gap-8 md:gap-16 -translate-y-3">
                 {activePets.length > 0 ? (
                     activePets.map((pet, idx) => {
                         const isSelected = pet.id === selectedPetId;
@@ -280,14 +228,12 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-white/40 border-4 border-dashed border-yellow-400 rounded-full animate-spin-slow pointer-events-none" />
                                 )}
 
-                                {/* 🌟 核心修复 1：主展示舱正确渲染 Avatar */}
-                                <div className={`relative z-10 transform transition-all duration-300 ${isSelected ? 'scale-[1.5]' : 'scale-[1.2] hover:scale-[1.3]'} ${isFocusing ? 'translate-y-4' : 'animate-float'} ${pet.isOnExpedition ? 'opacity-30 grayscale blur-[1px]' : ''}`} style={{ animationDelay: `${idx * 0.2}s` }}>
+                                <div className={`relative z-10 transform transition-all duration-300 ${isSelected ? 'scale-[1.3]' : 'scale-100 hover:scale-110'} animate-float ${pet.isOnExpedition ? 'opacity-30 grayscale blur-[1px]' : ''}`} style={{ animationDelay: `${idx * 0.2}s` }}>
                                     <Avatar
                                         selectedParts={pet.selectedParts}
                                         dominantStat={getDominantStat(calculateStats(pet.selectedParts, pet.stats))}
                                         className="w-40 h-40"
                                     />
-                                    {/* 探险中的挂机提示 */}
                                     {pet.isOnExpedition && (
                                         <div className="absolute inset-0 flex items-center justify-center">
                                             <div className="bg-black text-white text-[10px] font-black px-2 py-1 rounded-md">EXPLORING</div>
@@ -295,25 +241,16 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                     )}
                                 </div>
 
-                                {!isFocusing && (
-                                    <div className="absolute -bottom-10 z-20 flex flex-col gap-1.5 bg-white/90 p-2 rounded-xl border-[3px] border-black shadow-[2px_2px_0_black] opacity-80 group-hover:opacity-100 transition-opacity">
-                                        <div className="w-16 h-2 bg-gray-200 rounded-full border-2 border-black overflow-hidden">
-                                            <div className="bg-[#D2691E] h-full transition-all duration-500" style={{ width: `${pet.hunger ?? 80}%` }} />
-                                        </div>
-                                        <div className="w-16 h-2 bg-gray-200 rounded-full border-2 border-black overflow-hidden">
-                                            <div className="bg-[#FF90E8] h-full transition-all duration-500" style={{ width: `${pet.intimacy ?? 30}%` }} />
-                                        </div>
+                                <div className="absolute -bottom-8 z-20 flex flex-col gap-1.5 bg-white/90 p-2 rounded-xl border-[3px] border-black shadow-[2px_2px_0_black] opacity-80 group-hover:opacity-100 transition-opacity">
+                                    <div className="w-16 h-2 bg-gray-200 rounded-full border-2 border-black overflow-hidden">
+                                        <div className="bg-[#D2691E] h-full transition-all duration-500" style={{ width: `${pet.hunger ?? 80}%` }} />
                                     </div>
-                                )}
+                                    <div className="w-16 h-2 bg-gray-200 rounded-full border-2 border-black overflow-hidden">
+                                        <div className="bg-[#FF90E8] h-full transition-all duration-500" style={{ width: `${pet.intimacy ?? 30}%` }} />
+                                    </div>
+                                </div>
 
-                                {isFocusing && (
-                                    <div className="relative z-20 mt-[-20px] w-56 h-20 bg-[#FFD700] border-[5px] border-black rounded-3xl shadow-[0_10px_0_rgba(0,0,0,0.2)] flex justify-center items-start pt-2 overflow-hidden animate-bounce-slow" style={{ animationDelay: `${idx * 0.1}s` }}>
-                                        <div className="w-28 h-8 bg-white border-[3px] border-black rounded-lg opacity-80" />
-                                        <div className="absolute top-2 left-6 w-7 h-7 bg-white border-[3px] border-black rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-                                        <div className="absolute top-2 right-6 w-7 h-7 bg-white border-[3px] border-black rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                                    </div>
-                                )}
-                                {!isFocusing && <div className="absolute -bottom-2 w-28 h-5 bg-black/10 blur-xl rounded-full" />}
+                                <div className="absolute -bottom-2 w-28 h-5 bg-black/10 blur-xl rounded-full" />
                             </div>
                         );
                     })
@@ -343,15 +280,28 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
 
                 <div className="h-52 overflow-y-auto px-2 custom-scrollbar">
                     {activeTab === 'focus' && (
-                        <div className="flex flex-col items-center gap-4 py-2">
-                            <div className="text-6xl font-black italic tracking-tighter text-black drop-shadow-[4px_4px_0_#85C1E9]">
-                                {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:{(timeLeft % 60).toString().padStart(2, '0')}
-                            </div>
+                        <div className="flex flex-col items-center justify-center h-full gap-4">
+                            <p className="font-black text-gray-500 text-center text-sm">
+                                {currentLang === 'cn' ? '开启全能专注模式！\n你可以一边计时，一边去实验室制造新伙伴。' : 'Global Focus Mode!\nYou can build new rabbits while focusing.'}
+                            </p>
                             <button
-                                onClick={toggleFocus}
-                                className={`w-full max-w-sm py-4 border-[5px] border-black rounded-2xl font-black text-2xl active:translate-y-2 active:shadow-none transition-all ${isFocusing ? 'bg-[#FF6B6B] text-white shadow-[6px_6px_0_#444]' : 'bg-[#82E0AA] text-black shadow-[6px_6px_0_black]'}`}
+                                onClick={() => {
+                                    if (!selectedPet) {
+                                        playSound?.('error');
+                                        setGlobalAlert(currentLang === 'cn' ? '请先选中一只兔子来陪伴你！' : 'Select a rabbit to focus with!');
+                                        return;
+                                    }
+                                    if (selectedPet.isOnExpedition) {
+                                        playSound?.('error');
+                                        setGlobalAlert(currentLang === 'cn' ? '它去探险了，换一只吧！' : 'It is exploring, choose another!');
+                                        return;
+                                    }
+                                    playSound?.('click');
+                                    onStartGlobalFocus(selectedPet.id);
+                                }}
+                                className="w-full max-w-sm py-4 border-[5px] border-black rounded-2xl font-black text-xl bg-[#82E0AA] text-black shadow-[6px_6px_0_black] active:translate-y-2 active:shadow-none transition-all flex items-center justify-center gap-2"
                             >
-                                {isFocusing ? t.stopFocus : t.startFocus}
+                                <FarmIcons.Focus /> {currentLang === 'cn' ? '启动专注光球' : 'START GLOBAL FOCUS'}
                             </button>
                         </div>
                     )}
@@ -381,18 +331,13 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                 {savedPassports && savedPassports.length > 0 ? savedPassports.map((p) => (
                                     <div
                                         key={p.id}
-                                        onClick={() => handleLocalToggleFarm(p)} // ✅ 修复 1：调用拦截器！
-                                        className={`p-3 rounded-2xl flex items-center gap-3 cursor-pointer border-[4px] border-black shadow-[4px_4px_0_black] active:shadow-none active:translate-y-1 transition-all ${p.isAssignedToFarm ? 'bg-[#A8E6CF]' : 'bg-[#F9FAFB] hover:bg-yellow-50'
-                                            }`}
+                                        onClick={() => handleLocalToggleFarm(p)}
+                                        className={`p-3 rounded-2xl flex items-center gap-3 cursor-pointer border-[4px] border-black shadow-[4px_4px_0_black] active:shadow-none active:translate-y-1 transition-all ${p.isAssignedToFarm ? 'bg-[#A8E6CF]' : 'bg-[#F9FAFB] hover:bg-yellow-50'}`}
                                     >
-                                        {/* ✅ 修复 2：列表舱绝对居中小头像 */}
+                                        {/* ✅ 修复 2：彻底修复细长头像问题 */}
                                         <div className="w-14 h-14 bg-white border-[3px] border-black rounded-full overflow-hidden flex-shrink-0 relative flex justify-center items-center">
                                             <div className="absolute bottom-4 right-7 w-full h-full transform scale-[0.5] origin-top translate y-4.5">
-                                                <Avatar
-                                                    selectedParts={p.selectedParts}
-                                                    dominantStat={getDominantStat(calculateStats(p.selectedParts, p.stats))}
-                                                    transparent={true}
-                                                />
+                                                <Avatar selectedParts={p.selectedParts} dominantStat={getDominantStat(calculateStats(p.selectedParts, p.stats))} transparent={true} />
                                             </div>
                                         </div>
                                         <div className="flex flex-col overflow-hidden">
@@ -420,28 +365,28 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                     )}
 
                     {activeTab === 'explore' && (
-                        <div className="flex flex-col items-center justify-center h-full pt-2">
+                        <div className="h-full pt-1">
                             {!selectedPet ? (
-                                <div className="flex flex-col items-center opacity-50">
-                                    <FarmIcons.Explore />
-                                    <p className="font-black mt-2">{currentLang === 'cn' ? '请先在农场选中一只生命' : 'Select a life first'}</p>
+                                <div className="flex flex-col items-center opacity-50 mt-10">
+                                    <div className="w-16 h-16 mb-4"><FarmIcons.Explore /></div>
+                                    <p className="font-black">{currentLang === 'cn' ? '请先在农场选中一只生命' : 'Select a life first'}</p>
                                 </div>
                             ) : selectedPet.isOnExpedition ? (
                                 (() => {
-                                    const EXPEDITION_TIME = 2 * 60 * 60 * 1000; // 2 小时
+                                    const duration = selectedPet.expeditionDuration || (2 * 60 * 60 * 1000);
                                     const timePassed = Date.now() - (selectedPet.expeditionStartTime || 0);
-                                    const isDone = timePassed >= EXPEDITION_TIME;
+                                    const isDone = timePassed >= duration;
 
                                     if (isDone) {
                                         return (
-                                            <div className="flex flex-col items-center gap-2 animate-bounce-in">
+                                            <div className="flex flex-col items-center justify-center h-full gap-2 animate-bounce-in">
                                                 <div className="w-16 h-16 bg-green-100 border-[3px] border-black rounded-full flex items-center justify-center animate-bounce">
-                                                    <FarmIcons.Explore />
+                                                    <div className="w-10 h-10"><FarmIcons.Explore /></div>
                                                 </div>
                                                 <p className="font-black text-[#82E0AA] uppercase tracking-wider">{currentLang === 'cn' ? '探险归来！' : 'RETURNED!'}</p>
                                                 <button
                                                     onClick={handleClaimExpedition}
-                                                    className="mt-2 bg-[#FFD700] border-[4px] border-black px-6 py-3 rounded-2xl font-black text-black shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none flex items-center gap-2"
+                                                    className="mt-2 bg-[#FFD700] border-[4px] border-black px-6 py-2 rounded-2xl font-black text-black shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none flex items-center gap-2"
                                                 >
                                                     <CarrotCoinIcon className="w-5 h-5" />
                                                     {currentLang === 'cn' ? '领取奖励' : 'CLAIM REWARD'}
@@ -449,78 +394,53 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                             </div>
                                         );
                                     } else {
-                                        const leftMs = EXPEDITION_TIME - timePassed;
+                                        const leftMs = duration - timePassed;
                                         const h = Math.floor(leftMs / 3600000);
                                         const m = Math.floor((leftMs % 3600000) / 60000);
                                         return (
-                                            <div className="flex flex-col items-center gap-2 bg-gray-100 border-[3px] border-dashed border-black p-4 rounded-3xl w-full max-w-[280px]">
-                                                <div className="w-12 h-12 bg-[#85C1E9] border-[3px] border-black rounded-full flex items-center justify-center animate-pulse">
-                                                    <FarmIcons.Explore />
-                                                </div>
-                                                <p className="font-black text-sm uppercase">{currentLang === 'cn' ? '正在深空航行...' : 'EXPLORING DEEP SPACE...'}</p>
-                                                <div className="bg-black text-white px-4 py-1.5 rounded-xl font-mono font-bold tracking-widest">
-                                                    {h}H {m}M
+                                            <div className="flex flex-col items-center justify-center h-full gap-2">
+                                                <div className="flex flex-col items-center gap-2 bg-gray-100 border-[3px] border-dashed border-black p-4 rounded-3xl w-full max-w-[280px]">
+                                                    <div className="w-12 h-12 bg-[#85C1E9] border-[3px] border-black rounded-full flex items-center justify-center animate-pulse">
+                                                        <div className="w-8 h-8"><FarmIcons.Explore /></div>
+                                                    </div>
+                                                    <p className="font-black text-sm uppercase">{currentLang === 'cn' ? '正在深空航行...' : 'EXPLORING DEEP SPACE...'}</p>
+                                                    <div className="bg-black text-white px-4 py-1.5 rounded-xl font-mono font-bold tracking-widest">
+                                                        {h}H {m}M
+                                                    </div>
                                                 </div>
                                             </div>
                                         );
                                     }
                                 })()
                             ) : (
-                                <div className="flex flex-col items-center gap-3">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <FarmIcons.Explore />
-                                        <p className="font-black text-sm text-center leading-tight">
-                                            {currentLang === 'cn' ? '派遣去外星星域探索两小时' : 'Send to deep space for 2 hrs'}<br />
-                                            <span className="text-[#FF6B6B] text-xs uppercase">{currentLang === 'cn' ? '-30 饥饿度' : '-30 HUNGER'}</span>
-                                        </p>
-                                    </div>
-                                    <button
-                                        onClick={handleStartExpedition}
-                                        className="bg-[#82E0AA] border-[4px] border-black px-8 py-4 rounded-2xl font-black text-xl shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none transition-all flex items-center gap-3"
-                                    >
-                                        <FarmIcons.Star />
-                                        {currentLang === 'cn' ? '发射升空' : 'LAUNCH'}
-                                    </button>
+                                <div className="grid grid-cols-2 gap-3 h-full pb-2">
+                                    {EXPEDITION_OPTIONS.map((opt, i) => (
+                                        <div key={i} onClick={() => startExpedition(opt)} className="bg-white border-[4px] border-black rounded-2xl p-3 flex flex-col items-center justify-center cursor-pointer shadow-[4px_4px_0_black] hover:bg-[#82E0AA] transition-colors active:translate-y-1 active:shadow-none group">
+                                            <div className="font-black text-sm mb-1">{opt.label[currentLang]}</div>
+                                            <div className="text-xs font-bold text-gray-500 mb-2">{opt.minutes} MIN</div>
+                                            <div className="flex w-full justify-between items-center text-[10px] font-black border-t-[3px] border-black border-dashed pt-2">
+                                                {/* ✅ 修复 3：去掉 Emoji */}
+                                                <span className="text-[#D2691E] flex items-center gap-1"><div className="w-3 h-3"><FarmIcons.Hunger /></div> -{opt.hungerCost}</span>
+                                                <span className="flex items-center gap-0.5 text-yellow-600"><CarrotCoinIcon className="w-3 h-3" /> +{opt.reward}</span>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
                     )}
                 </div>
             </footer>
-
-            {/* ✅ 修复 1：专属的、不会卡死的高颜值报错弹窗 */}
-            {customAlert && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
-                    <div className="bg-white border-[6px] border-black p-8 rounded-[40px] shadow-[15px_15px_0_black] w-full max-w-[320px] flex flex-col items-center animate-bounce-in">
-                        <div className="w-20 h-20 bg-[#FFB7B2] border-[4px] border-black rounded-full flex items-center justify-center mb-6 shadow-[inset_-3px_-3px_0_rgba(0,0,0,0.1)]">
-                            <span className="font-black text-4xl text-black">!</span>
-                        </div>
-                        <h3 className="font-black text-2xl mb-2 text-center uppercase tracking-tighter">
-                            {currentLang === 'cn' ? '等一下！' : 'OOPS!'}
-                        </h3>
-                        <p className="text-black/60 font-bold mb-8 text-center text-sm whitespace-pre-line leading-relaxed">
-                            {customAlert}
-                        </p>
-                        <button
-                            onClick={() => { playSound?.('click'); setCustomAlert(null); }}
-                            className="w-full py-4 bg-[#FFD700] border-[4px] border-black rounded-2xl font-black text-xl shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none transition-all"
-                        >
-                            {currentLang === 'cn' ? '知道了' : 'GOT IT'}
-                        </button>
-                    </div>
-                </div>
-            )}
-
         </div>
     );
 };
 
 const StatBar = ({ icon, value, color }: any) => (
-    <div className="flex items-center gap-3 w-full">
-        <div className="bg-white border-[3px] border-black p-1.5 rounded-xl shadow-[2px_2px_0_black] flex-shrink-0">
+    <div className="flex items-center gap-2 w-full max-w-[140px]">
+        <div className="bg-white border-[3px] border-black p-1 rounded-lg shadow-[2px_2px_0_black] flex-shrink-0">
             {icon}
         </div>
-        <div className="w-full max-w-[120px] h-5 bg-white border-[3px] border-black rounded-full overflow-hidden">
+        <div className="w-full h-4 bg-white border-[3px] border-black rounded-full overflow-hidden">
             <div className={`h-full ${color} transition-all duration-500 ease-out border-r-[2px] border-black`} style={{ width: `${value}%` }} />
         </div>
     </div>
@@ -529,19 +449,21 @@ const StatBar = ({ icon, value, color }: any) => (
 const TabButton = ({ active, onClick, icon, color }: any) => (
     <button
         onClick={onClick}
-        className={`w-[72px] h-[72px] rounded-[28px] border-[5px] border-black flex items-center justify-center transition-all ${active ? `${color} shadow-none translate-y-3` : `bg-white shadow-[0_12px_0_black] hover:translate-y-1 hover:shadow-[0_8px_0_black]`}`}
+        className={`w-16 h-16 rounded-[24px] border-[4px] border-black flex items-center justify-center transition-all ${active ? `${color} shadow-none translate-y-2` : `bg-white shadow-[0_8px_0_black] hover:translate-y-1 hover:shadow-[0_4px_0_black]`}`}
     >
         <div className={`transform transition-transform ${active ? 'scale-125' : 'scale-100'}`}>{icon}</div>
     </button>
 );
 
 const ShopItem = ({ name, price, icon, onBuy }: any) => (
-    <div onClick={onBuy} className="bg-white border-[4px] border-black p-4 rounded-[24px] flex flex-col items-center gap-3 shadow-[6px_6px_0_black] cursor-pointer hover:bg-[#F9FAFB] active:translate-y-1 active:shadow-[2px_2px_0_black] transition-all">
-        <div className="w-16 h-16 bg-[#F3F4F6] border-[3px] border-black rounded-full flex items-center justify-center">{icon}</div>
-        <span className="font-black text-sm">{name}</span>
-        <div className="flex items-center gap-1 bg-[#FFD700] px-3 py-1 rounded-lg border-[3px] border-black">
-            <CarrotCoinIcon className="w-4 h-4" />
-            <span className="text-sm font-black">{price}</span>
+    <div onClick={onBuy} className="bg-white border-[4px] border-black p-3 rounded-[20px] flex flex-col items-center gap-2 shadow-[4px_4px_0_black] cursor-pointer hover:bg-[#F9FAFB] active:translate-y-1 active:shadow-none transition-all">
+        <div className="w-12 h-12 bg-[#F3F4F6] border-[3px] border-black rounded-full flex items-center justify-center">
+            <div className="w-8 h-8">{icon}</div>
+        </div>
+        <span className="font-black text-xs">{name}</span>
+        <div className="flex items-center gap-1 bg-[#FFD700] px-2 py-0.5 rounded-lg border-2 border-black">
+            <CarrotCoinIcon className="w-3 h-3" />
+            <span className="text-[10px] font-black">{price}</span>
         </div>
     </div>
 );

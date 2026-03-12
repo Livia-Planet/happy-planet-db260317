@@ -78,6 +78,8 @@ export interface PassportData extends CharacterData {
   lastSyncTime?: number;        // 上次同步状态的时间戳 (用于计算离线流逝)
   isOnExpedition?: boolean;     // 是否正在外星探险
   expeditionStartTime?: number; // 探险出发的时间戳
+  expeditionDuration?: number;  // 探险总时长 (毫秒)
+  expeditionReward?: number;    // 探险完成后可领取的胡萝卜币
 }
 
 export interface StoryEntry {
