@@ -81,6 +81,28 @@ const EXPEDITION_OPTIONS = [
     { minutes: 480, reward: 150, hungerCost: 90, label: { cn: '未知虫洞', en: 'Wormhole', se: 'Maskhål' } }
 ];
 
+// 🌌 探险奇遇事件库 (Livia 可以随时往这里面加新画的卡片！)
+const EXPEDITION_EVENTS = [
+    {
+        id: 'ev_01',
+        img: "https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Duddu400x400-face.png", // <- 之后换成你的场景插画
+        title: { cn: '发光的晶石洞', en: 'Glowing Cave', se: 'Glödande Grotta' },
+        desc: { cn: '在火星地下迷路了，但发现了一群会发光的蓝色蘑菇，还顺便睡了个午觉！', en: 'Found glowing mushrooms!', se: 'Hittade glödande svampar och tog en tupplur!' }
+    },
+    {
+        id: 'ev_02',
+        img: "https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Issi400x400-face.png", // <- 之后换成你的场景插画
+        title: { cn: '偶遇外星邻居', en: 'Alien Neighbor', se: 'Utomjordisk Granne' },
+        desc: { cn: '在小行星带遇到了一只戴墨镜的奇怪生物，他们一起分享了草莓牛奶。', en: 'Shared milk with an alien.', se: 'Delade jordgubbsmjölk med en utomjording.' }
+    },
+    {
+        id: 'ev_03',
+        img: "https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Plott400x400-face.png", // <- 之后换成你的场景插画
+        title: { cn: '流星雨速递', en: 'Meteor Shower', se: 'Meteorregn' },
+        desc: { cn: '搭乘着彗星的尾巴冲浪，惊险刺激，差点把帽子吹飞了！', en: 'Surfed on a comet tail!', se: 'Surfade på en kometsvans, tappade nästan hatten!' }
+    }
+];
+
 export const FarmScreen: React.FC<FarmScreenProps> = ({
     currentLang,
     carrotCoins,
@@ -97,6 +119,8 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
 }) => {
     const [activeTab, setActiveTab] = useState<'focus' | 'shop' | 'archives' | 'explore'>('focus');
     const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
+    // 👇 新增：控制明信片弹窗的状态
+    const [claimedPostcard, setClaimedPostcard] = useState<any>(null);
 
     const activePets = useMemo(() => savedPassports.filter(p => p.isAssignedToFarm), [savedPassports]);
     const SLOT_UPGRADE_COSTS = [0, 50, 150, 500, 1000];
@@ -161,9 +185,17 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
         if (!selectedPet) return;
         playSound?.('success');
         const reward = selectedPet.expeditionReward || 50;
+
+        // 🎲 随机抽取一张明信片事件
+        const randomEvent = EXPEDITION_EVENTS[Math.floor(Math.random() * EXPEDITION_EVENTS.length)];
+
+        // 将事件和奖励金额存入状态，触发弹窗
+        setClaimedPostcard({ ...randomEvent, reward });
+
+        // 发放奖励，取消探险状态，并重置时间戳防止一回来就饿死
         onUpdateCoins(reward);
         onUpdatePassport(selectedPet.id, 'isOnExpedition', false);
-        setGlobalAlert(currentLang === 'cn' ? `探险圆满结束！\n带回了 ${reward} 个胡萝卜币！` : `Expedition complete!\nBrought back ${reward} coins!`);
+        onUpdatePassport(selectedPet.id, 'lastSyncTime', Date.now());
     };
 
     const handleLocalToggleFarm = (p: PassportData) => {
@@ -431,6 +463,56 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                     )}
                 </div>
             </footer>
+            {/* ========================================== */}
+            {/* 💌 新增：探险归来的拍立得明信片盲盒 */}
+            {/* ========================================== */}
+            {claimedPostcard && (
+                <div className="fixed inset-0 z-[11000] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
+                    {/* 拍立得相纸主体：带有微妙的倾斜和进入动画 */}
+                    <div className="bg-white p-4 pb-12 rounded-lg shadow-[15px_15px_0_rgba(0,0,0,0.8)] w-full max-w-[340px] transform -rotate-2 animate-bounce-in flex flex-col items-center">
+
+                        {/* 顶部胶带装饰 */}
+                        <div className="absolute -top-4 w-24 h-8 bg-white/50 backdrop-blur-md border border-gray-200 rotate-3 shadow-sm z-10" />
+
+                        {/* 照片区域 */}
+                        <div className="w-full aspect-square bg-[#1a1a2e] border-4 border-black mb-6 overflow-hidden relative shadow-inner">
+                            <img
+                                src={claimedPostcard.img}
+                                alt="Postcard"
+                                className="w-full h-full object-cover opacity-90 mix-blend-screen"
+                            />
+                            {/* 复古漏光滤镜 */}
+                            <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/20 to-purple-500/20 pointer-events-none" />
+                        </div>
+
+                        {/* 手写日记文字 */}
+                        <h3 className="font-black text-2xl uppercase tracking-tighter mb-2 text-center text-gray-800">
+                            {claimedPostcard.title[currentLang]}
+                        </h3>
+                        <p className="font-hand text-lg text-gray-600 text-center leading-tight mb-6 px-2">
+                            {claimedPostcard.desc[currentLang]}
+                        </p>
+
+                        {/* 战利品奖励印章 */}
+                        <div className="flex items-center gap-2 bg-[#FFD700] px-6 py-2 border-[3px] border-black rounded-full shadow-[3px_3px_0_black] -rotate-3 mb-4">
+                            <CarrotCoinIcon className="w-6 h-6" />
+                            <span className="font-black text-xl">+{claimedPostcard.reward}</span>
+                        </div>
+
+                        {/* 收下按钮 */}
+                        <button
+                            onClick={() => {
+                                playSound?.('click');
+                                setClaimedPostcard(null);
+                            }}
+                            className="w-full max-w-[200px] mt-2 bg-black text-white py-3 rounded-xl font-black uppercase tracking-widest hover:bg-gray-800 transition-colors"
+                        >
+                            {currentLang === 'cn' ? '收下明信片' : 'KEEP POSTCARD'}
+                        </button>
+
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

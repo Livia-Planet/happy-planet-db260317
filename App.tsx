@@ -217,6 +217,43 @@ export const App: React.FC = () => {
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.MEDALS, JSON.stringify(unlockedMedals)); }, [unlockedMedals]);
   useEffect(() => { setDisplayBpm(PLAYLIST[currentTrackIndex].bpm); }, [currentTrackIndex]);
 
+  // ==========================================
+  // 🌍 新增：在线生命维持系统 (后台心跳定时器)
+  // ==========================================
+  useEffect(() => {
+    const HUNGER_INTERVAL_MS = 30 * 60 * 1000; // 设定：30分钟扣 1 点饥饿度
+
+    const lifeTimer = setInterval(() => {
+      setSavedPassports(prev => {
+        let hasChanges = false;
+        const now = Date.now();
+
+        const updated = prev.map(p => {
+          // 只有在农场里，且【没有去探险】的兔子，才会随着时间变饿 (探险时冻结饥饿)
+          if (p.isAssignedToFarm && p.lastSyncTime && !p.isOnExpedition) {
+            const timeDiffMs = now - p.lastSyncTime;
+            const hungerLost = Math.floor(timeDiffMs / HUNGER_INTERVAL_MS);
+
+            if (hungerLost > 0) {
+              hasChanges = true;
+              return {
+                ...p,
+                hunger: Math.max(0, (p.hunger ?? 80) - hungerLost),
+                // 核心细节：保留余数！比如过了 35 分钟，扣 1 点，剩下 5 分钟算入下一次计时
+                lastSyncTime: p.lastSyncTime + hungerLost * HUNGER_INTERVAL_MS
+              };
+            }
+          }
+          return p;
+        });
+
+        return hasChanges ? updated : prev;
+      });
+    }, 60000); // 每 1 分钟偷偷检查一次
+
+    return () => clearInterval(lifeTimer);
+  }, []);
+
   // 🏆 成就监控
   useEffect(() => {
     let hasNew = false;
