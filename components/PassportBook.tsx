@@ -568,14 +568,6 @@ export const PassportBook: React.FC<PassportBookProps> = ({
               <IconAstroStats className="w-6 h-6" />
             </button>
 
-            {/* 返回编辑器 */}
-            <button
-              onClick={onBack}
-              className="px-6 py-3 bg-white border-[3px] border-black rounded-xl font-black text-sm shadow-[4px_4px_0_black] hover:-translate-y-1 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-2"
-            >
-              <span>←</span>
-              {lang === 'cn' ? '返回' : 'BACK'}
-            </button>
           </div>
         </div>
 

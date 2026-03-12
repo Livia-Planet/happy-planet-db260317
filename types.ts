@@ -75,6 +75,9 @@ export interface PassportData extends CharacterData {
   isAssignedToFarm?: boolean; // <--- 新增这行：用于标记是否被收藏/锁定
   hunger?: number;   // 👈 新增：每只兔子专属的饥饿值
   intimacy?: number; // 👈 新增：每只兔子专属的亲密度
+  lastSyncTime?: number;        // 上次同步状态的时间戳 (用于计算离线流逝)
+  isOnExpedition?: boolean;     // 是否正在外星探险
+  expeditionStartTime?: number; // 探险出发的时间戳
 }
 
 export interface StoryEntry {

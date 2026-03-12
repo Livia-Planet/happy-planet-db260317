@@ -83,7 +83,29 @@ export const App: React.FC = () => {
 
   const [savedPassports, setSavedPassports] = useState<PassportData[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.PASSPORTS);
-    if (saved) { try { return JSON.parse(saved); } catch { return []; } }
+    if (saved) {
+      try {
+        const parsed: PassportData[] = JSON.parse(saved);
+        const now = Date.now();
+        // 🌟 离线结算引擎：计算流逝的时间并扣除饥饿度
+        return parsed.map(p => {
+          if (p.isAssignedToFarm && p.lastSyncTime) {
+            const timeDiffMs = now - p.lastSyncTime;
+            // 设定：每 30 分钟 (1800000 毫秒) 扣除 1 点饥饿度
+            const hungerLost = Math.floor(timeDiffMs / 1800000);
+            if (hungerLost > 0) {
+              return {
+                ...p,
+                // 确保探险中不会被饿死，最低保底 0
+                hunger: Math.max(0, (p.hunger ?? 80) - hungerLost),
+                lastSyncTime: now // 结清后更新时间戳
+              };
+            }
+          }
+          return p;
+        });
+      } catch { return []; }
+    }
     return [];
   });
 
@@ -406,7 +428,19 @@ export const App: React.FC = () => {
       } else {
         playSound('click'); // 召回
       }
-      return prev.map(p => p.id === id ? { ...p, isAssignedToFarm: !p.isAssignedToFarm } : p);
+      return prev.map(p => {
+        if (p.id === id) {
+          return {
+            ...p,
+            isAssignedToFarm: !p.isAssignedToFarm,
+            // 赋予时间轴起点，以及初始属性
+            lastSyncTime: Date.now(),
+            hunger: p.hunger ?? 80,
+            intimacy: p.intimacy ?? 30
+          };
+        }
+        return p;
+      });
     });
   }, [maxFarmSlots, currentLang, playSound]);
 
