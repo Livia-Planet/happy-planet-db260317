@@ -105,6 +105,7 @@ interface PassportBookProps {
   onDelete: (id: string) => void;
   lang: Language;
   onReward?: (amount: number, sourceId: string) => void; // <--- 新增这行
+  onToggleFarm: (id: string) => void;
 }
 
 type Tab = 'profile' | 'personality' | 'relations' | 'story';
@@ -257,7 +258,8 @@ export const PassportBook: React.FC<PassportBookProps> = ({
   onUpdatePassport,
   onDelete,
   lang,
-  onReward
+  onReward,
+  onToggleFarm
 }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -966,6 +968,38 @@ export const PassportBook: React.FC<PassportBookProps> = ({
           <p className={`mt-4 font-hand text-lg ${isFlipped ? currentTheme.text === 'text-white' ? 'text-gray-300' : 'text-gray-600' : currentTheme.text === 'text-white' ? 'text-gray-300' : 'text-gray-600'}`}>
             {isFlipped ? (lang === 'cn' ? '点击返回正面' : 'Tap to flip back') : (lang === 'cn' ? '点击查看背面' : 'Tap to see planet')}
           </p>
+
+          {/* 👇 新增：认领/召回 核心控制面板 👇 */}
+          <div className="mt-6 w-full max-w-[340px] bg-white/50 backdrop-blur-sm p-4 rounded-3xl border-[3px] border-black/10 shadow-sm">
+            <div className="flex flex-col gap-3">
+              {/* 状态指示标签 */}
+              <div className={`px-4 py-2 rounded-xl border-[3px] border-black font-black text-center transition-colors text-sm tracking-widest ${activePassport.isAssignedToFarm ? 'bg-green-400 text-white shadow-[2px_2px_0_black]' : 'bg-gray-100 text-gray-400'
+                }`}>
+                {activePassport.isAssignedToFarm
+                  ? (lang === 'cn' ? '正在农场忙碌中...' : 'ACTIVE IN FARM')
+                  : (lang === 'cn' ? '待命（档案状态）' : 'IN ARCHIVES')}
+              </div>
+
+              {/* 核心操作按钮 */}
+              <button
+                onClick={() => onToggleFarm(activePassport.id)}
+                className={`w-full py-4 rounded-2xl font-black border-[3px] border-black shadow-[4px_4px_0_black] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-center gap-2 ${activePassport.isAssignedToFarm
+                  ? 'bg-red-400 text-white'
+                  : 'bg-[#FACC15] text-black'
+                  }`}
+              >
+                {activePassport.isAssignedToFarm ? (
+                  <span>{lang === 'cn' ? '从农场召回' : 'RECALL FROM FARM'}</span>
+                ) : (
+                  <>
+                    <span className="text-xl">🐰</span>
+                    <span>{lang === 'cn' ? '领养到农场' : 'ADOPT TO FARM'}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+          {/* 👆 新增结束 👆 */}
         </div>
 
         {/* RIGHT: 大框底部与「点击查看背面」齐平（md 下 items-stretch 拉齐高度） */}
@@ -1691,7 +1725,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
           document.body
         )}
 
-      </div>
+      </div >
     </>
   );
 };

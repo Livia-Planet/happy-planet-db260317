@@ -63,7 +63,8 @@ const STORAGE_KEYS = {
   PASSPORTS: 'happyPlanet_passports',
   TOKENS: 'happyPlanet_tokens',
   DRAFT: 'happyPlanet_draft',
-  MEDALS: 'happyPlanet_medals'
+  MEDALS: 'happyPlanet_medals',
+  FARM_SLOTS: 'happyPlanet_farmSlots'
 };
 
 export const App: React.FC = () => {
@@ -85,6 +86,15 @@ export const App: React.FC = () => {
     if (saved) { try { return JSON.parse(saved); } catch { return []; } }
     return [];
   });
+
+  // 👇 新增：农场槽位状态 (初始默认为 1 个位置)
+  const [maxFarmSlots, setMaxFarmSlots] = useState<number>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.FARM_SLOTS);
+    return saved !== null ? parseInt(saved, 10) : 1;
+  });
+
+  useEffect(() => { localStorage.setItem(STORAGE_KEYS.FARM_SLOTS, maxFarmSlots.toString()); }, [maxFarmSlots]);
+  // 👆 新增结束
 
   const [unlockedMedals, setUnlockedMedals] = useState<Record<string, UnlockedMedal>>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.MEDALS);
@@ -376,6 +386,42 @@ export const App: React.FC = () => {
     }, 400);
   };
 
+  // 👇 新增：农场槽位与认领核心逻辑
+  const SLOT_UPGRADE_COSTS = [0, 50, 150, 500, 1000]; // 购买第2、3、4个位置的价格
+
+  const handleToggleFarmStatus = useCallback((id: string) => {
+    setSavedPassports(prev => {
+      const currentAssignedCount = prev.filter(p => p.isAssignedToFarm).length;
+      const targetPassport = prev.find(p => p.id === id);
+      if (!targetPassport) return prev;
+
+      if (!targetPassport.isAssignedToFarm) {
+        // 尝试去农场：检查槽位
+        if (currentAssignedCount >= maxFarmSlots) {
+          playSound('error');
+          alert(currentLang === 'cn' ? '农场床位不足，请先解锁更多位置！' : 'Farm is full!');
+          return prev;
+        }
+        playSound('success'); // 认领成功
+      } else {
+        playSound('click'); // 召回
+      }
+      return prev.map(p => p.id === id ? { ...p, isAssignedToFarm: !p.isAssignedToFarm } : p);
+    });
+  }, [maxFarmSlots, currentLang, playSound]);
+
+  const handleUnlockSlot = useCallback(() => {
+    const cost = SLOT_UPGRADE_COSTS[maxFarmSlots] || 9999;
+    if (carrotCoins >= cost) {
+      setCarrotCoins(prev => prev - cost);
+      setMaxFarmSlots(prev => prev + 1);
+      playSound('achievement');
+    } else {
+      playSound('error');
+    }
+  }, [carrotCoins, maxFarmSlots, playSound]);
+  // 👆 新增结束
+
   const handleUpdatePassportData = (id: string, field: keyof PassportData, value: any) => { setSavedPassports(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p)); };
   const handleDeletePassport = (id: string) => { setSavedPassports(prev => prev.filter(p => p.id !== id)); };
 
@@ -542,10 +588,12 @@ export const App: React.FC = () => {
                 onDelete={handleDeletePassport}
                 lang={currentLang}
                 onReward={handleReward}
+                onToggleFarm={handleToggleFarmStatus}
               />
             </div>
           )}
 
+          {/* --- 丰饶农场界面 --- */}
           {viewMode === 'focus' && (
             <FarmScreen
               currentLang={currentLang}
@@ -559,6 +607,11 @@ export const App: React.FC = () => {
                 playSound('click');
                 setViewMode(mode);
               }}
+              maxFarmSlots={maxFarmSlots}         // 👈 传给农场
+              onUnlockSlot={handleUnlockSlot}     // 👈 传给农场
+              onToggleFarm={handleToggleFarmStatus} // 👈 传给农场
+              // 👇 新增这一行：让农场可以修改兔子的饥饿和亲密！
+              onUpdatePassport={handleUpdatePassportData}
             />
           )}
 
