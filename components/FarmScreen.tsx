@@ -36,6 +36,12 @@ const FarmIcons = {
     MilkFood: () => (
         <svg viewBox="0 0 24 24" fill="#FF90E8" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M6 8h12v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8z" fill="white" /><path d="M8 8V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4" /></svg>
     ),
+    // 👇 在最下面加上这个星砂图标
+    StarSand: ({ className = "w-6 h-6" }) => (
+        <svg viewBox="0 0 24 24" fill="#60EFFF" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M12 2l2.4 7.6H22l-6.2 4.5 2.4 7.6-6.2-4.5-6.2 4.5 2.4-7.6L2 9.6h7.6z" /><circle cx="12" cy="12" r="3" fill="white" />
+        </svg>
+    ),
     Star: () => (
         <svg viewBox="0 0 24 24" fill="#FFD700" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" /></svg>
     )
@@ -327,6 +333,12 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
             <main className="relative z-10 flex-1 w-full flex flex-wrap items-center justify-center p-4 gap-8 md:gap-16 -translate-y-3">
                 {activePets.length > 0 ? (
                     activePets.map((pet, idx) => {
+                        // 1. 判断它和当前农场里的其他兔子，是否有极高的亲密度
+                        const hasBond = activePets.some(otherPet =>
+                            otherPet.id !== pet.id &&
+                            pet.relationships?.some(rel => rel.targetId === otherPet.id && (rel.intimacyScore ?? 0) >= 50)
+                        );
+
                         const isSelected = pet.id === selectedPetId;
                         return (
                             <div
@@ -336,6 +348,13 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                             >
                                 {isSelected && (
                                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-white/40 border-4 border-dashed border-yellow-400 rounded-full animate-spin-slow pointer-events-none" />
+                                )}
+
+                                {/* 👇 羁绊特效：亲密≥50，冒出跳动的爱心 */}
+                                {hasBond && !isFocusing && (
+                                    <div className="absolute -top-4 -right-2 z-50 animate-bounce text-2xl drop-shadow-[2px_2px_0_black] pointer-events-none">
+                                        💖
+                                    </div>
                                 )}
 
                                 <div className={`relative z-10 transform transition-all duration-300 ${isSelected ? 'scale-[1.3]' : 'scale-100 hover:scale-110'} animate-float ${pet.isOnExpedition ? 'opacity-30 grayscale blur-[1px]' : ''}`} style={{ animationDelay: `${idx * 0.2}s` }}>
@@ -488,7 +507,7 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                             </div>
                                             <span className="font-black text-xs text-center leading-tight">{item.name[currentLang]}</span>
                                             <div className={`flex items-center gap-1 px-2 py-0.5 rounded-lg border-2 border-black mt-auto ${shopCategory === 'supplies' ? 'bg-[#FFD700]' : 'bg-[#60EFFF]'}`}>
-                                                {shopCategory === 'supplies' ? <CarrotCoinIcon className="w-3 h-3" /> : <SocialIcons.StarSand className="w-3 h-3" />}
+                                                {shopCategory === 'supplies' ? <CarrotCoinIcon className="w-3 h-3" /> : <FarmIcons.StarSand className="w-3 h-3" />}
                                                 <span className="text-[10px] font-black">{item.price}</span>
                                             </div>
                                         </div>

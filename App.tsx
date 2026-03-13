@@ -789,13 +789,33 @@ export const App: React.FC = () => {
               onCancel={() => setFocusPetId(null)}
               onComplete={() => {
                 playSound('success');
-                setCarrotCoins(prev => prev + 10);
+
                 const pet = savedPassports.find(p => p.id === focusPetId);
+                const activeFarmPets = savedPassports.filter(p => p.isAssignedToFarm);
+
+                // 🌟 检查是否有羁绊达到 100 的同伴在农场！
+                let hasMaxBond = false;
+                if (pet && pet.relationships) {
+                  hasMaxBond = activeFarmPets.some(otherPet =>
+                    otherPet.id !== pet.id &&
+                    pet.relationships!.some(rel => rel.targetId === otherPet.id && (rel.intimacyScore ?? 0) >= 100)
+                  );
+                }
+
+                // 基础给 10 币，如果有满羁绊同伴，额外加 20% (即多给 2 币)
+                const coinsEarned = hasMaxBond ? 12 : 10;
+                setCarrotCoins(prev => prev + coinsEarned);
+
                 if (pet) {
                   handleUpdatePassportData(pet.id, 'intimacy', Math.min(100, (pet.intimacy ?? 30) + 5));
                 }
                 setFocusPetId(null);
-                setToastMsg(currentLang === 'cn' ? '专注完成！+10 🥕' : 'Focus Complete! +10 🥕');
+
+                const msg = hasMaxBond
+                  ? (currentLang === 'cn' ? `羁绊共鸣！专注完成 +${coinsEarned} 🥕` : `Bond Resonance! +${coinsEarned} 🥕`)
+                  : (currentLang === 'cn' ? `专注完成！+${coinsEarned} 🥕` : `Focus Complete! +${coinsEarned} 🥕`);
+
+                setToastMsg(msg);
                 setTimeout(() => setToastMsg(null), 3000);
               }}
             />
