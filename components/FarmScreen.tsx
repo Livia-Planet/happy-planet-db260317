@@ -113,7 +113,7 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
     onUnlockShopItem,
     onUnlockPart,
     recordedEvents,
-    onRecordEvent
+    onRecordEvent,
     // 👇👇👇 把它们从参数里解构出来 👇👇👇
     starSand,
     onUpdateStarSand,
