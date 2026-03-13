@@ -984,7 +984,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                   <span>{lang === 'cn' ? '从农场召回' : 'RECALL FROM FARM'}</span>
                 ) : (
                   <>
-                    <span className="text-xl">🐰</span>
+                    <span className="text-xl"></span>
                     <span>{lang === 'cn' ? '领养到农场' : 'ADOPT TO FARM'}</span>
                   </>
                 )}

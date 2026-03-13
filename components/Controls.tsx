@@ -16,6 +16,7 @@ interface ControlsProps {
   updatePart: (category: PartCategory, partId: string) => void;
   updatePlanetPart: (category: PlanetCategory, partId: string) => void;
   lang: Language;
+  unlockedParts?: string[]; // 👈 接收已解锁的隐藏配件列表
 }
 
 // Helper to get translated tab label key
@@ -84,7 +85,8 @@ export const Controls: React.FC<ControlsProps> = ({
   updateName,
   updatePart,
   updatePlanetPart,
-  lang
+  lang,
+  unlockedParts = [] // 👈 默认给个空数组，防止 undefined
 }) => {
   // === STAT ICONS (SVG LINE ART) ===
   const ModIcon = ({ className }: { className?: string }) => (
@@ -160,39 +162,33 @@ export const Controls: React.FC<ControlsProps> = ({
 
   // Calculate Pagination Data
 
-  // --- 专业逻辑：当处于“头发”选项卡时，同时抓取前发(hair)和后发(hair_b)的零件 ---
+  // --- 专业逻辑：同时抓取前发(hair)和后发(hair_b)，并应用隐藏配件解锁机制！ ---
   const allParts = React.useMemo(() => {
+    // 👈 核心修改：把 unlockedParts 传给 getPartList
     if (activeTab === 'hair') {
-      // 1. 获取两部分数据
-      const rawHair = getPartList('hair');
-      const rawHairB = getPartList('hair_b');
+      const rawHair = getPartList('hair', unlockedParts);
+      const rawHairB = getPartList('hair_b', unlockedParts);
 
-      // 2. 强制合并，并利用 Map 根据 id 去重
       const combined = [...rawHair, ...rawHairB];
       const uniquePartsMap = new Map();
 
       combined.forEach(part => {
-        // 如果这个 id 还没存进 Map 里，就存进去
         if (!uniquePartsMap.has(part.id)) {
           uniquePartsMap.set(part.id, part);
         }
       });
 
-      // 3. 把去重后的 Map 值转回数组
       return Array.from(uniquePartsMap.values());
     }
 
-    // 如果不是头发 Tab，正常返回
-    return getPartList(activeTab);
-  }, [activeTab]);
+    return getPartList(activeTab, unlockedParts);
+  }, [activeTab, unlockedParts]);
 
   const totalPages = Math.ceil(allParts.length / ITEMS_PER_PAGE);
   const currentParts = allParts.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE);
 
   return (
-    <div
-      className="w-full max-w-[340px] h-[480px] flex flex-col mt-8 md:mt-0 relative"
-    >
+    <div className="w-full max-w-[340px] h-[480px] flex flex-col mt-8 md:mt-0 relative">
 
       {/* --- FOLDER TABS (Dynamic based on View) --- */}
       <div className="flex w-full px-3 space-x-1 relative z-10 translate-y-[4px] overflow-hidden">
@@ -291,7 +287,6 @@ export const Controls: React.FC<ControlsProps> = ({
                         className={`w-5 h-5 rounded-full border border-black mb-1 shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)] ${part.id.includes('none') ? 'border-dashed opacity-50' : ''}`}
                         style={{
                           backgroundColor: getPartPreviewColor(part.id),
-                          // 如果是“无”，可以加个斜杠视觉效果
                           backgroundImage: part.id.includes('none')
                             ? 'linear-gradient(45deg, transparent 45%, #ff0000 45%, #ff0000 55%, transparent 55%)'
                             : 'none'

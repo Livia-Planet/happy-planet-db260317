@@ -135,7 +135,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     rarity: 'E',
     images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Issi400x400-face.png' }
   },
-    'face_innocent': {
+  'face_innocent': {
     id: 'face_innocent',
     category: 'face',
     name: 'Innocent Face',
@@ -143,13 +143,24 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     rarity: 'C',
     images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-face-Innocent%20blush.png' }
   },
-    'face_craving': {
+  'face_craving': {
     id: 'face_craving',
     category: 'face',
     name: 'Craving Face',
     stats: stats(1, 0, 0),
     rarity: 'R',
     images: { main: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-face-craving.png' }
+  },
+
+  // ... 其他脸部 ...
+  'eyes_alien_star': {
+    id: 'eyes_alien_star',
+    category: 'face',
+    name: 'Star Gazer',
+    stats: stats(0, 2, 3), // 很高哦！
+    rarity: 'E',
+    isUnlockable: true, // 👈 隐藏配件标记
+    images: { main: '' } // 你可以之后换成真图
   },
 
   // === HAIR (Layer 1 Back, Layer 5 Front) ===
@@ -337,13 +348,17 @@ export const PLANET_PARTS_DB: Record<string, PartDefinition> = {
   'planet_comp_station': { id: 'planet_comp_station', category: 'companion', name: 'Station', stats: stats(0, 3, 1), rarity: 'E', images: { main: '/parts/p_c_station.png' } }, // 空间站
 };
 
-export const getPartList = (category: PartCategory | PlanetCategory) => {
-  // 核心魔法：当 UI 处于 'hair' 标签时，同时返回前发和后发的数据！
+// 👈 修改参数：传入 unlockedParts
+export const getPartList = (category: PartCategory | PlanetCategory, unlockedParts: string[] = []) => {
+  let list = [];
   if (category === 'hair') {
-    return Object.values(PARTS_DB).filter(p => p.category === 'hair' || p.category === 'hair_b');
+    list = Object.values(PARTS_DB).filter(p => p.category === 'hair' || p.category === 'hair_b');
+  } else if (['body', 'ears', 'face', 'hair_b', 'access'].includes(category)) {
+    list = Object.values(PARTS_DB).filter(p => p.category === category);
+  } else {
+    list = Object.values(PLANET_PARTS_DB).filter(p => p.category === category);
   }
-  if (['body', 'ears', 'face', 'hair_b', 'access'].includes(category)) {
-    return Object.values(PARTS_DB).filter(p => p.category === category);
-  }
-  return Object.values(PLANET_PARTS_DB).filter(p => p.category === category);
+
+  // 核心魔法：如果是隐藏配件，只有在 unlockedParts 里的才显示！
+  return list.filter(p => !p.isUnlockable || unlockedParts.includes(p.id));
 };

@@ -46,6 +46,7 @@ export interface PartDefinition {
   rarity?: Rarity; // 2. 强制要求每个部件都有稀有度的话，就删掉问好。
   offsetY?: number;
   images: PartImages;
+  isUnlockable?: boolean; // 👈 新增：标记是否为探险专属隐藏配件
 }
 
 export interface CharacterData {

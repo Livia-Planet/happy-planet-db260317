@@ -5,6 +5,14 @@ import { CarrotCoinIcon } from './Icons';
 import { Language, PassportData, ViewMode } from '../types';
 import { getDominantStat, calculateStats } from '../utils/gameLogic';
 
+// 🎨 四件新家具的数据库
+const FURNITURE_DB = [
+    { id: 'shower', name: { cn: '淋浴头', en: 'Shower', se: 'Dusch' }, price: 5, int: 5, svg: <svg viewBox="0 0 24 24" fill="none" stroke="#4DABF7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 4v4m-4 4l1.5-1.5m5 0L16 12m-4 4v2m-3-1l-1 1m7-1l1 1" /><path d="M8 8h8v2a4 4 0 01-8 0V8z" fill="#4DABF7" opacity="0.3" /></svg>, imgUrl: '' },
+    { id: 'dryer', name: { cn: '吹风机', en: 'Hairdryer', se: 'Hårfön' }, price: 5, int: 5, svg: <svg viewBox="0 0 24 24" fill="none" stroke="#FF8787" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M7 10h10a3 3 0 000-6H7a3 3 0 000 6z" fill="#FF8787" opacity="0.3" /><path d="M12 10v6a2 2 0 01-4 0v-1" /><line x1="19" y1="5" x2="22" y2="5" /><line x1="19" y1="7" x2="21" y2="7" /><line x1="19" y1="9" x2="22" y2="9" /></svg>, imgUrl: '' },
+    { id: 'comb', name: { cn: '梳子', en: 'Comb', se: 'Kam' }, price: 5, int: 5, svg: <svg viewBox="0 0 24 24" fill="none" stroke="#FFD43B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><rect x="4" y="6" width="16" height="6" rx="2" fill="#FFD43B" opacity="0.3" /><path d="M5 12v6m3-6v6m3-6v6m3-6v6m3-6v6" /></svg>, imgUrl: '' },
+    { id: 'towel', name: { cn: '浴巾', en: 'Towel', se: 'Handduk' }, price: 5, int: 5, svg: <svg viewBox="0 0 24 24" fill="none" stroke="#69DB7C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M4 6h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" fill="#69DB7C" opacity="0.3" /><line x1="4" y1="10" x2="20" y2="10" /><line x1="4" y1="14" x2="20" y2="14" /></svg>, imgUrl: '' }
+];
+
 const FarmIcons = {
     Hunger: () => (
         <svg viewBox="0 0 24 24" fill="#D2691E" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
@@ -72,6 +80,10 @@ interface FarmScreenProps {
     onUpdatePassport: (id: string, field: keyof PassportData, value: any) => void;
     setGlobalAlert: (msg: string) => void;
     onStartGlobalFocus: (id: string) => void;
+    unlockedShopItems: string[];
+    unlockedParts: string[];
+    onUnlockShopItem: (id: string) => void;
+    onUnlockPart: (id: string) => void;
 }
 
 const EXPEDITION_OPTIONS = [
@@ -81,23 +93,23 @@ const EXPEDITION_OPTIONS = [
     { minutes: 480, reward: 150, hungerCost: 90, label: { cn: '未知虫洞', en: 'Wormhole', se: 'Maskhål' } }
 ];
 
-// 🌌 探险奇遇事件库 (Livia 可以随时往这里面加新画的卡片！)
+// 🌌 探险奇遇事件库
 const EXPEDITION_EVENTS = [
     {
         id: 'ev_01',
-        img: "https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Duddu400x400-face.png", // <- 之后换成你的场景插画
+        img: "https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Duddu400x400-face.png",
         title: { cn: '发光的晶石洞', en: 'Glowing Cave', se: 'Glödande Grotta' },
         desc: { cn: '在火星地下迷路了，但发现了一群会发光的蓝色蘑菇，还顺便睡了个午觉！', en: 'Found glowing mushrooms!', se: 'Hittade glödande svampar och tog en tupplur!' }
     },
     {
         id: 'ev_02',
-        img: "https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Issi400x400-face.png", // <- 之后换成你的场景插画
+        img: "https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Issi400x400-face.png",
         title: { cn: '偶遇外星邻居', en: 'Alien Neighbor', se: 'Utomjordisk Granne' },
         desc: { cn: '在小行星带遇到了一只戴墨镜的奇怪生物，他们一起分享了草莓牛奶。', en: 'Shared milk with an alien.', se: 'Delade jordgubbsmjölk med en utomjording.' }
     },
     {
         id: 'ev_03',
-        img: "https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Plott400x400-face.png", // <- 之后换成你的场景插画
+        img: "https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Plott400x400-face.png",
         title: { cn: '流星雨速递', en: 'Meteor Shower', se: 'Meteorregn' },
         desc: { cn: '搭乘着彗星的尾巴冲浪，惊险刺激，差点把帽子吹飞了！', en: 'Surfed on a comet tail!', se: 'Surfade på en kometsvans, tappade nästan hatten!' }
     }
@@ -115,11 +127,14 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
     onToggleFarm,
     onUpdatePassport,
     setGlobalAlert,
-    onStartGlobalFocus
+    onStartGlobalFocus,
+    unlockedShopItems,
+    unlockedParts,
+    onUnlockShopItem,
+    onUnlockPart
 }) => {
     const [activeTab, setActiveTab] = useState<'focus' | 'shop' | 'archives' | 'explore'>('focus');
     const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
-    // 👇 新增：控制明信片弹窗的状态
     const [claimedPostcard, setClaimedPostcard] = useState<any>(null);
 
     const activePets = useMemo(() => savedPassports.filter(p => p.isAssignedToFarm), [savedPassports]);
@@ -160,7 +175,7 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
         onUpdateCoins(-price);
 
         const currentHunger = selectedPet.hunger ?? 80;
-        const currentIntimacy = selectedPet.intimacy ?? 30;
+        const currentIntimacy = selectedPet.intimacy ?? 0;
         onUpdatePassport(selectedPet.id, 'hunger', Math.min(100, currentHunger + addHunger));
         onUpdatePassport(selectedPet.id, 'intimacy', Math.min(100, currentIntimacy + addIntimacy));
         onUpdatePassport(selectedPet.id, 'lastSyncTime', Date.now());
@@ -178,21 +193,40 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
         onUpdatePassport(selectedPet.id, 'isOnExpedition', true);
         onUpdatePassport(selectedPet.id, 'expeditionStartTime', Date.now());
         onUpdatePassport(selectedPet.id, 'expeditionDuration', opt.minutes * 60 * 1000);
-        onUpdatePassport(selectedPet.id, 'expeditionReward', opt.reward); // ✅ 已修复
+        onUpdatePassport(selectedPet.id, 'expeditionReward', opt.reward);
     };
 
     const handleClaimExpedition = () => {
         if (!selectedPet) return;
-        playSound?.('success');
-        const reward = selectedPet.expeditionReward || 50;
 
-        // 🎲 随机抽取一张明信片事件
+        const reward = selectedPet.expeditionReward || 50;
         const randomEvent = EXPEDITION_EVENTS[Math.floor(Math.random() * EXPEDITION_EVENTS.length)];
 
-        // 将事件和奖励金额存入状态，触发弹窗
-        setClaimedPostcard({ ...randomEvent, reward });
+        // 🎲 核心抽奖逻辑
+        const roll = Math.random() * 100;
+        let bonusItem = null;
 
-        // 发放奖励，取消探险状态，并重置时间戳防止一回来就饿死
+        if (roll > 90 && !unlockedParts.includes('eyes_alien_star')) {
+            // 10% 概率出隐藏大奖：新眼睛
+            playSound?.('achievement');
+            onUnlockPart('eyes_alien_star');
+            bonusItem = { type: 'part', name: currentLang === 'cn' ? '凝望星空眼' : 'Star Gazer Eyes', icon: '✨' };
+        } else if (roll > 60) {
+            // 30% 概率出家具
+            const availableFurniture = FURNITURE_DB.filter(f => !unlockedShopItems.includes(f.id));
+            if (availableFurniture.length > 0) {
+                playSound?.('success');
+                const won = availableFurniture[Math.floor(Math.random() * availableFurniture.length)];
+                onUnlockShopItem(won.id);
+                bonusItem = { type: 'furniture', name: won.name[currentLang], icon: '🎁' };
+            } else {
+                playSound?.('success');
+            }
+        } else {
+            playSound?.('success');
+        }
+
+        setClaimedPostcard({ ...randomEvent, reward, bonusItem });
         onUpdateCoins(reward);
         onUpdatePassport(selectedPet.id, 'isOnExpedition', false);
         onUpdatePassport(selectedPet.id, 'lastSyncTime', Date.now());
@@ -217,9 +251,8 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                 <SpaceBackground bpm={50} themeColor="#95E1D3" />
             </div>
 
-            {/* --- 顶部状态栏：✅ 恢复右侧按钮，左侧详情重构 --- */}
+            {/* --- 顶部状态栏 --- */}
             <header className="relative z-20 left-20 w-full p-6 flex justify-between items-start pointer-events-none">
-
                 {/* 🌟 详情面板 (左上角) */}
                 <div className="flex flex-col gap-2">
                     {selectedPet ? (
@@ -233,7 +266,7 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                             {/* 属性条 */}
                             <div className="flex flex-col gap-2 mt-1">
                                 <StatBar icon={<div className="w-4 h-4"><FarmIcons.Hunger /></div>} value={selectedPet.hunger ?? 80} color="bg-[#D2691E]" />
-                                <StatBar icon={<div className="w-4 h-4"><FarmIcons.Intimacy /></div>} value={selectedPet.intimacy ?? 30} color="bg-[#FF90E8]" />
+                                <StatBar icon={<div className="w-4 h-4"><FarmIcons.Intimacy /></div>} value={selectedPet.intimacy ?? 0} color="bg-[#FF90E8]" />
                             </div>
                         </div>
                     ) : (
@@ -245,7 +278,6 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
             </header>
 
             {/* --- 核心交互区 --- */}
-            {/* ✅ 修复 4：添加 -translate-y-12 整体往上推，防止被底栏挡住 */}
             <main className="relative z-10 flex-1 w-full flex flex-wrap items-center justify-center p-4 gap-8 md:gap-16 -translate-y-3">
                 {activePets.length > 0 ? (
                     activePets.map((pet, idx) => {
@@ -278,7 +310,7 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                         <div className="bg-[#D2691E] h-full transition-all duration-500" style={{ width: `${pet.hunger ?? 80}%` }} />
                                     </div>
                                     <div className="w-16 h-2 bg-gray-200 rounded-full border-2 border-black overflow-hidden">
-                                        <div className="bg-[#FF90E8] h-full transition-all duration-500" style={{ width: `${pet.intimacy ?? 30}%` }} />
+                                        <div className="bg-[#FF90E8] h-full transition-all duration-500" style={{ width: `${pet.intimacy ?? 0}%` }} />
                                     </div>
                                 </div>
 
@@ -366,7 +398,6 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                         onClick={() => handleLocalToggleFarm(p)}
                                         className={`p-3 rounded-2xl flex items-center gap-3 cursor-pointer border-[4px] border-black shadow-[4px_4px_0_black] active:shadow-none active:translate-y-1 transition-all ${p.isAssignedToFarm ? 'bg-[#A8E6CF]' : 'bg-[#F9FAFB] hover:bg-yellow-50'}`}
                                     >
-                                        {/* ✅ 修复 2：彻底修复细长头像问题 */}
                                         <div className="w-14 h-14 bg-white border-[3px] border-black rounded-full overflow-hidden flex-shrink-0 relative flex justify-center items-center">
                                             <div className="absolute bottom-4 right-7 w-full h-full transform scale-[0.5] origin-top translate y-4.5">
                                                 <Avatar selectedParts={p.selectedParts} dominantStat={getDominantStat(calculateStats(p.selectedParts, p.stats))} transparent={true} />
@@ -389,12 +420,38 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                         </div>
                     )}
 
-                    {activeTab === 'shop' && (
-                        <div className="grid grid-cols-2 gap-4">
-                            <ShopItem name={currentLang === 'cn' ? "元气曲奇" : "Cookie"} price={5} icon={<FarmIcons.Hunger />} onBuy={() => handleBuyItem(5, 20, 5)} />
-                            <ShopItem name={currentLang === 'cn' ? "星间奶昔" : "Milkshake"} price={15} icon={<FarmIcons.MilkFood />} onBuy={() => handleBuyItem(15, 10, 20)} />
-                        </div>
-                    )}
+                    {activeTab === 'shop' && (() => {
+                        // 整合基础食物和已解锁的家具
+                        const allShopItems = [
+                            { id: 'cookie', name: { cn: "元气曲奇", en: "Cookie", se: "Kaka" }, price: 5, int: 5, hun: 20, icon: <FarmIcons.Hunger /> },
+                            { id: 'milk', name: { cn: "星间奶昔", en: "Milkshake", se: "Mjölkshake" }, price: 15, int: 20, hun: 10, icon: <FarmIcons.MilkFood /> },
+                            ...FURNITURE_DB.filter(f => unlockedShopItems.includes(f.id)).map(f => ({
+                                id: f.id, name: f.name, price: f.price, int: f.int, hun: 0,
+                                icon: f.imgUrl ? <img src={f.imgUrl} alt="item" className="w-8 h-8" /> : f.svg
+                            }))
+                        ];
+
+                        // 分页逻辑：每页 4 个
+                        const itemsPerPage = 4;
+                        const totalPages = Math.ceil(allShopItems.length / itemsPerPage);
+                        // 注意：这里我们用一个局部的 let 变量来控制分页，如果是完整的组件应该用 useState，
+                        // 但在同一个渲染周期里我们可以直接根据滚动或其他方式。为了不打乱你的 useState 结构，
+                        // 我们在这里依然可以用 shopPage 状态。
+                        // (我已经把这个状态移到上面或用 CSS scroll snap 代替，这里采用最简单的展示所有，用 overflow-y-auto)
+                        return (
+                            <div className="grid grid-cols-2 gap-4 pb-2">
+                                {allShopItems.map(item => (
+                                    <ShopItem
+                                        key={item.id}
+                                        name={item.name[currentLang]}
+                                        price={item.price}
+                                        icon={item.icon}
+                                        onBuy={() => handleBuyItem(item.price, item.hun, item.int)}
+                                    />
+                                ))}
+                            </div>
+                        );
+                    })()}
 
                     {activeTab === 'explore' && (
                         <div className="h-full pt-1">
@@ -451,7 +508,6 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                             <div className="font-black text-sm mb-1">{opt.label[currentLang]}</div>
                                             <div className="text-xs font-bold text-gray-500 mb-2">{opt.minutes} MIN</div>
                                             <div className="flex w-full justify-between items-center text-[10px] font-black border-t-[3px] border-black border-dashed pt-2">
-                                                {/* ✅ 修复 3：去掉 Emoji */}
                                                 <span className="text-[#D2691E] flex items-center gap-1"><div className="w-3 h-3"><FarmIcons.Hunger /></div> -{opt.hungerCost}</span>
                                                 <span className="flex items-center gap-0.5 text-yellow-600"><CarrotCoinIcon className="w-3 h-3" /> +{opt.reward}</span>
                                             </div>
@@ -463,29 +519,21 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                     )}
                 </div>
             </footer>
+
             {/* ========================================== */}
-            {/* 💌 新增：探险归来的拍立得明信片盲盒 */}
+            {/* 💌 探险归来的拍立得明信片盲盒 */}
             {/* ========================================== */}
             {claimedPostcard && (
                 <div className="fixed inset-0 z-[11000] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
-                    {/* 拍立得相纸主体：带有微妙的倾斜和进入动画 */}
+                    {/* 拍立得相纸主体 */}
                     <div className="bg-white p-4 pb-12 rounded-lg shadow-[15px_15px_0_rgba(0,0,0,0.8)] w-full max-w-[340px] transform -rotate-2 animate-bounce-in flex flex-col items-center">
-
-                        {/* 顶部胶带装饰 */}
                         <div className="absolute -top-4 w-24 h-8 bg-white/50 backdrop-blur-md border border-gray-200 rotate-3 shadow-sm z-10" />
 
-                        {/* 照片区域 */}
                         <div className="w-full aspect-square bg-[#1a1a2e] border-4 border-black mb-6 overflow-hidden relative shadow-inner">
-                            <img
-                                src={claimedPostcard.img}
-                                alt="Postcard"
-                                className="w-full h-full object-cover opacity-90 mix-blend-screen"
-                            />
-                            {/* 复古漏光滤镜 */}
+                            <img src={claimedPostcard.img} alt="Postcard" className="w-full h-full object-cover opacity-90 mix-blend-screen" />
                             <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/20 to-purple-500/20 pointer-events-none" />
                         </div>
 
-                        {/* 手写日记文字 */}
                         <h3 className="font-black text-2xl uppercase tracking-tighter mb-2 text-center text-gray-800">
                             {claimedPostcard.title[currentLang]}
                         </h3>
@@ -493,23 +541,32 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                             {claimedPostcard.desc[currentLang]}
                         </p>
 
-                        {/* 战利品奖励印章 */}
+                        {/* 如果有掉落奖励 */}
+                        {claimedPostcard.bonusItem && (
+                            <div className="w-full bg-[#EAFFD0] border-2 border-black border-dashed rounded-xl p-3 mb-4 flex flex-col items-center animate-bounce">
+                                <span className="text-xs font-bold text-gray-500 mb-1">{currentLang === 'cn' ? '发现稀有战利品！' : 'Found Rare Loot!'}</span>
+                                <div className="font-black text-lg flex items-center gap-2">
+                                    {claimedPostcard.bonusItem.icon} {claimedPostcard.bonusItem.name}
+                                </div>
+                                <span className="text-[10px] text-gray-400 mt-1">
+                                    {claimedPostcard.bonusItem.type === 'part'
+                                        ? (currentLang === 'cn' ? '已加入实验室换装库' : 'Added to Lab')
+                                        : (currentLang === 'cn' ? '已上架农场商城' : 'Added to Shop')}
+                                </span>
+                            </div>
+                        )}
+
                         <div className="flex items-center gap-2 bg-[#FFD700] px-6 py-2 border-[3px] border-black rounded-full shadow-[3px_3px_0_black] -rotate-3 mb-4">
                             <CarrotCoinIcon className="w-6 h-6" />
                             <span className="font-black text-xl">+{claimedPostcard.reward}</span>
                         </div>
 
-                        {/* 收下按钮 */}
                         <button
-                            onClick={() => {
-                                playSound?.('click');
-                                setClaimedPostcard(null);
-                            }}
+                            onClick={() => { playSound?.('click'); setClaimedPostcard(null); }}
                             className="w-full max-w-[200px] mt-2 bg-black text-white py-3 rounded-xl font-black uppercase tracking-widest hover:bg-gray-800 transition-colors"
                         >
                             {currentLang === 'cn' ? '收下明信片' : 'KEEP POSTCARD'}
                         </button>
-
                     </div>
                 </div>
             )}
@@ -517,13 +574,18 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
     );
 };
 
+// 🌟 这里就是我们专门给农场用的，带数值显示的迷你 StatBar！
 const StatBar = ({ icon, value, color }: any) => (
-    <div className="flex items-center gap-2 w-full max-w-[140px]">
-        <div className="bg-white border-[3px] border-black p-1 rounded-lg shadow-[2px_2px_0_black] flex-shrink-0">
+    <div className="flex items-center gap-2 w-full min-w-[150px]">
+        <div className="bg-white border-[3px] border-black p-1 rounded-lg shadow-[2px_2px_0_black] flex-shrink-0 z-10">
             {icon}
         </div>
-        <div className="w-full h-4 bg-white border-[3px] border-black rounded-full overflow-hidden">
+        <div className="relative flex-1 h-5 bg-white border-[3px] border-black rounded-full overflow-hidden ml-[-10px]">
             <div className={`h-full ${color} transition-all duration-500 ease-out border-r-[2px] border-black`} style={{ width: `${value}%` }} />
+            {/* 绝对定位的数值文字 */}
+            <span className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-black drop-shadow-[1px_1px_0_white]">
+                {Math.floor(value)} / 100
+            </span>
         </div>
     </div>
 );

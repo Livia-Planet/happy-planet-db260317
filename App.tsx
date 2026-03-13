@@ -122,6 +122,19 @@ export const App: React.FC = () => {
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.FARM_SLOTS, maxFarmSlots.toString()); }, [maxFarmSlots]);
   // 👆 新增结束
 
+  // 👇 探险战利品资产库
+  const [unlockedShopItems, setUnlockedShopItems] = useState<string[]>(() => {
+    const saved = localStorage.getItem('happyPlanet_shopItems');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [unlockedParts, setUnlockedParts] = useState<string[]>(() => {
+    const saved = localStorage.getItem('happyPlanet_unlockedParts');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => { localStorage.setItem('happyPlanet_shopItems', JSON.stringify(unlockedShopItems)); }, [unlockedShopItems]);
+  useEffect(() => { localStorage.setItem('happyPlanet_unlockedParts', JSON.stringify(unlockedParts)); }, [unlockedParts]);
+
   const [unlockedMedals, setUnlockedMedals] = useState<Record<string, UnlockedMedal>>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.MEDALS);
     if (saved) { try { return JSON.parse(saved); } catch { return {}; } }
@@ -218,10 +231,11 @@ export const App: React.FC = () => {
   useEffect(() => { setDisplayBpm(PLAYLIST[currentTrackIndex].bpm); }, [currentTrackIndex]);
 
   // ==========================================
-  // 🌍 新增：在线生命维持系统 (后台心跳定时器)
+  // 🌍 在线生命维持系统 (后台心跳定时器)
   // ==========================================
   useEffect(() => {
-    const HUNGER_INTERVAL_MS = 30 * 60 * 1000; // 设定：30分钟扣 1 点饥饿度
+    const HUNGER_INTERVAL_MS = 30 * 60 * 1000;   // 30分钟扣 1 饥饿
+    const INTIMACY_INTERVAL_MS = 60 * 60 * 1000; // 60分钟扣 1 亲密 (需要经常陪伴)
 
     const lifeTimer = setInterval(() => {
       setSavedPassports(prev => {
@@ -229,27 +243,28 @@ export const App: React.FC = () => {
         const now = Date.now();
 
         const updated = prev.map(p => {
-          // 只有在农场里，且【没有去探险】的兔子，才会随着时间变饿 (探险时冻结饥饿)
           if (p.isAssignedToFarm && p.lastSyncTime && !p.isOnExpedition) {
             const timeDiffMs = now - p.lastSyncTime;
             const hungerLost = Math.floor(timeDiffMs / HUNGER_INTERVAL_MS);
+            const intimacyLost = Math.floor(timeDiffMs / INTIMACY_INTERVAL_MS);
 
-            if (hungerLost > 0) {
+            if (hungerLost > 0 || intimacyLost > 0) {
               hasChanges = true;
+              // 我们将时间戳对齐到饥饿消耗的基准，保证循环稳定
+              const syncOffset = Math.max(hungerLost * HUNGER_INTERVAL_MS, intimacyLost * INTIMACY_INTERVAL_MS);
               return {
                 ...p,
                 hunger: Math.max(0, (p.hunger ?? 80) - hungerLost),
-                // 核心细节：保留余数！比如过了 35 分钟，扣 1 点，剩下 5 分钟算入下一次计时
-                lastSyncTime: p.lastSyncTime + hungerLost * HUNGER_INTERVAL_MS
+                intimacy: Math.max(0, (p.intimacy ?? 0) - intimacyLost), // 亲密也会掉
+                lastSyncTime: p.lastSyncTime + syncOffset
               };
             }
           }
           return p;
         });
-
         return hasChanges ? updated : prev;
       });
-    }, 60000); // 每 1 分钟偷偷检查一次
+    }, 60000);
 
     return () => clearInterval(lifeTimer);
   }, []);
@@ -476,8 +491,8 @@ export const App: React.FC = () => {
             isAssignedToFarm: !p.isAssignedToFarm,
             // 赋予时间轴起点，以及初始属性
             lastSyncTime: Date.now(),
-            hunger: p.hunger ?? 80,
-            intimacy: p.intimacy ?? 30
+            hunger: p.hunger ?? 100,
+            intimacy: p.intimacy ?? 0
           };
         }
         return p;
@@ -486,7 +501,7 @@ export const App: React.FC = () => {
   }, [maxFarmSlots, currentLang, playSound]);
 
   const handleUnlockSlot = useCallback(() => {
-    const cost = SLOT_UPGRADE_COSTS[maxFarmSlots] || 9999;
+    const cost = SLOT_UPGRADE_COSTS[maxFarmSlots] || 99999;
     if (carrotCoins >= cost) {
       setCarrotCoins(prev => prev - cost);
       setMaxFarmSlots(prev => prev + 1);
@@ -638,6 +653,7 @@ export const App: React.FC = () => {
                     updatePart={handleUpdatePart}
                     updatePlanetPart={handleUpdatePlanetPart}
                     lang={currentLang}
+                    unlockedParts={unlockedParts} // 👈 新增这一行！
                   />
                   <div className="w-full max-w-[340px] flex flex-col gap-4 pb-8">
                     <div className="flex gap-4 w-full">
@@ -691,6 +707,11 @@ export const App: React.FC = () => {
               setGlobalAlert={setGlobalAlert}
               onStartGlobalFocus={(id) => setFocusPetId(id)}
               playSound={playSound}
+              // 👇 就是在这里加上这 4 行传参！
+              unlockedShopItems={unlockedShopItems}
+              unlockedParts={unlockedParts}
+              onUnlockShopItem={(item) => setUnlockedShopItems(prev => [...prev, item])}
+              onUnlockPart={(part) => setUnlockedParts(prev => [...prev, part])}
             />
           )}
 
