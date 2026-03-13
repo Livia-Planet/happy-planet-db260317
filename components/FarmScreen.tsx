@@ -114,6 +114,8 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
     const [activeTab, setActiveTab] = useState<'focus' | 'shop' | 'archives' | 'explore'>('focus');
     const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
     const [claimedPostcard, setClaimedPostcard] = useState<any>(null);
+    // 👇 修复：把商店的分页状态提升到最顶层！
+    const [shopPage, setShopPage] = useState(0);
 
     const activePets = useMemo(() => savedPassports.filter(p => p.isAssignedToFarm), [savedPassports]);
     const SLOT_UPGRADE_COSTS = [0, 50, 150, 500, 1000];
@@ -414,7 +416,6 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                     )}
 
                     {activeTab === 'shop' && (() => {
-                        const [shopPage, setShopPage] = useState(0);
                         const allShopItems = [
                             { id: 'cookie', name: { cn: "元气曲奇", en: "Cookie", se: "Kaka" }, price: 5, int: 5, hun: 20, icon: <FarmIcons.Hunger /> },
                             { id: 'milk', name: { cn: "星间奶昔", en: "Milkshake", se: "Mjölkshake" }, price: 15, int: 20, hun: 10, icon: <FarmIcons.MilkFood /> },
