@@ -99,6 +99,7 @@ export interface StoryEntry {
   password?: string;
   imageUrl?: string; // 👈 新增：用来存放奇遇事件的插画！
   hasReceivedReward?: boolean;   // 👈 新增这行：给防重复领奖功能上个“合法户口”！
+  isBottled?: boolean; // 👈 新增：标记这篇故事是否已经扔进了漂流瓶
 }
 
 // --- 视图路由系统 ---

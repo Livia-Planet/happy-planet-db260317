@@ -146,6 +146,13 @@ export const App: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // 👇 新增：玩家使用星砂在秘店兑换的特效装扮
+  const [unlockedEffects, setUnlockedEffects] = useState<string[]>(() => {
+    const saved = localStorage.getItem('happyPlanet_unlockedEffects');
+    return saved ? JSON.parse(saved) : [];
+  });
+  useEffect(() => { localStorage.setItem('happyPlanet_unlockedEffects', JSON.stringify(unlockedEffects)); }, [unlockedEffects]);
+
   useEffect(() => { localStorage.setItem('happyPlanet_shopItems', JSON.stringify(unlockedShopItems)); }, [unlockedShopItems]);
   useEffect(() => { localStorage.setItem('happyPlanet_unlockedParts', JSON.stringify(unlockedParts)); }, [unlockedParts]);
   // 👇 新增存储
@@ -383,17 +390,29 @@ export const App: React.FC = () => {
     });
   }, []);
 
-  const handleReward = useCallback((amount: number, sourceId: string) => {
-    gainCarrots(sourceId, amount);
-    setTimeout(() => {
-      playSound('coins'); // 👈 得到金币的音效
-      setCarrotCoins(prev => prev + amount);
+  // 👈 增加了 currency 参数，支持发胡萝卜和星砂！
+  const handleReward = useCallback((amount: number, sourceId: string, currency: 'carrot' | 'starSand' = 'carrot') => {
+    if (currency === 'carrot') {
+      gainCarrots(sourceId, amount);
+      setTimeout(() => {
+        playSound('coins');
+        setCarrotCoins(prev => prev + amount);
+        const msg = currentLang === 'cn'
+          ? `🚀 故事记录成功！奖励 ${amount} 🥕`
+          : (currentLang === 'se' ? `🚀 Berättelse sparad! Belöning: ${amount} 🥕` : `🚀 Story Saved! Reward: ${amount} 🥕`);
+        setToastMsg(msg);
+        setTimeout(() => setToastMsg(null), 3000);
+      }, 700);
+    } else if (currency === 'starSand') {
+      // 发送星砂的特效
+      playSound('achievement');
+      setStarSand(prev => prev + amount);
       const msg = currentLang === 'cn'
-        ? `🚀 故事记录成功！奖励 ${amount} 🥕`
-        : (currentLang === 'se' ? `🚀 Berättelse sparad! Belöning: ${amount} 🥕` : `🚀 Story Saved! Reward: ${amount} 🥕`);
+        ? `✨ 漂流瓶发射成功！\n获得 ${amount} 友谊星砂`
+        : `✨ Bottle Sent!\nEarned ${amount} Star Sand`;
       setToastMsg(msg);
       setTimeout(() => setToastMsg(null), 3000);
-    }, 700);
+    }
   }, [gainCarrots, currentLang, playSound]);
 
   const handleIssue = async () => {
@@ -731,6 +750,11 @@ export const App: React.FC = () => {
               // 👇 新增这两行传参
               recordedEvents={recordedEvents}
               onRecordEvent={(id) => setRecordedEvents(prev => [...prev, id])}
+              // 👇 这 4 行是给“星砂秘店”新增的
+              starSand={starSand}
+              onUpdateStarSand={(amount) => setStarSand(prev => prev + amount)}
+              unlockedEffects={unlockedEffects}
+              onUnlockEffect={(effect) => setUnlockedEffects(prev => [...prev, effect])}
             />
           )}
 

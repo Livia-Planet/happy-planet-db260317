@@ -104,7 +104,7 @@ interface PassportBookProps {
   onUpdatePassport: (id: string, field: keyof PassportData, value: any) => void;
   onDelete: (id: string) => void;
   lang: Language;
-  onReward?: (amount: number, sourceId: string) => void; // <--- 新增这行
+  onReward?: (amount: number, sourceId: string, currency?: 'carrot' | 'starSand') => void; // <--- 新增这行
   onToggleFarm: (id: string) => void;
 }
 
@@ -1633,6 +1633,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                   isFlipped={isFlipped}
                   onUpdateStories={handleUpdateStories}
                   selectedId={selectedId}
+                  onReward={onReward} // 👈 新增这一行：把发奖的方法传给故事本！
                 />
               </div>
             )}

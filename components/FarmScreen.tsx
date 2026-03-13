@@ -60,6 +60,10 @@ interface FarmScreenProps {
     onUnlockPart: (id: string) => void;
     recordedEvents: string[];           // 👈 接收已记录的事件
     onRecordEvent: (id: string) => void; // 👈 触发记录的方法
+    starSand: number;
+    onUpdateStarSand?: (amount: number) => void;
+    unlockedEffects?: string[];
+    onUnlockEffect?: (id: string) => void;
 }
 
 const EXPEDITION_OPTIONS = [
@@ -110,6 +114,11 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
     onUnlockPart,
     recordedEvents,
     onRecordEvent
+    // 👇👇👇 把它们从参数里解构出来 👇👇👇
+    starSand,
+    onUpdateStarSand,
+    unlockedEffects,
+    onUnlockEffect
 }) => {
     const [activeTab, setActiveTab] = useState<'focus' | 'shop' | 'archives' | 'explore'>('focus');
     const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
@@ -416,24 +425,75 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                     )}
 
                     {activeTab === 'shop' && (() => {
+                        const [shopCategory, setShopCategory] = useState<'supplies' | 'starsand'>('supplies');
+
+                        // 星砂特效数据库
+                        const EFFECTS_DB = [
+                            { id: 'eff_heart', name: { cn: '爱心羁绊光环', en: 'Heart Aura', se: 'Hjärta Aura' }, price: 50, icon: <svg viewBox="0 0 24 24" fill="#FF90E8" stroke="black" strokeWidth="2" className="w-8 h-8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg> },
+                            { id: 'eff_star', name: { cn: '动态星轨', en: 'Star Trail', se: 'Stjärnspår' }, price: 100, icon: <FarmIcons.Star /> }
+                        ];
+
                         const allShopItems = [
                             { id: 'cookie', name: { cn: "元气曲奇", en: "Cookie", se: "Kaka" }, price: 5, int: 5, hun: 20, icon: <FarmIcons.Hunger /> },
                             { id: 'milk', name: { cn: "星间奶昔", en: "Milkshake", se: "Mjölkshake" }, price: 15, int: 20, hun: 10, icon: <FarmIcons.MilkFood /> },
                             ...FURNITURE_DB.filter(f => unlockedShopItems.includes(f.id)).map(f => ({ id: f.id, name: f.name, price: f.price, int: f.int, hun: 0, icon: f.imgUrl ? <img src={f.imgUrl} alt="item" className="w-8 h-8" /> : f.svg }))
                         ];
-                        const totalPages = Math.ceil(allShopItems.length / 4);
+
+                        const currentItems = shopCategory === 'supplies' ? allShopItems : EFFECTS_DB;
+
                         return (
                             <div className="flex flex-col h-full pb-2">
-                                <div className="grid grid-cols-2 gap-4 flex-1">
-                                    {allShopItems.slice(shopPage * 4, (shopPage + 1) * 4).map(item => (
-                                        <ShopItem key={item.id} name={item.name[currentLang]} price={item.price} icon={item.icon} onBuy={() => handleBuyItem(item.price, item.hun, item.int)} />
+                                {/* 商城分类选项卡 */}
+                                <div className="flex gap-2 mb-3 bg-gray-100 p-1.5 rounded-xl border-2 border-black">
+                                    <button onClick={() => setShopCategory('supplies')} className={`flex-1 font-black text-xs py-2 rounded-lg transition-colors ${shopCategory === 'supplies' ? 'bg-[#FFD700] border-2 border-black shadow-sm' : 'text-gray-500'}`}>
+                                        {currentLang === 'cn' ? '🥕 基础补给' : 'SUPPLIES'}
+                                    </button>
+                                    <button onClick={() => setShopCategory('starsand')} className={`flex-1 font-black text-xs py-2 rounded-lg transition-colors ${shopCategory === 'starsand' ? 'bg-[#60EFFF] border-2 border-black shadow-sm text-black' : 'text-gray-500'}`}>
+                                        {currentLang === 'cn' ? '✨ 星砂秘店' : 'SECRET SHOP'}
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto custom-scrollbar pr-2">
+                                    {currentItems.map(item => (
+                                        <div key={item.id}
+                                            onClick={() => {
+                                                if (shopCategory === 'supplies') {
+                                                    handleBuyItem(item.price, (item as any).hun, (item as any).int);
+                                                } else {
+                                                    // 兑换星砂特效逻辑
+                                                    if (unlockedEffects?.includes(item.id)) {
+                                                        alert(currentLang === 'cn' ? '已经拥有该特效啦！' : 'Already owned!');
+                                                        return;
+                                                    }
+                                                    if (starSand < item.price) {
+                                                        playSound?.('error');
+                                                        alert(currentLang === 'cn' ? '友谊星砂不足！去雷达里转转吧。' : 'Not enough Star Sand!');
+                                                        return;
+                                                    }
+                                                    playSound?.('achievement');
+                                                    onUpdateStarSand!(-item.price);
+                                                    onUnlockEffect!(item.id);
+                                                    alert(currentLang === 'cn' ? '特效兑换成功！' : 'Effect Unlocked!');
+                                                }
+                                            }}
+                                            className="bg-white border-[4px] border-black p-3 rounded-[20px] flex flex-col items-center gap-2 shadow-[4px_4px_0_black] cursor-pointer hover:bg-[#F9FAFB] active:translate-y-1 active:shadow-none transition-all relative overflow-hidden"
+                                        >
+                                            {shopCategory === 'starsand' && unlockedEffects?.includes(item.id) && (
+                                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
+                                                    <span className="bg-green-400 text-white font-black text-xs px-3 py-1 rounded-full border-2 border-black -rotate-12">OWNED</span>
+                                                </div>
+                                            )}
+                                            <div className="w-12 h-12 bg-[#F3F4F6] border-[3px] border-black rounded-full flex items-center justify-center">
+                                                <div className="w-8 h-8">{item.icon}</div>
+                                            </div>
+                                            <span className="font-black text-xs text-center leading-tight">{item.name[currentLang]}</span>
+                                            <div className={`flex items-center gap-1 px-2 py-0.5 rounded-lg border-2 border-black mt-auto ${shopCategory === 'supplies' ? 'bg-[#FFD700]' : 'bg-[#60EFFF]'}`}>
+                                                {shopCategory === 'supplies' ? <CarrotCoinIcon className="w-3 h-3" /> : <SocialIcons.StarSand className="w-3 h-3" />}
+                                                <span className="text-[10px] font-black">{item.price}</span>
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
-                                {totalPages > 1 && (
-                                    <div className="flex justify-center gap-1.5 mt-2">
-                                        {Array.from({ length: totalPages }).map((_, i) => (<button key={i} onClick={() => setShopPage(i)} className={`transition-all duration-300 rounded-full ${shopPage === i ? 'w-8 h-2 bg-black' : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'}`} />))}
-                                    </div>
-                                )}
                             </div>
                         );
                     })()}

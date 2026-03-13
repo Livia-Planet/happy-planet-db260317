@@ -16,6 +16,7 @@ interface StoryTabProps {
     onUpdateStories: (stories: StoryEntry[], savedText?: string) => void;
     /** 用于持久化星系锁状态 */
     selectedId?: string | null;
+    onReward?: (amount: number, sourceId: string, currency?: 'carrot' | 'starSand') => void; // 👈 接收它
 }
 
 /* ─────────────────────────────────────────────────────
@@ -130,6 +131,7 @@ export const StoryTab: React.FC<StoryTabProps> = ({
     isFlipped,
     onUpdateStories,
     selectedId,
+    onReward // 👈 接收它
 }) => {
     const [currentPage, setCurrentPage] = useState(0);
     const [editingIdx, setEditingIdx] = useState<number | null>(null);
@@ -512,7 +514,14 @@ export const StoryTab: React.FC<StoryTabProps> = ({
                     isNew={!storyForStar(editingIdx)}
                     recordNo={recordNo}
                     onClose={() => setEditingIdx(null)}
-                    onSave={handleSave}
+                    // 👇 修改 onSave 回调
+                    onSave={(title, content, lockPayload) => {
+                        handleSave(title, content, lockPayload);
+                        // 如果在保存时收到了装瓶信号，就发 5 个星砂！
+                        if (lockPayload?.isBottled && onReward) {
+                            onReward(5, 'bottle_throw', 'starSand');
+                        }
+                    }}
                     onDelete={handleDelete}
                 />
             )}
@@ -560,6 +569,7 @@ const StoryModal: React.FC<StoryModalProps> = ({
     onSave,
     onDelete,
 }) => {
+    const [isThrowing, setIsThrowing] = useState(false);
     const [title, setTitle] = useState<Record<Language, string>>(
         story?.title ?? { se: '', en: '', cn: '' },
     );
@@ -688,7 +698,7 @@ const StoryModal: React.FC<StoryModalProps> = ({
                     </span>
                 </div>
 
-                {/* 右下角亮黄色大贴纸 [Save] */}
+                {/* 右下角大贴纸 [Save] 和 [Throw] */}
                 <div className="absolute bottom-6 right-6 md:bottom-8 md:right-8 flex items-center gap-3">
                     {!isNew && (
                         <button
@@ -698,9 +708,39 @@ const StoryModal: React.FC<StoryModalProps> = ({
                             {DEL_LABEL[lang]}
                         </button>
                     )}
+
+                    {/* 👇 新增：如果已经保存过，且还没被扔进过漂流瓶，就显示发射按钮！ */}
+                    {!isNew && !story?.isBottled && (
+                        <button
+                            onClick={() => {
+                                setIsThrowing(true);
+                                setTimeout(() => {
+                                    // 播放动画后，触发保存，标记 isBottled 为 true，并在全局奖励 5 个星砂
+                                    onSave(title, content, { isLocked, password: isLocked ? lockPassword : '', isBottled: true } as any);
+                                    // 注意这里触发我们刚在 App.tsx 里写的第三个参数 'starSand'
+                                    if ((window as any).handleRewardCallback) (window as any).handleRewardCallback(5, 'bottle_throw', 'starSand');
+                                    setIsThrowing(false);
+                                }, 1200);
+                            }}
+                            className="bg-[#60EFFF] border-2 border-black font-black p-3 rounded-2xl shadow-[4px_4px_0_black] hover:scale-105 active:scale-100 transition-transform flex items-center justify-center group relative overflow-hidden"
+                            title={lang === 'cn' ? '装进漂流瓶发射到星际雷达' : 'Throw into Space'}
+                        >
+                            {/* 酷炫的火箭发射器 SVG */}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-8 h-8 text-black group-hover:-translate-y-1 transition-transform">
+                                <path d="M12 2v20M17 7l-5-5-5 5" />
+                                <rect x="3" y="14" width="18" height="8" rx="2" />
+                            </svg>
+                            {isThrowing && (
+                                <div className="absolute inset-0 bg-[#60EFFF] flex items-center justify-center z-10 animate-slide-up">
+                                    <span className="text-xl">🚀</span>
+                                </div>
+                            )}
+                        </button>
+                    )}
+
                     <button
-                        id="btn-save-story" // <--- 必须加上这行 ID ！！！
-                        onClick={() => onSave(title, content, { isLocked, password: isLocked ? lockPassword : '' })}
+                        id="btn-save-story"
+                        onClick={() => onSave(title, content, { isLocked, password: isLocked ? lockPassword : '' } as any)}
                         className="bg-[#FACC15] border-2 border-black font-black py-4 px-10 rounded-2xl text-lg md:text-xl uppercase tracking-widest shadow-[4px_4px_0_black] hover:scale-105 active:scale-100 transition-transform min-h-[52px]"
                     >
                         {SAVE_LABEL[lang]}
