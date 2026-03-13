@@ -21,6 +21,7 @@ import { DraggableMedal } from './components/DraggableMedal';
 import { MagicCursor } from './components/MagicCursor';
 import { FarmScreen } from './components/FarmScreen';
 import { FloatingFocus } from './components/FloatingFocus'; // 👈 新增引入
+import { SocialScreen } from './components/SocialScreen';
 
 // --- 专业的零延迟音效加载函数 ---
 const loadAudioBuffer = async (url: string, context: AudioContext) => {
@@ -81,6 +82,13 @@ export const App: React.FC = () => {
     const saved = localStorage.getItem(STORAGE_KEYS.TOKENS);
     return saved !== null ? parseInt(saved, 10) : 30;
   });
+
+  // 👇 新增：友谊星砂货币
+  const [starSand, setStarSand] = useState<number>(() => {
+    const saved = localStorage.getItem('happyPlanet_starSand');
+    return saved !== null ? parseInt(saved, 10) : 0;
+  });
+  useEffect(() => { localStorage.setItem('happyPlanet_starSand', starSand.toString()); }, [starSand]);
 
   const [savedPassports, setSavedPassports] = useState<PassportData[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.PASSPORTS);
@@ -723,6 +731,30 @@ export const App: React.FC = () => {
               // 👇 新增这两行传参
               recordedEvents={recordedEvents}
               onRecordEvent={(id) => setRecordedEvents(prev => [...prev, id])}
+            />
+          )}
+
+          {/* --- 星际雷达界面 --- */}
+          {viewMode === 'social' && (
+            <SocialScreen
+              currentLang={currentLang}
+              carrotCoins={carrotCoins}
+              starSand={starSand}
+              onUpdateCoins={(amount) => {
+                playSound('coins');
+                setCarrotCoins(prev => prev + amount);
+              }}
+              onUpdateStarSand={(amount) => {
+                playSound('achievement');
+                setStarSand(prev => prev + amount);
+              }}
+              passports={savedPassports}
+              onNavigate={(mode: ViewMode) => {
+                playSound('click');
+                setViewMode(mode);
+              }}
+              playSound={playSound}
+              onUpdatePassport={handleUpdatePassportData}
             />
           )}
 

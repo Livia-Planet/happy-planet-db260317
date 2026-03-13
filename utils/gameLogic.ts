@@ -838,3 +838,64 @@ export const calculateFinalRarity = (
   if (finalScore >= 18) return 'U';
   return 'C';
 };
+
+// ==========================================
+// 🌌 星际雷达：虚拟数据生成器 (Phase 1 专用)
+// ==========================================
+
+export const MOCK_BOTTLES = [
+  {
+    id: 'bottle_1',
+    author: 'Zorp.K',
+    date: 'SD-2026.01',
+    title: { cn: '迷路的彗星', en: 'Lost Comet', se: 'Vilse Komet' },
+    content: {
+      cn: '今天看到一颗彗星在原地打转，我给了它一块指路牌，希望它能找到回家的轨道。',
+      en: 'Saw a comet spinning in circles today. Gave it a signpost!',
+      se: 'Såg en komet snurra runt idag. Gav den en vägskylt!'
+    }
+  },
+  {
+    id: 'bottle_2',
+    author: 'Mochi.X',
+    date: 'SD-2026.02',
+    title: { cn: '草莓星云的味道', en: 'Strawberry Nebula', se: 'Jordgubbsnebulosan' },
+    content: {
+      cn: '穿过那片粉色的星云时，飞船的挡风玻璃上全是甜甜的草莓味！',
+      en: 'The pink nebula tasted exactly like strawberry milk!',
+      se: 'Den rosa nebulosan smakade precis som jordgubbsmjölk!'
+    }
+  }
+];
+
+export const generateMockNeighbors = (): PassportData[] => {
+  // 生成两个固定样式的假邻居，用于测试“投喂”功能
+  return [
+    {
+      id: 'MOCK-001',
+      name: 'NICO.R',
+      savedAt: Date.now(),
+      lastModified: Date.now(),
+      bio: '',
+      isAssignedToFarm: false,
+      hunger: 30, // 故意设置得很饿，等待玩家投喂
+      selectedParts: { body: 'body_white', ears: 'ears_dark', face: 'face_innocent', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_beret' },
+      selectedPlanetParts: { base: 'planet_base_blue', surface: 'planet_surf_craters', atmosphere: 'planet_atmo_glow', companion: 'planet_comp_moon' },
+      relationships: [],
+      stats: { mod: 2, bus: 5, klurighet: 8 }
+    },
+    {
+      id: 'MOCK-002',
+      name: 'NOVA.T',
+      savedAt: Date.now(),
+      lastModified: Date.now(),
+      bio: '',
+      isAssignedToFarm: false,
+      hunger: 45,
+      selectedParts: { body: 'body_mimosa', ears: 'ears_mimosa', face: 'eyes_glasses', hair: 'hair_fashion', hair_b: 'hair_b_none', access: 'access_none' },
+      selectedPlanetParts: { base: 'planet_base_purple', surface: 'planet_surf_rings', atmosphere: 'planet_atmo_none', companion: 'planet_comp_satellite' },
+      relationships: [],
+      stats: { mod: 7, bus: 4, klurighet: 6 }
+    }
+  ];
+};

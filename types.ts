@@ -66,7 +66,7 @@ export interface PassportData extends CharacterData {
   occupations?: string[]; // New: Selected occupation keys
   location?: string; // Discovery location
   savedAt: number; // Timestamp when passport was issued
-  relationships: { targetId: string, relationType: string }[]; // New: Relationship system
+  relationships: { targetId: string, relationType: string, intimacyScore?: number }[]; // New: Relationship system
   stats?: CharacterStats; // Optional: Override calculated stats
   traits?: string[]; // Personality tags
   // 标记是否已经领取过本篇日记的写作奖励（防止重复刷币）
