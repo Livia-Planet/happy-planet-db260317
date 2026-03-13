@@ -97,6 +97,8 @@ export interface StoryEntry {
   isLocked?: boolean;
   /** 单篇密码（用户设置后存储，用于验证） */
   password?: string;
+  imageUrl?: string; // 👈 新增：用来存放奇遇事件的插画！
+  hasReceivedReward?: boolean;   // 👈 新增这行：给防重复领奖功能上个“合法户口”！
 }
 
 // --- 视图路由系统 ---

@@ -324,7 +324,7 @@ export const StoryTab: React.FC<StoryTabProps> = ({
             next = [...stories, entry];
         }
         // 把玩家写的故事传出去用于算法判定
-        onUpdateStories(next, content[lang]); 
+        onUpdateStories(next, content[lang]);
         setEditingIdx(null);
     };
 
@@ -662,6 +662,13 @@ const StoryModal: React.FC<StoryModalProps> = ({
                         </div>
                     )}
                     <div className="border-t-[3px] border-dashed border-gray-300 my-4 mx-0" />
+                    {/* 👇 新增：如果这篇故事有图片（奇遇事件），就展示出来！ */}
+                    {story?.imageUrl && (
+                        <div className="w-full aspect-video bg-[#1a1a2e] rounded-2xl border-[3px] border-black overflow-hidden mb-6 relative shadow-inner">
+                            <img src={story.imageUrl} alt="Memory" className="w-full h-full object-cover opacity-90 mix-blend-screen" />
+                            <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/20 to-purple-500/20 pointer-events-none" />
+                        </div>
+                    )}
                     <textarea
                         value={content[lang]}
                         onChange={(e) => setContent({ ...content, [lang]: e.target.value })}

@@ -132,8 +132,16 @@ export const App: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // 👇 新增：记录已经写进手帐的奇遇事件 ID
+  const [recordedEvents, setRecordedEvents] = useState<string[]>(() => {
+    const saved = localStorage.getItem('happyPlanet_recordedEvents');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   useEffect(() => { localStorage.setItem('happyPlanet_shopItems', JSON.stringify(unlockedShopItems)); }, [unlockedShopItems]);
   useEffect(() => { localStorage.setItem('happyPlanet_unlockedParts', JSON.stringify(unlockedParts)); }, [unlockedParts]);
+  // 👇 新增存储
+  useEffect(() => { localStorage.setItem('happyPlanet_recordedEvents', JSON.stringify(recordedEvents)); }, [recordedEvents]);
 
   const [unlockedMedals, setUnlockedMedals] = useState<Record<string, UnlockedMedal>>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.MEDALS);
@@ -712,6 +720,9 @@ export const App: React.FC = () => {
               unlockedParts={unlockedParts}
               onUnlockShopItem={(item) => setUnlockedShopItems(prev => [...prev, item])}
               onUnlockPart={(part) => setUnlockedParts(prev => [...prev, part])}
+              // 👇 新增这两行传参
+              recordedEvents={recordedEvents}
+              onRecordEvent={(id) => setRecordedEvents(prev => [...prev, id])}
             />
           )}
 
