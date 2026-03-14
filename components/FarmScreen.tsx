@@ -8,10 +8,10 @@ import { PARTS_DB, PLANET_PARTS_DB } from '../data/parts';
 
 // 🎨 四件新家具的数据库
 const FURNITURE_DB = [
-    { id: 'shower', name: { cn: '淋浴头', en: 'Shower', se: 'Dusch' }, price: 5, int: 5, svg: <svg viewBox="0 0 24 24" fill="none" stroke="#4DABF7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 4v4m-4 4l1.5-1.5m5 0L16 12m-4 4v2m-3-1l-1 1m7-1l1 1" /><path d="M8 8h8v2a4 4 0 01-8 0V8z" fill="#4DABF7" opacity="0.3" /></svg>, imgUrl: '' },
-    { id: 'dryer', name: { cn: '吹风机', en: 'Hairdryer', se: 'Hårfön' }, price: 5, int: 5, svg: <svg viewBox="0 0 24 24" fill="none" stroke="#FF8787" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M7 10h10a3 3 0 000-6H7a3 3 0 000 6z" fill="#FF8787" opacity="0.3" /><path d="M12 10v6a2 2 0 01-4 0v-1" /><line x1="19" y1="5" x2="22" y2="5" /><line x1="19" y1="7" x2="21" y2="7" /><line x1="19" y1="9" x2="22" y2="9" /></svg>, imgUrl: '' },
-    { id: 'comb', name: { cn: '梳子', en: 'Comb', se: 'Kam' }, price: 5, int: 5, svg: <svg viewBox="0 0 24 24" fill="none" stroke="#FFD43B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><rect x="4" y="6" width="16" height="6" rx="2" fill="#FFD43B" opacity="0.3" /><path d="M5 12v6m3-6v6m3-6v6m3-6v6m3-6v6" /></svg>, imgUrl: '' },
-    { id: 'towel', name: { cn: '浴巾', en: 'Towel', se: 'Handduk' }, price: 5, int: 5, svg: <svg viewBox="0 0 24 24" fill="none" stroke="#69DB7C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M4 6h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" fill="#69DB7C" opacity="0.3" /><line x1="4" y1="10" x2="20" y2="10" /><line x1="4" y1="14" x2="20" y2="14" /></svg>, imgUrl: '' }
+    { id: 'shower', name: { cn: '淋浴头', en: 'Shower', se: 'Dusch' }, price: 5, int: 5, svg: <svg viewBox="0 0 24 24" fill="none" stroke="#4DABF7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M12 4v4m-4 4l1.5-1.5m5 0L16 12m-4 4v2m-3-1l-1 1m7-1l1 1" /><path d="M8 8h8v2a4 4 0 01-8 0V8z" fill="#4DABF7" opacity="0.3" /></svg>, imgUrl: '' },
+    { id: 'dryer', name: { cn: '吹风机', en: 'Hairdryer', se: 'Hårfön' }, price: 5, int: 5, svg: <svg viewBox="0 0 24 24" fill="none" stroke="#FF8787" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M7 10h10a3 3 0 000-6H7a3 3 0 000 6z" fill="#FF8787" opacity="0.3" /><path d="M12 10v6a2 2 0 01-4 0v-1" /><line x1="19" y1="5" x2="22" y2="5" /><line x1="19" y1="7" x2="21" y2="7" /><line x1="19" y1="9" x2="22" y2="9" /></svg>, imgUrl: '' },
+    { id: 'comb', name: { cn: '梳子', en: 'Comb', se: 'Kam' }, price: 5, int: 5, svg: <svg viewBox="0 0 24 24" fill="none" stroke="#FFD43B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><rect x="4" y="6" width="16" height="6" rx="2" fill="#FFD43B" opacity="0.3" /><path d="M5 12v6m3-6v6m3-6v6m3-6v6m3-6v6" /></svg>, imgUrl: '' },
+    { id: 'towel', name: { cn: '浴巾', en: 'Towel', se: 'Handduk' }, price: 5, int: 5, svg: <svg viewBox="0 0 24 24" fill="none" stroke="#69DB7C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M4 6h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" fill="#69DB7C" opacity="0.3" /><line x1="4" y1="10" x2="20" y2="10" /><line x1="4" y1="14" x2="20" y2="14" /></svg>, imgUrl: '' }
 ];
 
 const FarmIcons = {
@@ -34,7 +34,7 @@ const FarmIcons = {
         <svg viewBox="0 0 24 24" fill="#82E0AA" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" /><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" /><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" /><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" /></svg>
     ),
     MilkFood: () => (
-        <svg viewBox="0 0 24 24" fill="#FF90E8" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M6 8h12v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8z" fill="white" /><path d="M8 8V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4" /></svg>
+        <svg viewBox="0 0 24 24" fill="#FF90E8" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M6 8h12v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8z" fill="white" /><path d="M8 8V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4" /></svg>
     ),
     StarSand: ({ className = "w-6 h-6" }) => (
         <svg viewBox="0 0 24 24" fill="#60EFFF" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -90,8 +90,6 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
     const [activeTab, setActiveTab] = useState<'focus' | 'shop' | 'archives' | 'explore'>('focus');
     const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
     const [claimedPostcard, setClaimedPostcard] = useState<any>(null);
-
-    // ✅ 修复1：把商店状态提出来，告别白屏崩溃！
     const [shopCategory, setShopCategory] = useState<'supplies' | 'starsand'>('supplies');
 
     const activePets = useMemo(() => savedPassports.filter(p => p.isAssignedToFarm), [savedPassports]);
@@ -225,40 +223,41 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                 <SpaceBackground bpm={50} themeColor="#95E1D3" />
             </div>
 
-            {/* ✅ 修复3：极致美化的绝对定位 UI 布局 */}
-            {/* 1. 绝对居中的双资产栏 (避开右上角) */}
-            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 flex gap-4 pointer-events-auto">
-                <div className="h-12 bg-white border-[3px] border-black px-4 rounded-xl shadow-[4px_4px_0_black] flex items-center gap-2">
-                    <CarrotCoinIcon className="w-6 h-6" /> <span className="font-black text-xl mt-1">{carrotCoins}</span>
+            {/* ✅ 修复 4：极致统一的顶部胶囊货币 UI */}
+            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 flex gap-3 pointer-events-auto">
+                <div className="h-10 bg-white border-[3px] border-black px-3 rounded-full shadow-[3px_3px_0_black] flex items-center gap-2">
+                    <CarrotCoinIcon className="w-5 h-5" />
+                    <span className="font-black text-lg mt-0.5 text-black">{carrotCoins}</span>
                 </div>
                 {starSand !== undefined && (
-                    <div className="h-12 bg-[#E0F2FE] border-[3px] border-[#60EFFF] px-4 rounded-xl shadow-[4px_4px_0_black] flex items-center gap-2">
-                        <FarmIcons.StarSand className="w-6 h-6" /> <span className="font-black text-xl text-[#0369A1] mt-1">{starSand}</span>
+                    <div className="h-10 bg-white border-[3px] border-black px-3 rounded-full shadow-[3px_3px_0_black] flex items-center gap-2">
+                        <FarmIcons.StarSand className="w-5 h-5" />
+                        <span className="font-black text-lg mt-0.5 text-black">{starSand}</span>
                     </div>
                 )}
             </div>
 
-            {/* 2. 绝对定位在左上角的拓麻歌子身份卡牌 */}
+            {/* ✅ 修复 1.1：左上角身份牌头像框的防变形设计 */}
             <header className="absolute top-0 left-6 z-30 flex flex-col items-center pointer-events-auto">
                 {selectedPet ? (
                     <>
-                        {/* 挂绳结构 */}
                         <div className="w-6 h-8 bg-gray-300 border-x-[3px] border-b-[3px] border-black rounded-b-2xl shadow-[inset_0_-3px_0_rgba(0,0,0,0.2)] z-10" />
                         <div className="bg-white border-[4px] border-black rounded-[24px] p-3 shadow-[6px_6px_0_black] flex flex-col items-center w-[140px] mt-[-8px] transition-transform hover:translate-y-1">
-                            {/* 头像视窗 */}
-                            <div className="w-full aspect-square bg-[#E0F2FE] border-[3px] border-black rounded-xl overflow-hidden relative shadow-inner mb-2">
-                                <div className="absolute inset-0 flex justify-center items-center transform scale-[0.6] translate-y-4">
+
+                            {/* 固定外框尺寸，内部绝对居中缩放，杜绝挤压！ */}
+                            <div className="w-full aspect-square bg-[#E0F2FE] border-[3px] border-black rounded-xl overflow-hidden relative shadow-inner mb-2 flex items-center justify-center">
+                                {/* 🛠️ 调整位置：改这里的 scale 和 translate-y 即可！ */}
+                                <div className="absolute w-[160px] h-[160px] flex items-center justify-center transform scale-[0.6] translate-y-3">
                                     <Avatar selectedParts={selectedPet.selectedParts} dominantStat={getDominantStat(calculateStats(selectedPet.selectedParts))} transparent={true} />
                                 </div>
                             </div>
-                            {/* 名字区 */}
+
                             <div className="font-black text-[11px] uppercase tracking-widest bg-black text-white px-2 py-1 rounded-full w-full text-center truncate mb-2">
                                 {selectedPet.starName}
                             </div>
-                            {/* 属性条区 */}
                             <div className="w-full flex flex-col gap-1.5">
-                                <StatBar icon={<FarmIcons.Hunger className="w-3 h-3" />} value={selectedPet.hunger ?? 80} color="bg-[#D2691E]" />
-                                <StatBar icon={<FarmIcons.Intimacy className="w-3 h-3" />} value={selectedPet.intimacy ?? 0} color="bg-[#FF90E8]" />
+                                <StatBar icon={<div className="w-4 h-4"><FarmIcons.Hunger /></div>} value={selectedPet.hunger ?? 80} color="bg-[#D2691E]" />
+                                <StatBar icon={<div className="w-4 h-4"><FarmIcons.Intimacy /></div>} value={selectedPet.intimacy ?? 0} color="bg-[#FF90E8]" />
                             </div>
                         </div>
                     </>
@@ -268,7 +267,8 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
             </header>
 
             {/* --- 核心交互区 --- */}
-            <main className="relative z-10 flex-1 w-full flex flex-wrap items-center justify-center p-4 gap-8 md:gap-16 pt-16 -translate-y-6">
+            {/* ✅ 修复 3：整体下移 pt-20 translate-y-8，避免漂浮在半空 */}
+            <main className="relative z-10 flex-1 w-full flex flex-wrap items-center justify-center p-4 gap-8 md:gap-16 pt-20 translate-y-16">
                 {activePets.length > 0 ? (
                     activePets.map((pet, idx) => {
                         const hasBond = activePets.some(otherPet =>
@@ -279,16 +279,16 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                         return (
                             <div key={pet.id} onClick={() => { playSound?.('click'); setSelectedPetId(pet.id); }} className="relative flex flex-col items-center cursor-pointer group">
                                 {isSelected && (
-                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-44 bg-white/40 border-4 border-dashed border-yellow-400 rounded-full animate-spin-slow pointer-events-none" />
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-white/40 border-4 border-dashed border-yellow-400 rounded-full animate-spin-slow pointer-events-none" />
                                 )}
 
-                                {/* ✅ 修复2：去掉导致报错的 !isFocusing，让羁绊爱心正常渲染 */}
                                 {hasBond && (
                                     <div className="absolute -top-4 -right-2 z-50 animate-bounce text-2xl drop-shadow-[2px_2px_0_black] pointer-events-none">
                                         💖
                                     </div>
                                 )}
 
+                                {/* 主头像区域 */}
                                 <div className={`relative z-10 transform transition-all duration-300 ${isSelected ? 'scale-[1.25]' : 'scale-100 hover:scale-110'} animate-float ${pet.isOnExpedition ? 'opacity-30 grayscale blur-[1px]' : ''}`} style={{ animationDelay: `${idx * 0.2}s` }}>
                                     <Avatar selectedParts={pet.selectedParts} dominantStat={getDominantStat(calculateStats(pet.selectedParts, pet.stats))} className="w-40 h-40 relative z-10" />
                                     {pet.isOnExpedition && (
@@ -298,15 +298,16 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                     )}
                                 </div>
 
-                                <div className="absolute -bottom-8 z-20 flex flex-col gap-1.5 bg-white/90 p-2 rounded-xl border-[3px] border-black shadow-[2px_2px_0_black] opacity-80 group-hover:opacity-100 transition-opacity">
-                                    <div className="w-16 h-2 bg-gray-200 rounded-full border-2 border-black overflow-hidden">
+                                {/* ✅ 修复 3.1：把状态栏也往下推（-bottom-12） */}
+                                <div className="absolute -bottom-8 z-20 flex flex-col gap-1.5 w-28 bg-white/90 p-2 rounded-xl border-[3px] border-black shadow-[2px_2px_0_black] opacity-80 group-hover:opacity-100 transition-opacity">
+                                    <div className="w-full h-2 bg-gray-200 rounded-full border-2 border-black overflow-hidden">
                                         <div className="bg-[#D2691E] h-full transition-all duration-500" style={{ width: `${pet.hunger ?? 80}%` }} />
                                     </div>
-                                    <div className="w-16 h-2 bg-gray-200 rounded-full border-2 border-black overflow-hidden">
+                                    <div className="w-full h-2 bg-gray-200 rounded-full border-2 border-black overflow-hidden">
                                         <div className="bg-[#FF90E8] h-full transition-all duration-500" style={{ width: `${pet.intimacy ?? 0}%` }} />
                                     </div>
                                 </div>
-                                <div className="absolute -bottom-2 w-28 h-5 bg-black/10 blur-xl rounded-full" />
+                                <div className="absolute -bottom-6 w-28 h-5 bg-black/10 blur-xl rounded-full" />
                             </div>
                         );
                     })
@@ -346,7 +347,7 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                         </div>
                     )}
 
-                    {/* ARCHIVES TAB */}
+                    {/* ARCHIVES TAB ✅ 修复 1.2：列表头像框防变形设计 */}
                     {activeTab === 'archives' && (
                         <div className="flex flex-col gap-4 pb-4">
                             <div className="flex justify-between items-center bg-gray-100 p-4 rounded-2xl border-[3px] border-black border-dashed">
@@ -364,9 +365,15 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                             <div className="grid grid-cols-2 gap-4">
                                 {savedPassports && savedPassports.length > 0 ? savedPassports.map((p) => (
                                     <div key={p.id} onClick={() => handleLocalToggleFarm(p)} className={`p-3 rounded-2xl flex items-center gap-3 cursor-pointer border-[4px] border-black shadow-[4px_4px_0_black] active:translate-y-1 transition-all ${p.isAssignedToFarm ? 'bg-[#A8E6CF]' : 'bg-[#F9FAFB] hover:bg-yellow-50'}`}>
-                                        <div className="w-12 h-12 bg-white border-[3px] border-black rounded-xl overflow-hidden flex-shrink-0 relative">
-                                            <div className="absolute inset-0 flex justify-center items-center transform scale-[0.35] translate-y-1"><Avatar selectedParts={p.selectedParts} dominantStat={getDominantStat(calculateStats(p.selectedParts, p.stats))} transparent={true} /></div>
+
+                                        {/* 固定容器，内部居中缩放 */}
+                                        <div className="w-12 h-12 bg-white border-[3px] border-black rounded-xl overflow-hidden flex-shrink-0 relative flex items-center justify-center">
+                                            {/* 🛠️ 调整位置：改这里的 scale 和 translate y 即可！ */}
+                                            <div className="absolute w-[160px] h-[160px] flex items-center justify-center transform scale-[0.4] translate y-2">
+                                                <Avatar selectedParts={p.selectedParts} dominantStat={getDominantStat(calculateStats(p.selectedParts, p.stats))} transparent={true} />
+                                            </div>
                                         </div>
+
                                         <div className="flex flex-col overflow-hidden">
                                             <span className="font-black text-xs truncate">{p.starName}</span>
                                             <span className={`text-[9px] font-bold uppercase ${p.isAssignedToFarm ? 'text-green-800' : 'text-gray-400'}`}>{p.isAssignedToFarm ? '★ 已入驻' : '待命'}</span>
@@ -379,17 +386,17 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                         </div>
                     )}
 
-                    {/* SHOP TAB ✅ 修复1：使用顶部的 shopCategory 状态 */}
+                    {/* SHOP TAB ✅ 修复 2：优化商店卡片排版 */}
                     {activeTab === 'shop' && (() => {
                         const EFFECTS_DB = [
-                            { id: 'eff_heart', name: { cn: '爱心羁绊光环', en: 'Heart Aura', se: 'Hjärta Aura' }, price: 50, icon: <span className="text-2xl">💖</span> },
-                            { id: 'eff_star', name: { cn: '动态星轨', en: 'Star Trail', se: 'Stjärnspår' }, price: 100, icon: <FarmIcons.Star /> }
+                            { id: 'eff_heart', name: { cn: '爱心羁绊光环', en: 'Heart Aura', se: 'Hjärta Aura' }, price: 50, icon: <span className="text-3xl">💖</span> },
+                            { id: 'eff_star', name: { cn: '动态星轨', en: 'Star Trail', se: 'Stjärnspår' }, price: 100, icon: <div className="w-8 h-8"><FarmIcons.Star /></div> }
                         ];
 
                         const allShopItems = [
-                            { id: 'cookie', name: { cn: "元气曲奇", en: "Cookie", se: "Kaka" }, price: 5, int: 5, hun: 20, icon: <FarmIcons.Hunger /> },
-                            { id: 'milk', name: { cn: "星间奶昔", en: "Milkshake", se: "Mjölkshake" }, price: 15, int: 20, hun: 10, icon: <FarmIcons.MilkFood /> },
-                            ...FURNITURE_DB.filter(f => unlockedShopItems.includes(f.id)).map(f => ({ id: f.id, name: f.name, price: f.price, int: f.int, hun: 0, icon: f.imgUrl ? <img src={f.imgUrl} alt="item" className="w-8 h-8" /> : f.svg }))
+                            { id: 'cookie', name: { cn: "元气曲奇", en: "Cookie", se: "Kaka" }, price: 5, int: 5, hun: 20, icon: <div className="w-8 h-8"><FarmIcons.Hunger className="w-full h-full" /></div> },
+                            { id: 'milk', name: { cn: "星间奶昔", en: "Milkshake", se: "Mjölkshake" }, price: 15, int: 20, hun: 10, icon: <div className="w-8 h-8"><FarmIcons.MilkFood /></div> },
+                            ...FURNITURE_DB.filter(f => unlockedShopItems.includes(f.id)).map(f => ({ id: f.id, name: f.name, price: f.price, int: f.int, hun: 0, icon: f.imgUrl ? <img src={f.imgUrl} alt="item" className="w-8 h-8" /> : <div className="w-8 h-8">{f.svg}</div> }))
                         ];
 
                         const currentItems = shopCategory === 'supplies' ? allShopItems : EFFECTS_DB;
@@ -405,7 +412,8 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                     </button>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto custom-scrollbar pr-2">
+                                {/* 优化后的物品网格 */}
+                                <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4">
                                     {currentItems.map(item => (
                                         <div key={item.id}
                                             onClick={() => {
@@ -424,20 +432,23 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                                     alert(currentLang === 'cn' ? '特效兑换成功！' : 'Effect Unlocked!');
                                                 }
                                             }}
-                                            className="bg-white border-[4px] border-black p-3 rounded-[20px] flex flex-col items-center gap-2 shadow-[4px_4px_0_black] cursor-pointer hover:bg-[#F9FAFB] active:translate-y-1 active:shadow-none transition-all relative overflow-hidden"
+                                            className="bg-white border-[4px] border-black p-4 rounded-[20px] flex flex-col items-center justify-between min-h-[140px] shadow-[4px_4px_0_black] cursor-pointer hover:bg-[#F9FAFB] active:translate-y-1 active:shadow-none transition-all relative overflow-hidden"
                                         >
                                             {shopCategory === 'starsand' && unlockedEffects?.includes(item.id) && (
                                                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
                                                     <span className="bg-green-400 text-white font-black text-[10px] px-2 py-1 rounded-full border-2 border-black -rotate-12">OWNED</span>
                                                 </div>
                                             )}
-                                            <div className="w-12 h-12 bg-[#F3F4F6] border-[3px] border-black rounded-full flex items-center justify-center">
-                                                <div className="w-8 h-8 flex items-center justify-center">{item.icon}</div>
+                                            {/* 图标区放大，底色统一 */}
+                                            <div className="w-14 h-14 bg-gray-100 border-[3px] border-black rounded-full flex items-center justify-center mb-2 shadow-inner">
+                                                {item.icon}
                                             </div>
-                                            <span className="font-black text-[10px] text-center leading-tight">{item.name[currentLang]}</span>
-                                            <div className={`flex items-center gap-1 px-2 py-0.5 rounded-lg border-2 border-black mt-auto ${shopCategory === 'supplies' ? 'bg-[#FFD700]' : 'bg-[#E0F2FE]'}`}>
-                                                {shopCategory === 'supplies' ? <CarrotCoinIcon className="w-3 h-3" /> : <FarmIcons.StarSand className="w-3 h-3" />}
-                                                <span className="text-[10px] font-black">{item.price}</span>
+                                            {/* 名字区域留足空间 */}
+                                            <span className="font-black text-sm text-center leading-tight mb-2">{item.name[currentLang]}</span>
+                                            {/* 底部价格标签横向拉满 */}
+                                            <div className={`flex items-center justify-center gap-1 w-full py-1.5 rounded-lg border-2 border-black ${shopCategory === 'supplies' ? 'bg-[#FFD700]' : 'bg-[#E0F2FE]'}`}>
+                                                {shopCategory === 'supplies' ? <CarrotCoinIcon className="w-4 h-4" /> : <FarmIcons.StarSand className="w-4 h-4" />}
+                                                <span className="text-xs font-black">{item.price}</span>
                                             </div>
                                         </div>
                                     ))}
@@ -552,12 +563,13 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
     );
 };
 
-// ✅ 修复 3：修复挤压的进度条
 const StatBar = ({ icon, value, color }: any) => (
     <div className="flex items-center gap-2 w-full">
         <div className="bg-white border-[3px] border-black p-1 rounded-md shadow-[2px_2px_0_black] flex-shrink-0 z-10">{icon}</div>
         <div className="relative flex-1 h-3.5 bg-white border-[3px] border-black rounded-full overflow-hidden ml-[-8px]">
             <div className={`h-full ${color} transition-all duration-500 ease-out border-r-[2px] border-black`} style={{ width: `${value}%` }} />
+            {/* 加回数字显示 */}
+            <span className="absolute inset-0 flex items-center justify-center text-[8px] font-black text-black drop-shadow-[1px_1px_0_white]">{Math.floor(value)}/100</span>
         </div>
     </div>
 );
