@@ -1,71 +1,57 @@
 import { useCallback } from 'react';
 
 export const useAnimateTokens = () => {
+  // 通用代币飞行动画 (支持 🥕 和 ✨)
+  const animateToken = useCallback((startId: string, endId: string, symbol: string, isGaining: boolean) => {
+    const startEl = document.getElementById(startId);
+    const endEl = document.getElementById(endId);
+
+    if (!startEl || !endEl) {
+      console.warn(`Animation failed: missing elements ${startId} or ${endId}`);
+      return;
+    }
+
+    const startRect = startEl.getBoundingClientRect();
+    const endRect = endEl.getBoundingClientRect();
+
+    const startX = startRect.left + startRect.width / 2;
+    const startY = startRect.top + startRect.height / 2;
+    const endX = endRect.left + endRect.width / 2;
+    const endY = endRect.top + endRect.height / 2;
+
+    // 默认飞 3 个粒子，显得丰满
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => {
+        createFlyingParticle(startX, startY, endX, endY, endEl, isGaining, symbol);
+      }, i * 100);
+    }
+  }, []);
+
+  // 兼容旧版的快捷方法
   const spendCarrots = useCallback((targetButtonId: string, count: number) => {
-    const walletEl = document.getElementById('carrot-wallet');
-    const buttonEl = document.getElementById(targetButtonId);
+    animateToken('carrot-wallet', targetButtonId, '🥕', false);
+  }, [animateToken]);
 
-    if (!walletEl || !buttonEl) return;
-
-    const walletRect = walletEl.getBoundingClientRect();
-    const buttonRect = buttonEl.getBoundingClientRect();
-
-    // 起点：右上角钱包中心
-    const startX = walletRect.left + walletRect.width / 2;
-    const startY = walletRect.top + walletRect.height / 2;
-    
-    // 终点：点击的按钮中心
-    const endX = buttonRect.left + buttonRect.width / 2;
-    const endY = buttonRect.top + buttonRect.height / 2;
-
-    for (let i = 0; i < count; i++) {
-      setTimeout(() => {
-        createFlyingCarrot(startX, startY, endX, endY, buttonEl, false);
-      }, i * 80);
-    }
-  }, []);
-
-  // NEW: 获得金币的反向动画
   const gainCarrots = useCallback((sourceButtonId: string, count: number) => {
-    const walletEl = document.getElementById('carrot-wallet');
-    const buttonEl = document.getElementById(sourceButtonId);
+    animateToken(sourceButtonId, 'carrot-wallet', '🥕', true);
+  }, [animateToken]);
 
-    if (!walletEl || !buttonEl) return;
-
-    const walletRect = walletEl.getBoundingClientRect();
-    const buttonRect = buttonEl.getBoundingClientRect();
-
-    // 起点：触发获得的按钮中心
-    const startX = buttonRect.left + buttonRect.width / 2;
-    const startY = buttonRect.top + buttonRect.height / 2;
-    
-    // 终点：右上角钱包中心
-    const endX = walletRect.left + walletRect.width / 2;
-    const endY = walletRect.top + walletRect.height / 2;
-
-    for (let i = 0; i < count; i++) {
-      setTimeout(() => {
-        createFlyingCarrot(startX, startY, endX, endY, walletEl, true);
-      }, i * 80);
-    }
-  }, []);
-
-  return { spendCarrots, gainCarrots };
+  return { spendCarrots, gainCarrots, animateToken };
 };
 
-function createFlyingCarrot(startX: number, startY: number, endX: number, endY: number, targetEl: HTMLElement, isGaining: boolean) {
+function createFlyingParticle(startX: number, startY: number, endX: number, endY: number, targetEl: HTMLElement, isGaining: boolean, symbol: string) {
   const el = document.createElement('div');
-  el.innerHTML = '🥕';
-  // Z-index 调到极高，确保在 Modal 之上显示
-  el.className = 'fixed text-lg z-[99999] pointer-events-none select-none drop-shadow-sm';
+  el.innerHTML = symbol;
+  // 极高的 z-index 确保在所有弹窗之上
+  el.className = 'fixed text-2xl z-[99999] pointer-events-none select-none drop-shadow-md';
   el.style.left = `${startX}px`;
   el.style.top = `${startY}px`;
   document.body.appendChild(el);
 
   const startTime = performance.now();
-  const duration = 650; // 飞行时间
+  const duration = 650;
 
-  // 弧线控制点：让它划出一道自然的抛物线
+  // 弧线控制点
   const cpX = (startX + endX) / 2 + (Math.random() - 0.5) * 150;
   const cpY = Math.min(startY, endY) - 150;
 
@@ -78,13 +64,11 @@ function createFlyingCarrot(startX: number, startY: number, endX: number, endY: 
 
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
-    
+
     if (isGaining) {
-      // 获得的动画：旋转并带有呼吸放大效果
       el.style.transform = `translate(-50%, -50%) rotate(${t * 720}deg) scale(${1 + Math.sin(t * Math.PI) * 0.5})`;
       el.style.opacity = '1';
     } else {
-      // 消费的动画：旋转变小
       el.style.transform = `translate(-50%, -50%) rotate(${t * 720}deg) scale(${1.2 - t * 0.5})`;
       el.style.opacity = `${1 - t * t}`;
     }
@@ -93,13 +77,13 @@ function createFlyingCarrot(startX: number, startY: number, endX: number, endY: 
       requestAnimationFrame(animate);
     } else {
       el.remove();
-      // 给目标元素（按钮或钱包）添加"被击中/收入"的反馈动画
+      // 目标受到撞击的反馈反馈
       if (isGaining) {
-        targetEl.classList.add('animate-bounce-short');
-        setTimeout(() => targetEl.classList.remove('animate-bounce-short'), 300);
+        targetEl.classList.add('scale-110', 'brightness-110');
+        setTimeout(() => targetEl.classList.remove('scale-110', 'brightness-110'), 200);
       } else {
-        targetEl.classList.add('animate-spend-hit');
-        setTimeout(() => targetEl.classList.remove('animate-spend-hit'), 200);
+        targetEl.classList.add('scale-95', 'opacity-80');
+        setTimeout(() => targetEl.classList.remove('scale-95', 'opacity-80'), 200);
       }
     }
   };
