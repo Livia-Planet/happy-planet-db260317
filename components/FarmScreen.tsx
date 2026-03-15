@@ -121,7 +121,51 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
     // 🌟 新增：化身鼠标的交互状态
     const [holdingItem, setHoldingItem] = useState<{ id: string, name: string, price: number, hun: number, int: number, cursor: string, isStarSand: boolean } | null>(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-    const [interactEffectId, setInteractEffectId] = useState<string | null>(null); // 控制爱心爆出的 ID
+    const [interactEffectId, setInteractEffectId] = useState<string | null>(null);
+
+    // 👇 1. 注入灵魂互动引擎 👇
+    const [speechBubble, setSpeechBubble] = useState<{ text: string, id: number } | null>(null);
+    const [badgeAnim, setBadgeAnim] = useState('');
+
+    // 身份牌颜色映射 (随 Tab 变化)
+    const badgeColors = {
+        focus: 'bg-[#E0F2FE]',    // 浅蓝
+        shop: 'bg-[#FEF08A]',     // 浅黄
+        archives: 'bg-[#F3E8FF]', // 浅紫
+        explore: 'bg-[#DCFCE7]'   // 浅绿
+    };
+
+    // 漫画气泡语录库
+    const BUBBLES = {
+        cookie: { cn: ['吧唧吧唧...真好吃！', '谢谢！我最爱吃曲奇了！', '好脆！感觉充满了能量！'], en: ['Nom nom... so yummy!', 'Thanks! Cookies are my favorite!', 'So crispy! Full of energy!'], se: ['Nom nom... så gott!', 'Tack! Kakor är min favorit!', 'Så krispig! Full av energi!'] },
+        milk: { cn: ['咕噜咕噜...草莓味的！', '好甜呀~ 肚子里冒粉色泡泡！', '喝完长高高！'], en: ['Glug glug... strawberry flavor!', 'So sweet~ pink bubbles in my tummy!', 'Drinking this makes me grow!'], se: ['Klunk klunk... jordgubbssmak!', 'Så söt~ rosa bubblor i magen!', 'Att dricka detta får mig att växa!'] },
+        groom: { cn: ['哇，好舒服呀~', '谢谢你帮我打理！', '感觉自己焕然一新！', '左边一点...对，就是那里！'], en: ['Wow, that feels so good~', 'Thanks for grooming me!', 'I feel brand new!', 'A bit to the left... yes, there!'], se: ['Wow, det känns så bra~', 'Tack för att du sköter om mig!', 'Jag känner mig som ny!', 'Lite till vänster... ja, där!'] },
+        eff_heart: { cn: ['扑通扑通！你听到了吗？', '充满了爱的力量！', '我们永远是好朋友哦！'], en: ['Thump thump! Hear it?', 'Filled with the power of love!', 'Best friends forever!'], se: ['Dunk dunk! Hör du det?', 'Fylld med kärlekens kraft!', 'Bästa vänner för alltid!'] },
+        eff_star: { cn: ['我变成小宇宙啦！', '亮闪闪的，太酷了！', '跟着星轨一起转圈圈~'], en: ['I became a little universe!', 'So shiny and cool!', 'Spinning with the star trail~'], se: ['Jag blev ett litet universum!', 'Så blank och cool!', 'Snurrar med stjärnspåret~'] },
+        focus: { cn: ['交给我吧！我会安静陪你的！', '嘘...进入认真模式！', '一起加油哦！'], en: ['Leave it to me! I will stay quiet!', 'Shh... focus mode activated!', 'Let\'s do our best together!'], se: ['Lämna det till mig! Jag håller mig tyst!', 'Sch... fokusläge aktiverat!', 'Låt oss göra vårt bästa tillsammans!'] },
+        explore: { cn: ['目标星海，出发！', '我会带好东西回来的！', '冒险时间到！等我好消息！'], en: ['To the sea of stars, let\'s go!', 'I will bring back good stuff!', 'Adventure time! Wait for news!'], se: ['Mot stjärnhavet, nu åker vi!', 'Jag ska ta med bra saker tillbaka!', 'Äventyrsdags! Vänta på nyheter!'] }
+    };
+
+    const showBubble = (type: keyof typeof BUBBLES) => {
+        const phrases = BUBBLES[type][currentLang];
+        const text = phrases[Math.floor(Math.random() * phrases.length)];
+        setSpeechBubble({ text, id: Date.now() });
+        setTimeout(() => setSpeechBubble(null), 3000); // 3秒后自动消失
+    };
+
+    // 身份牌动效触发器
+    useEffect(() => {
+        setBadgeAnim('animate-wobble');
+        const t = setTimeout(() => setBadgeAnim(''), 400);
+        return () => clearTimeout(t);
+    }, [activeTab]);
+
+    useEffect(() => {
+        setBadgeAnim('animate-claw-drop');
+        const t = setTimeout(() => setBadgeAnim(''), 600);
+        return () => clearTimeout(t);
+    }, [selectedPetId]);
+    // 👆 引擎注入完毕 👆
 
     const activePets = useMemo(() => savedPassports.filter(p => p.isAssignedToFarm), [savedPassports]);
     const SLOT_UPGRADE_COSTS = [0, 50, 150, 500, 1000];
@@ -175,6 +219,8 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
 
             // 播放使用音效 (如果有具体的可以换，这里用统一下的)
             playSound?.('success');
+            // 👇 加上这行，区分吃喝和洗澡梳毛
+            showBubble(item.id === 'cookie' || item.id === 'milk' ? item.id : 'groom');
 
             // 触发货币扣除动画 (从钱包飞向兔子)
             animateToken('farm-wallet-carrot', `avatar-container-${petId}`, '🥕', false);
@@ -197,6 +243,7 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
         if ((selectedPet.hunger ?? 80) < opt.hungerCost) { playSound?.('error'); setGlobalAlert(currentLang === 'cn' ? `肚子太饿了，没力气飞那么远！\n需要 ${opt.hungerCost} 饥饿度。` : `Too hungry!\nNeeds ${opt.hungerCost} hunger.`); return; }
 
         playSound?.('camera');
+        showBubble('explore'); // 👈 加上这行，喊出探险口号！
         onUpdatePassport(selectedPet.id, 'hunger', (selectedPet.hunger ?? 80) - opt.hungerCost);
         onUpdatePassport(selectedPet.id, 'isOnExpedition', true);
         onUpdatePassport(selectedPet.id, 'expeditionStartTime', Date.now());
@@ -331,12 +378,12 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                 )}
             </div>
 
-            {/* 左上角身份牌 */}
+            {/* 左上角身份牌 (带有颜色变化和夹娃娃机动效) */}
             <header className="absolute top-0 left-6 z-30 flex flex-col items-center pointer-events-auto">
                 {selectedPet ? (
-                    <>
-                        <div className="w-6 h-8 bg-gray-300 border-x-[3px] border-b-[3px] border-black rounded-b-2xl shadow-[inset_0_-3px_0_rgba(0,0,0,0.2)] z-10" />
-                        <div className="bg-white border-[4px] border-black rounded-[24px] p-3 shadow-[6px_6px_0_black] flex flex-col items-center w-[140px] mt-[-8px] transition-transform hover:translate-y-1">
+                    <div className={badgeAnim}> {/* 👈 加入动画控制 */}
+                        <div className="w-6 h-8 bg-gray-300 border-x-[3px] border-b-[3px] border-black rounded-b-2xl shadow-[inset_0_-3px_0_rgba(0,0,0,0.2)] z-10 mx-auto" />
+                        <div className={`border-[4px] border-black rounded-[24px] p-3 shadow-[6px_6px_0_black] flex flex-col items-center w-[140px] mt-[-8px] transition-colors duration-500 hover:translate-y-1 ${badgeColors[activeTab]}`}>
                             <div className="w-full aspect-square bg-[#E0F2FE] border-[3px] border-black rounded-xl overflow-hidden relative shadow-inner mb-2 flex items-center justify-center">
                                 <div className="absolute w-[160px] h-[160px] flex items-center justify-center transform scale-[0.6] translate-y-3">
                                     <Avatar selectedParts={selectedPet.selectedParts} dominantStat={getDominantStat(calculateStats(selectedPet.selectedParts))} transparent={true} />
@@ -345,12 +392,12 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                             <div className="font-black text-[11px] uppercase tracking-widest bg-black text-white px-2 py-1 rounded-full w-full text-center truncate mb-2">
                                 {selectedPet.starName}
                             </div>
-                            <div className="w-full flex flex-col gap-1.5">
+                            <div className="w-full flex flex-col gap-1.5 bg-white p-1.5 rounded-xl border-2 border-black">
                                 <StatBar icon={<div className="w-4 h-4"><FarmIcons.Hunger /></div>} value={selectedPet.hunger ?? 80} color="bg-[#D2691E]" />
                                 <StatBar icon={<div className="w-4 h-4"><FarmIcons.Intimacy /></div>} value={selectedPet.intimacy ?? 0} color="bg-[#FF90E8]" />
                             </div>
                         </div>
-                    </>
+                    </div>
                 ) : (
                     <div className="bg-white/80 mt-4 border-[4px] border-black border-dashed p-3 rounded-2xl text-center font-black text-xs opacity-60">{T.noPet[currentLang]}</div>
                 )}
@@ -453,6 +500,19 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                     </div>
                                 )}
 
+                                {/* 🌟 新增：漫画气泡框！(只给当前说话的兔子显示) */}
+                                {speechBubble && isSelected && (
+                                    <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-[100] animate-bubble-pop pointer-events-none w-max max-w-[200px]">
+                                        <div className="bg-white border-[3px] border-black px-4 py-2 rounded-2xl shadow-[4px_4px_0_black] relative">
+                                            <span className="font-black text-xs leading-tight block text-center">
+                                                {speechBubble.text}
+                                            </span>
+                                            {/* 气泡的尾巴 */}
+                                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-b-[3px] border-r-[3px] border-black transform rotate-45" />
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* 主角色图层 */}
                                 <div className={`relative z-10 transform transition-all duration-300 ${isSelected ? 'scale-[1.25]' : 'scale-100 hover:scale-110'} animate-float ${pet.isOnExpedition ? 'opacity-30 grayscale blur-[1px]' : ''}`} style={{ animationDelay: `${idx * 0.2}s` }}>
                                     <Avatar selectedParts={pet.selectedParts} dominantStat={getDominantStat(calculateStats(pet.selectedParts, pet.stats))} className="w-40 h-40 relative z-10" />
@@ -505,7 +565,9 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                             <button onClick={() => {
                                 if (!selectedPet) return setGlobalAlert(currentLang === 'cn' ? '请先选中一只兔子来陪伴你！' : 'Select a rabbit to focus with!');
                                 if (selectedPet.isOnExpedition) return setGlobalAlert(currentLang === 'cn' ? '它去探险了，换一只吧！' : 'It is exploring, choose another!');
-                                playSound?.('click'); onStartGlobalFocus(selectedPet.id);
+                                playSound?.('click');
+                                showBubble('focus'); // 👈 加上这行，鼓励专注！
+                                onStartGlobalFocus(selectedPet.id);
                             }} className="w-full max-w-sm py-4 border-[5px] border-black rounded-2xl font-black text-xl bg-[#82E0AA] text-black shadow-[6px_6px_0_black] active:translate-y-2 active:shadow-none transition-all flex items-center justify-center gap-2">
                                 <FarmIcons.Focus /> {T.focusBtn[currentLang]}
                             </button>
@@ -607,6 +669,8 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                                         onUpdateStarSand!(-item.price);
                                                         onUnlockEffect!(item.id);
                                                         onUpdatePassport(selectedPet.id, 'equippedEffect', item.id);
+                                                        // 👇 穿上时喊出口号
+                                                        showBubble(item.id as any);
                                                         setGlobalAlert(currentLang === 'cn' ? `✨ 特效兑换成功！\n已自动为 ${selectedPet.starName} 装备！` : '✨ Effect Unlocked & Equipped!');
                                                     }
                                                 }
@@ -637,12 +701,11 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
 
                     {/* EXPLORE TAB */}
                     {activeTab === 'explore' && (
-                        /* 🌟 修复：新增这个 w-full 和 flex 居中包裹层，彻底解决结算弹窗偏左的问题！ */
-                        <div className="flex flex-col items-center justify-center w-full h-full pt-1">
+                        <div className="flex flex-col w-full h-full pt-1 pb-4 px-2">
                             {!selectedPet ? (
-                                <div className="flex flex-col items-center opacity-50 mt-10">
+                                <div className="flex flex-col items-center justify-center w-full h-full opacity-50">
                                     <FarmIcons.Explore />
-                                    <p className="font-black mt-2">{T.selectFirst[currentLang]}</p>
+                                    <p className="font-black mt-2 text-center">{T.selectFirst[currentLang]}</p>
                                 </div>
                             ) : selectedPet.isOnExpedition ? (
                                 (() => {
@@ -652,13 +715,13 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
 
                                     if (isDone) {
                                         return (
-                                            /* 🌟 这里的 w-full 非常关键 */
-                                            <div className="flex flex-col items-center justify-center w-full h-full gap-2 animate-bounce-in relative">
+                                            /* 【教练笔记】探险归来：必须加上 w-full，否则 items-center 找不到全宽的中心，就会缩在左边 */
+                                            <div className="flex flex-col items-center justify-center mt-4 w-full h-full gap-2 animate-bounce-in">
                                                 <div className="w-16 h-16 bg-green-100 border-[3px] border-black rounded-full flex items-center justify-center animate-bounce">
                                                     <FarmIcons.Explore />
                                                 </div>
-                                                <p className="font-black text-[#82E0AA] uppercase tracking-wider text-center">{T.returned[currentLang]}</p>
-                                                <button onClick={handleClaimExpedition} className="mt-2 bg-[#FFD700] border-[4px] border-black px-6 py-2 rounded-2xl font-black text-black shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none flex items-center gap-2">
+                                                <p className="font-black text-[#82E0AA] uppercase tracking-wider text-center mt-2">{T.returned[currentLang]}</p>
+                                                <button onClick={handleClaimExpedition} className="mt-2 bg-[#FFD700] border-[4px] border-black px-6 py-2 rounded-2xl font-black text-black shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none flex items-center justify-center gap-2">
                                                     <CarrotCoinIcon className="w-5 h-5" />{T.checkResult[currentLang]}
                                                 </button>
                                             </div>
@@ -667,10 +730,11 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                         const h = Math.floor((duration - timePassed) / 3600000);
                                         const m = Math.floor(((duration - timePassed) % 3600000) / 60000);
                                         return (
-                                            <div className="flex flex-col items-center justify-center w-full h-full gap-2 relative">
-                                                <div className="flex flex-col items-center gap-2 bg-gray-100 border-[3px] border-dashed border-black p-4 rounded-3xl w-full max-w-[280px]">
+                                            /* 【教练笔记】探险中：加上 w-full，并去掉死板的 justify-center，改用 py-4 留出上下呼吸空间，防止顶部虚线被切断！ */
+                                            <div className="flex flex-col items-center w-full h-full py-4">
+                                                <div className="flex flex-col items-center gap-2 bg-gray-100 border-[3px] border-dashed border-black p-4 rounded-3xl w-full max-w-[260px] mx-auto">
                                                     <div className="w-12 h-12 bg-[#85C1E9] border-[3px] border-black rounded-full flex items-center justify-center animate-pulse"><FarmIcons.Explore /></div>
-                                                    <p className="font-black text-sm uppercase text-center">{T.exploringState[currentLang]}</p>
+                                                    <p className="font-black text-sm uppercase text-center mt-1">{T.exploringState[currentLang]}</p>
                                                     <div className="bg-black text-white px-4 py-1.5 rounded-xl font-mono font-bold tracking-widest">{h}H {m}M</div>
                                                 </div>
                                             </div>
@@ -678,7 +742,8 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                     }
                                 })()
                             ) : (
-                                <div className="grid grid-cols-2 gap-3 w-full h-full pb-2">
+                                /* 探险选项状态：保持原样，利用 grid 正常排列 */
+                                <div className="grid grid-cols-2 gap-3 w-full">
                                     {EXPEDITION_OPTIONS.map((opt, i) => (
                                         <div key={i} onClick={() => startExpedition(opt)} className="bg-white border-[4px] border-black rounded-2xl p-3 flex flex-col items-center justify-center cursor-pointer shadow-[4px_4px_0_black] hover:bg-[#82E0AA] transition-colors active:translate-y-1 active:shadow-none">
                                             <div className="font-black text-sm mb-1 text-center">{opt.label[currentLang]}</div>
@@ -738,8 +803,32 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                         </div>
                     </div>
                 </div>,
-                document.body // 👈 这里是关键！直接传送到 HTML 的顶层，无视任何父元素的干扰！
+                document.body
             )}
+
+            {/* 👇 加上这段控制所有互动的 CSS 动画 👇 */}
+            <style>{`
+                @keyframes wobble { 
+                    0%, 100% { transform: rotate(0deg); } 
+                    25% { transform: rotate(-5deg); } 
+                    75% { transform: rotate(5deg); } 
+                }
+                .animate-wobble { animation: wobble 0.4s ease-in-out; }
+                
+                @keyframes claw-drop { 
+                    0% { transform: translateY(-50px) scaleY(1.2); opacity: 0; } 
+                    60% { transform: translateY(10px) scaleY(0.9); opacity: 1; } 
+                    100% { transform: translateY(0) scaleY(1); opacity: 1; } 
+                }
+                .animate-claw-drop { animation: claw-drop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+                
+                @keyframes bubble-pop {
+                    0% { opacity: 0; transform: translateX(-50%) scale(0.5) translateY(10px); }
+                    50% { transform: translateX(-50%) scale(1.1) translateY(0); }
+                    100% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+                }
+                .animate-bubble-pop { animation: bubble-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+            `}</style>
         </div>
     );
 };
