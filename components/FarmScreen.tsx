@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom'; // 👈 召唤终极居中魔法！
 import { Avatar } from './Avatar';
 import { SpaceBackground } from './SpaceBackground';
 import { CarrotCoinIcon } from './Icons';
@@ -280,10 +281,20 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
         setClaimedPostcard(null);
     };
 
+    // 🌟 修复 1：确保 handleLocalToggleFarm 定义在安全位置
+    const handleLocalToggleFarm = (p: PassportData) => {
+        if (!p.isAssignedToFarm && activePets.length >= maxFarmSlots) {
+            playSound?.('error');
+            setGlobalAlert(currentLang === 'cn' ? '农场床位不足，\n请先解锁更多位置！' : 'Farm is full!\nUnlock more slots!');
+            return;
+        }
+        onToggleFarm(p.id);
+    };
+
     return (
         <div
             className={`fixed inset-0 z-40 flex flex-col items-center bg-[#EAFFD0] overflow-hidden font-rounded text-black select-none ${holdingItem ? 'cursor-none' : ''}`}
-            onClick={handleCancelHold} // 点击空白处取消拿着的物品
+            onClick={handleCancelHold}
             onMouseMove={(e) => { if (holdingItem) setMousePos({ x: e.clientX, y: e.clientY }) }}
             onTouchMove={(e) => { if (holdingItem) setMousePos({ x: e.touches[0].clientX, y: e.touches[0].clientY }) }}
         >
@@ -291,13 +302,18 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                 <SpaceBackground bpm={50} themeColor="#95E1D3" />
             </div>
 
-            {/* 🌟 跟随鼠标的互动道具 */}
+            {/* 🌟 修复 2：化身鼠标的插画接口 (优先读取 imgUrl) */}
             {holdingItem && (
                 <div
-                    className="fixed z-[99999] pointer-events-none transform -translate-x-1/2 -translate-y-1/2 text-5xl drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)] animate-bounce"
+                    className="fixed z-[99999] pointer-events-none transform -translate-x-1/2 -translate-y-1/2 animate-bounce drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]"
                     style={{ left: mousePos.x, top: mousePos.y }}
                 >
-                    {holdingItem.cursor}
+                    {holdingItem.imgUrl ? (
+                        /* 👇 以后你在 FURNITURE_DB 里填了 imgUrl，就会自动显示你的插画！建议尺寸 80x80 */
+                        <img src={holdingItem.imgUrl} alt="item" className="w-20 h-20 object-contain drop-shadow-md" />
+                    ) : (
+                        <span className="text-5xl">{holdingItem.cursor}</span>
+                    )}
                 </div>
             )}
 
@@ -352,6 +368,7 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                             pet.relationships?.some(rel => rel.targetId === otherPet.id && (rel.intimacyScore ?? 0) >= 50)
                         );
                         const isSelected = pet.id === selectedPetId;
+
                         return (
                             <div
                                 key={pet.id}
@@ -367,8 +384,59 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                 }}
                                 className="relative flex flex-col items-center cursor-pointer group"
                             >
+                                {/* 🌟 1. 果汁多巴胺选中光环 (替代旧黄圈) */}
                                 {isSelected && (
-                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-white/40 border-4 border-dashed border-yellow-400 rounded-full animate-spin-slow pointer-events-none" />
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 pointer-events-none z-0">
+                                        <svg viewBox="0 0 200 200" className="w-full h-full animate-spin-slow">
+                                            <defs>
+                                                <radialGradient id="juiceGradient" cx="50%" cy="50%" r="50%">
+                                                    <stop offset="60%" stopColor="#FFF9E0" stopOpacity="0" />
+                                                    <stop offset="90%" stopColor="#FFFAAE" stopOpacity="0.8" />
+                                                    <stop offset="100%" stopColor="#FFF2D6" stopOpacity="0" />
+                                                </radialGradient>
+                                            </defs>
+                                            <circle cx="100" cy="100" r="85" fill="url(#juiceGradient)" stroke="#FFE066" strokeWidth="4" strokeLinecap="round" strokeDasharray="30 20" />
+                                            <path d="M100 20l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="#FFE066" stroke="black" strokeWidth="1.5" transform="rotate(30 100 100)" />
+                                            <path d="M50 60l1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5z" fill="#FFF2D6" stroke="black" strokeWidth="1.2" transform="rotate(-60 50 60)" />
+                                        </svg>
+                                    </div>
+                                )}
+
+                                {/* 🌟 2. 动态星轨特效 (不再受 isSelected 限制，只要装备了就一直显示！) */}
+                                {pet.equippedEffect === 'eff_star' && (
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-60 h-60 pointer-events-none z-0">
+                                        <svg viewBox="0 0 200 200" className="w-full h-full animate-spin-slow" style={{ animationDuration: '10s' }}>
+                                            <defs>
+                                                <radialGradient id="starJuice" cx="50%" cy="50%" r="50%">
+                                                    <stop offset="70%" stopColor="#E0F2FE" stopOpacity="0" />
+                                                    <stop offset="95%" stopColor="#7DD3FC" stopOpacity="0.5" />
+                                                    <stop offset="100%" stopColor="#38BDF8" stopOpacity="0" />
+                                                </radialGradient>
+                                            </defs>
+                                            <circle cx="100" cy="100" r="88" fill="url(#starJuice)" stroke="#38BDF8" strokeWidth="3" strokeLinecap="round" strokeDasharray="10 30" />
+                                            <path d="M100 10l3 6 6 3-6 3-3 6-3-6-6-3 6-3z" fill="#BAE6FD" stroke="black" strokeWidth="1.5" transform="rotate(45 100 10)" />
+                                            <path d="M100 10l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="#E0F2FE" stroke="black" strokeWidth="1.5" transform="translate(-80, 80) scale(0.8) rotate(-30 100 10)" />
+                                            <path d="M100 10l3 6 6 3-6 3-3 6-3-6-6-3 6-3z" fill="#38BDF8" stroke="black" strokeWidth="1.5" transform="translate(60, 120) scale(0.6) rotate(70 100 10)" />
+                                        </svg>
+                                    </div>
+                                )}
+
+                                {/* 🌟 3. 爱心羁绊特效 (只要装备了就一直显示) */}
+                                {pet.equippedEffect === 'eff_heart' && (
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 pointer-events-none z-0">
+                                        <svg viewBox="0 0 200 200" className="w-full h-full animate-spin-slow" style={{ animationDirection: 'reverse', animationDuration: '8s' }}>
+                                            <defs>
+                                                <radialGradient id="heartJuice" cx="50%" cy="50%" r="50%">
+                                                    <stop offset="60%" stopColor="#FFF0F5" stopOpacity="0" />
+                                                    <stop offset="90%" stopColor="#FFB6C1" stopOpacity="0.7" />
+                                                    <stop offset="100%" stopColor="#FF69B4" stopOpacity="0" />
+                                                </radialGradient>
+                                            </defs>
+                                            <circle cx="100" cy="100" r="80" fill="url(#heartJuice)" stroke="#FF69B4" strokeWidth="4" strokeLinecap="round" strokeDasharray="15 25" />
+                                            <path d="M100 25 C100 25 90 10 75 10 C55 10 50 30 50 40 C50 60 100 80 100 80 C100 80 150 60 150 40 C150 30 145 10 125 10 C110 10 100 25 100 25 Z" fill="#FF69B4" stroke="black" strokeWidth="2" transform="scale(0.2) translate(450, -50)" />
+                                            <path d="M100 25 C100 25 90 10 75 10 C55 10 50 30 50 40 C50 60 100 80 100 80 C100 80 150 60 150 40 C150 30 145 10 125 10 C110 10 100 25 100 25 Z" fill="#FFB6C1" stroke="black" strokeWidth="2" transform="scale(0.15) translate(150, 800)" />
+                                        </svg>
+                                    </div>
                                 )}
 
                                 {/* 使用物品后的爆出特效 */}
@@ -378,12 +446,14 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                     </div>
                                 )}
 
+                                {/* 羁绊达到 50 时的头顶跳动爱心 */}
                                 {hasBond && (
                                     <div className="absolute -top-4 -right-2 z-50 animate-bounce text-2xl drop-shadow-[2px_2px_0_black] pointer-events-none">
                                         💖
                                     </div>
                                 )}
 
+                                {/* 主角色图层 */}
                                 <div className={`relative z-10 transform transition-all duration-300 ${isSelected ? 'scale-[1.25]' : 'scale-100 hover:scale-110'} animate-float ${pet.isOnExpedition ? 'opacity-30 grayscale blur-[1px]' : ''}`} style={{ animationDelay: `${idx * 0.2}s` }}>
                                     <Avatar selectedParts={pet.selectedParts} dominantStat={getDominantStat(calculateStats(pet.selectedParts, pet.stats))} className="w-40 h-40 relative z-10" />
                                     {pet.isOnExpedition && (
@@ -393,6 +463,7 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                     )}
                                 </div>
 
+                                {/* 状态进度条 */}
                                 <div className="absolute -bottom-8 z-20 flex flex-col gap-1.5 w-28 bg-white/90 p-2 rounded-xl border-[3px] border-black shadow-[2px_2px_0_black] opacity-80 group-hover:opacity-100 transition-opacity">
                                     <div className="w-full h-2 bg-gray-200 rounded-full border-2 border-black overflow-hidden">
                                         <div className="bg-[#D2691E] h-full transition-all duration-500" style={{ width: `${pet.hunger ?? 80}%` }} />
@@ -478,15 +549,16 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
 
                     {/* SHOP TAB */}
                     {activeTab === 'shop' && (() => {
+                        // 🌟 修复 3：纯 SVG 图标的星砂秘店
                         const EFFECTS_DB = [
-                            { id: 'eff_heart', cursor: '💖', name: { cn: '爱心羁绊光环', en: 'Heart Aura', se: 'Hjärta Aura' }, price: 50, isStarSand: true, icon: <span className="text-3xl">💖</span> },
-                            { id: 'eff_star', cursor: '✨', name: { cn: '动态星轨', en: 'Star Trail', se: 'Stjärnspår' }, price: 100, isStarSand: true, icon: <div className="w-8 h-8"><FarmIcons.Star /></div> }
+                            { id: 'eff_heart', cursor: '', name: { cn: '爱心羁绊光环', en: 'Heart Aura', se: 'Hjärta Aura' }, price: 50, isStarSand: true, icon: <div className="w-8 h-8"><FarmIcons.Intimacy /></div> },
+                            { id: 'eff_star', cursor: '', name: { cn: '动态星轨', en: 'Star Trail', se: 'Stjärnspår' }, price: 100, isStarSand: true, icon: <div className="w-8 h-8"><FarmIcons.Star /></div> }
                         ];
 
                         const allShopItems = [
                             { id: 'cookie', cursor: '🍪', name: { cn: "元气曲奇", en: "Cookie", se: "Kaka" }, price: 5, int: 5, hun: 20, icon: <div className="w-8 h-8"><FarmIcons.Hunger className="w-full h-full" /></div> },
                             { id: 'milk', cursor: '🍓', name: { cn: "星间奶昔", en: "Milkshake", se: "Mjölkshake" }, price: 15, int: 20, hun: 10, icon: <div className="w-8 h-8"><FarmIcons.MilkFood /></div> },
-                            ...FURNITURE_DB.filter(f => unlockedShopItems.includes(f.id)).map(f => ({ id: f.id, cursor: (f as any).cursor, name: f.name, price: f.price, int: f.int, hun: 0, icon: f.imgUrl ? <img src={f.imgUrl} alt="item" className="w-8 h-8" /> : <div className="w-8 h-8">{f.svg}</div> }))
+                            ...FURNITURE_DB.filter(f => unlockedShopItems.includes(f.id)).map(f => ({ id: f.id, cursor: (f as any).cursor, name: f.name, price: f.price, int: f.int, hun: 0, imgUrl: f.imgUrl, icon: f.imgUrl ? <img src={f.imgUrl} alt="item" className="w-8 h-8" /> : <div className="w-8 h-8">{f.svg}</div> }))
                         ];
 
                         const currentItems = shopCategory === 'supplies' ? allShopItems : EFFECTS_DB;
@@ -508,21 +580,44 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 if (shopCategory === 'supplies') {
-                                                    if (carrotCoins < item.price) { playSound?.('error'); return; }
-                                                    setHoldingItem(item as any); // 设置为化身鼠标
+                                                    if (carrotCoins < item.price) { playSound?.('error'); setGlobalAlert(T.notEnoughCoins[currentLang]); return; }
+                                                    setHoldingItem(item as any);
                                                 } else {
-                                                    if (unlockedEffects?.includes(item.id)) { alert(currentLang === 'cn' ? '已经拥有该特效啦！' : 'Already owned!'); return; }
-                                                    if ((starSand ?? 0) < item.price) { playSound?.('error'); return; }
-                                                    playSound?.('achievement');
-                                                    onUpdateStarSand!(-item.price);
-                                                    onUnlockEffect!(item.id);
+                                                    if (!selectedPet) {
+                                                        playSound?.('error');
+                                                        setGlobalAlert(T.selectFirst[currentLang]);
+                                                        return;
+                                                    }
+
+                                                    const isOwned = unlockedEffects?.includes(item.id);
+                                                    const isEquipped = selectedPet.equippedEffect === item.id;
+
+                                                    if (isOwned) {
+                                                        // 已拥有：进行装备 / 卸下操作
+                                                        playSound?.('click');
+                                                        const newEffect = isEquipped ? undefined : item.id; // 如果已经穿着，再点就是脱下
+                                                        onUpdatePassport(selectedPet.id, 'equippedEffect', newEffect);
+                                                        setGlobalAlert(currentLang === 'cn'
+                                                            ? (newEffect ? `✨ 已为 ${selectedPet.starName} 装备该特效！` : `✨ 已卸下特效！`)
+                                                            : 'Effect toggled!');
+                                                    } else {
+                                                        // 未拥有：购买并自动装备
+                                                        if ((starSand ?? 0) < item.price) { playSound?.('error'); setGlobalAlert(currentLang === 'cn' ? '友谊星砂不足！去雷达里转转吧。' : 'Not enough Star Sand!'); return; }
+                                                        playSound?.('achievement');
+                                                        onUpdateStarSand!(-item.price);
+                                                        onUnlockEffect!(item.id);
+                                                        onUpdatePassport(selectedPet.id, 'equippedEffect', item.id);
+                                                        setGlobalAlert(currentLang === 'cn' ? `✨ 特效兑换成功！\n已自动为 ${selectedPet.starName} 装备！` : '✨ Effect Unlocked & Equipped!');
+                                                    }
                                                 }
                                             }}
                                             className="bg-white border-[4px] border-black p-4 rounded-[20px] flex flex-col items-center justify-between min-h-[140px] shadow-[4px_4px_0_black] cursor-pointer hover:bg-[#F9FAFB] active:translate-y-1 active:shadow-none transition-all relative overflow-hidden"
                                         >
                                             {shopCategory === 'starsand' && unlockedEffects?.includes(item.id) && (
-                                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
-                                                    <span className="bg-green-400 text-white font-black text-[10px] px-2 py-1 rounded-full border-2 border-black -rotate-12">OWNED</span>
+                                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                                                    <span className={`text-white font-black text-[10px] px-2 py-1 rounded-full border-2 border-black -rotate-12 ${selectedPet?.equippedEffect === item.id ? 'bg-[#FF90E8]' : 'bg-green-400'}`}>
+                                                        {selectedPet?.equippedEffect === item.id ? 'EQUIPPED' : 'OWNED'}
+                                                    </span>
                                                 </div>
                                             )}
                                             <div className="w-14 h-14 bg-gray-100 border-[3px] border-black rounded-full flex items-center justify-center mb-2 shadow-inner">
@@ -542,7 +637,8 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
 
                     {/* EXPLORE TAB */}
                     {activeTab === 'explore' && (
-                        <div className="h-full pt-1">
+                        /* 🌟 修复：新增这个 w-full 和 flex 居中包裹层，彻底解决结算弹窗偏左的问题！ */
+                        <div className="flex flex-col items-center justify-center w-full h-full pt-1">
                             {!selectedPet ? (
                                 <div className="flex flex-col items-center opacity-50 mt-10">
                                     <FarmIcons.Explore />
@@ -556,11 +652,12 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
 
                                     if (isDone) {
                                         return (
-                                            <div className="flex flex-col items-center justify-center h-full gap-2 animate-bounce-in">
+                                            /* 🌟 这里的 w-full 非常关键 */
+                                            <div className="flex flex-col items-center justify-center w-full h-full gap-2 animate-bounce-in relative">
                                                 <div className="w-16 h-16 bg-green-100 border-[3px] border-black rounded-full flex items-center justify-center animate-bounce">
                                                     <FarmIcons.Explore />
                                                 </div>
-                                                <p className="font-black text-[#82E0AA] uppercase tracking-wider">{T.returned[currentLang]}</p>
+                                                <p className="font-black text-[#82E0AA] uppercase tracking-wider text-center">{T.returned[currentLang]}</p>
                                                 <button onClick={handleClaimExpedition} className="mt-2 bg-[#FFD700] border-[4px] border-black px-6 py-2 rounded-2xl font-black text-black shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none flex items-center gap-2">
                                                     <CarrotCoinIcon className="w-5 h-5" />{T.checkResult[currentLang]}
                                                 </button>
@@ -570,10 +667,10 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                         const h = Math.floor((duration - timePassed) / 3600000);
                                         const m = Math.floor(((duration - timePassed) % 3600000) / 60000);
                                         return (
-                                            <div className="flex flex-col items-center justify-center h-full gap-2">
+                                            <div className="flex flex-col items-center justify-center w-full h-full gap-2 relative">
                                                 <div className="flex flex-col items-center gap-2 bg-gray-100 border-[3px] border-dashed border-black p-4 rounded-3xl w-full max-w-[280px]">
                                                     <div className="w-12 h-12 bg-[#85C1E9] border-[3px] border-black rounded-full flex items-center justify-center animate-pulse"><FarmIcons.Explore /></div>
-                                                    <p className="font-black text-sm uppercase">{T.exploringState[currentLang]}</p>
+                                                    <p className="font-black text-sm uppercase text-center">{T.exploringState[currentLang]}</p>
                                                     <div className="bg-black text-white px-4 py-1.5 rounded-xl font-mono font-bold tracking-widest">{h}H {m}M</div>
                                                 </div>
                                             </div>
@@ -581,10 +678,10 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                     }
                                 })()
                             ) : (
-                                <div className="grid grid-cols-2 gap-3 h-full pb-2">
+                                <div className="grid grid-cols-2 gap-3 w-full h-full pb-2">
                                     {EXPEDITION_OPTIONS.map((opt, i) => (
                                         <div key={i} onClick={() => startExpedition(opt)} className="bg-white border-[4px] border-black rounded-2xl p-3 flex flex-col items-center justify-center cursor-pointer shadow-[4px_4px_0_black] hover:bg-[#82E0AA] transition-colors active:translate-y-1 active:shadow-none">
-                                            <div className="font-black text-sm mb-1">{opt.label[currentLang]}</div>
+                                            <div className="font-black text-sm mb-1 text-center">{opt.label[currentLang]}</div>
                                             <div className="text-xs font-bold text-gray-500 mb-2">{opt.minutes} MIN</div>
                                             <div className="flex w-full justify-between items-center text-[10px] font-black border-t-[3px] border-black border-dashed pt-2">
                                                 <span className="text-[#D2691E] flex items-center gap-1"><div className="w-3 h-3"><FarmIcons.Hunger /></div> -{opt.hungerCost}</span>
@@ -599,9 +696,9 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                 </div>
             </footer>
 
-            {/* ✅ 修复 3：多功能结算弹窗布局修复 (居中 + 防止偏左) */}
-            {claimedPostcard && (
-                <div className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-auto p-4">
+            {/* 💌 多功能结算弹窗 (使用 Portal 彻底解决任何偏移问题！) */}
+            {claimedPostcard && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-auto p-4 animate-fade-in">
                     <div className="bg-white p-5 pb-8 rounded-[2rem] shadow-[15px_15px_0_rgba(0,0,0,0.8)] w-full max-w-[320px] animate-bounce-in flex flex-col items-center relative">
                         <div className="absolute -top-4 w-24 h-8 bg-white/50 backdrop-blur-md border border-gray-200 rotate-3 shadow-sm z-10" />
 
@@ -640,7 +737,8 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body // 👈 这里是关键！直接传送到 HTML 的顶层，无视任何父元素的干扰！
             )}
         </div>
     );

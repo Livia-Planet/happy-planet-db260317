@@ -81,6 +81,7 @@ export interface PassportData extends CharacterData {
   expeditionStartTime?: number; // 探险出发的时间戳
   expeditionDuration?: number;  // 探险总时长 (毫秒)
   expeditionReward?: number;    // 探险完成后可领取的胡萝卜币
+  equippedEffect?: string;      // 👈 新增：用来记录当前兔子穿戴的星砂特效！
 }
 
 export interface StoryEntry {
