@@ -378,12 +378,20 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                 )}
             </div>
 
-            {/* 左上角身份牌 (带有颜色变化和夹娃娃机动效) */}
+            {/* 左上角身份牌 (带有颜色变化和完美的夹娃娃机动效) */}
             <header className="absolute top-0 left-6 z-30 flex flex-col items-center pointer-events-auto">
                 {selectedPet ? (
-                    <div className={badgeAnim}> {/* 👈 加入动画控制 */}
-                        <div className="w-6 h-8 bg-gray-300 border-x-[3px] border-b-[3px] border-black rounded-b-2xl shadow-[inset_0_-3px_0_rgba(0,0,0,0.2)] z-10 mx-auto" />
-                        <div className={`border-[4px] border-black rounded-[24px] p-3 shadow-[6px_6px_0_black] flex flex-col items-center w-[140px] mt-[-8px] transition-colors duration-500 hover:translate-y-1 ${badgeColors[activeTab]}`}>
+                    <div className={`relative flex flex-col items-center ${badgeAnim}`}>
+                        {/* 🌟 视觉魔法：长长的挂绳，延伸到屏幕外面，永远不会露出断掉的头部！ */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-2 h-[500px] bg-gray-400 border-x-[3px] border-black z-0" />
+
+                        {/* 夹子头部 */}
+                        <div className="w-10 h-6 bg-gray-300 border-[3px] border-black rounded-b-xl shadow-[inset_0_-3px_0_rgba(0,0,0,0.2)] z-10 relative flex justify-center items-end pb-1">
+                            <div className="w-2 h-2 bg-gray-800 rounded-full" />
+                        </div>
+
+                        {/* 身份牌本体 */}
+                        <div className={`border-[4px] border-black rounded-[24px] p-3 shadow-[6px_6px_0_black] flex flex-col items-center w-[140px] mt-[-6px] transition-colors duration-500 hover:translate-y-1 ${badgeColors[activeTab]}`}>
                             <div className="w-full aspect-square bg-[#E0F2FE] border-[3px] border-black rounded-xl overflow-hidden relative shadow-inner mb-2 flex items-center justify-center">
                                 <div className="absolute w-[160px] h-[160px] flex items-center justify-center transform scale-[0.6] translate-y-3">
                                     <Avatar selectedParts={selectedPet.selectedParts} dominantStat={getDominantStat(calculateStats(selectedPet.selectedParts))} transparent={true} />
@@ -613,8 +621,8 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                     {activeTab === 'shop' && (() => {
                         // 🌟 修复 3：纯 SVG 图标的星砂秘店
                         const EFFECTS_DB = [
-                            { id: 'eff_heart', cursor: '', name: { cn: '爱心羁绊光环', en: 'Heart Aura', se: 'Hjärta Aura' }, price: 50, isStarSand: true, icon: <div className="w-8 h-8"><FarmIcons.Intimacy /></div> },
-                            { id: 'eff_star', cursor: '', name: { cn: '动态星轨', en: 'Star Trail', se: 'Stjärnspår' }, price: 100, isStarSand: true, icon: <div className="w-8 h-8"><FarmIcons.Star /></div> }
+                            { id: 'eff_heart', cursor: '', name: { cn: '爱心羁绊光环', en: 'Heart Aura', se: 'Hjärta Aura' }, price: 50, isStarSand: true, icon: <div className="w-5 h-5"><FarmIcons.Intimacy /></div> },
+                            { id: 'eff_star', cursor: '', name: { cn: '动态星轨', en: 'Star Trail', se: 'Stjärnspår' }, price: 100, isStarSand: true, icon: <div className="w-18 h-18"><FarmIcons.Star /></div> }
                         ];
 
                         const allShopItems = [
@@ -716,7 +724,7 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                     if (isDone) {
                                         return (
                                             /* 【教练笔记】探险归来：必须加上 w-full，否则 items-center 找不到全宽的中心，就会缩在左边 */
-                                            <div className="flex flex-col items-center justify-center mt-4 w-full h-full gap-2 animate-bounce-in">
+                                            <div className="flex flex-col items-center justify-center w-full h-full gap-2 py-2">
                                                 <div className="w-16 h-16 bg-green-100 border-[3px] border-black rounded-full flex items-center justify-center animate-bounce">
                                                     <FarmIcons.Explore />
                                                 </div>
@@ -732,7 +740,7 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                         return (
                                             /* 【教练笔记】探险中：加上 w-full，并去掉死板的 justify-center，改用 py-4 留出上下呼吸空间，防止顶部虚线被切断！ */
                                             <div className="flex flex-col items-center w-full h-full py-4">
-                                                <div className="flex flex-col items-center gap-2 bg-gray-100 border-[3px] border-dashed border-black p-4 rounded-3xl w-full max-w-[260px] mx-auto">
+                                                <div className="flex flex-col items-center gap-2 bg-gray-100 border-[3px] border-dashed border-black p-2 rounded-3xl w-full max-w-[260px] mx-auto">
                                                     <div className="w-12 h-12 bg-[#85C1E9] border-[3px] border-black rounded-full flex items-center justify-center animate-pulse"><FarmIcons.Explore /></div>
                                                     <p className="font-black text-sm uppercase text-center mt-1">{T.exploringState[currentLang]}</p>
                                                     <div className="bg-black text-white px-4 py-1.5 rounded-xl font-mono font-bold tracking-widest">{h}H {m}M</div>
@@ -815,12 +823,14 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                 }
                 .animate-wobble { animation: wobble 0.4s ease-in-out; }
                 
+                /* 🌟 带有真实重力感和回弹的娃娃机下坠动画 */
                 @keyframes claw-drop { 
-                    0% { transform: translateY(-50px) scaleY(1.2); opacity: 0; } 
-                    60% { transform: translateY(10px) scaleY(0.9); opacity: 1; } 
-                    100% { transform: translateY(0) scaleY(1); opacity: 1; } 
+                    0% { transform: translateY(-400px); } 
+                    60% { transform: translateY(20px); } 
+                    80% { transform: translateY(-10px); } 
+                    100% { transform: translateY(0); } 
                 }
-                .animate-claw-drop { animation: claw-drop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+                .animate-claw-drop { animation: claw-drop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
                 
                 @keyframes bubble-pop {
                     0% { opacity: 0; transform: translateX(-50%) scale(0.5) translateY(10px); }
