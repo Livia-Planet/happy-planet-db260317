@@ -162,25 +162,21 @@ export const Controls: React.FC<ControlsProps> = ({
 
   // Calculate Pagination Data
 
-  // --- 专业逻辑：同时抓取前发(hair)和后发(hair_b)，并应用隐藏配件解锁机制！ ---
+  // --- 专业逻辑：过滤配件，并应用隐藏配件解锁机制！ ---
   const allParts = React.useMemo(() => {
-    // 👈 核心修改：把 unlockedParts 传给 getPartList
+    // 👈 如果是头发，同时抓取前发和后发
     if (activeTab === 'hair') {
       const rawHair = getPartList('hair', unlockedParts);
       const rawHairB = getPartList('hair_b', unlockedParts);
-
       const combined = [...rawHair, ...rawHairB];
       const uniquePartsMap = new Map();
-
       combined.forEach(part => {
-        if (!uniquePartsMap.has(part.id)) {
-          uniquePartsMap.set(part.id, part);
-        }
+        if (!uniquePartsMap.has(part.id)) uniquePartsMap.set(part.id, part);
       });
-
       return Array.from(uniquePartsMap.values());
     }
 
+    // 👈 正常的配件或星球配件抓取
     return getPartList(activeTab, unlockedParts);
   }, [activeTab, unlockedParts]);
 

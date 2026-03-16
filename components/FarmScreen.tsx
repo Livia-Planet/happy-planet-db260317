@@ -193,44 +193,47 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
     // 🎯 核心交互：将物品用在兔子身上
     const applyItemToPet = (petId: string, item: any) => {
         if (item.isStarSand) {
-            // 特效兑换逻辑
-            if (unlockedEffects?.includes(item.id)) {
-                setGlobalAlert(currentLang === 'cn' ? '已经拥有该特效啦！' : 'Already owned!');
-                setHoldingItem(null); return;
-            }
-            if ((starSand ?? 0) < item.price) {
-                playSound?.('error'); setGlobalAlert(currentLang === 'cn' ? '友谊星砂不足！去雷达里转转吧。' : 'Not enough Star Sand!');
-                setHoldingItem(null); return;
-            }
-            playSound?.('achievement');
-            animateToken(`avatar-container-${petId}`, 'farm-wallet-starsand', '✨', false);
-            onUpdateStarSand!(-item.price);
-            onUnlockEffect!(item.id);
-        } else {
-            // 补给品喂食/互动逻辑
+            // 特效兑换逻辑... (保持不变)
+            if (unlockedEffects?.includes(item.id)) { setGlobalAlert(currentLang === 'cn' ? '已经拥有该特效啦！' : 'Already owned!'); setHoldingItem(null); return; }
+            if ((starSand ?? 0) < item.price) { playSound?.('error'); setGlobalAlert(currentLang === 'cn' ? '友谊星砂不足！去雷达里转转吧。' : 'Not enough Star Sand!'); setHoldingItem(null); return; }
+            playSound?.('achievement'); animateToken(`avatar-container-${petId}`, 'farm-wallet-starsand', '✨', false);
+            onUpdateStarSand!(-item.price); onUnlockEffect!(item.id);
+        } else if (item.isMagic) {
+            // 🌟 虫洞杯的魔法逻辑！
             const pet = activePets.find(p => p.id === petId);
             if (!pet) return;
-            if (pet.isOnExpedition) {
-                playSound?.('error'); setGlobalAlert(T.exploringAlert[currentLang]); setHoldingItem(null); return;
-            }
-            if (carrotCoins < item.price) {
-                playSound?.('error'); setGlobalAlert(T.notEnoughCoins[currentLang]); setHoldingItem(null); return;
+            if (!pet.isOnExpedition) {
+                playSound?.('error'); setGlobalAlert(currentLang === 'cn' ? '它没有在探险哦！\n虫洞杯只能用来秒杀探险倒计时。' : 'It is not exploring!'); setHoldingItem(null); return;
             }
 
-            // 播放使用音效 (如果有具体的可以换，这里用统一下的)
+            // 触发魔法！直接把探险出发时间改到远古时期，让倒计时瞬间结束！
+            playSound?.('whoosh'); // 吸入虫洞的音效
+            onUpdatePassport(petId, 'expeditionStartTime', Date.now() - (pet.expeditionDuration || 9999999));
+
+            // 消耗掉虫洞杯（如果想做成消耗品，可以从 unlockedShopItems 里移除，这里暂时保留作为永久道具，或者你可以设计成消耗品）
+            setGlobalAlert(currentLang === 'cn' ? '🌌 虫洞开启！\n探险瞬间完成，快去查收结果吧！' : 'Wormhole opened! Expedition finished!');
+            setInteractEffectId(petId);
+            setTimeout(() => setInteractEffectId(null), 1000);
+
+        } else {
+            // 普通补给品喂食/互动逻辑... (保持不变)
+            const pet = activePets.find(p => p.id === petId);
+            if (!pet) return;
+            if (pet.isOnExpedition) { playSound?.('error'); setGlobalAlert(T.exploringAlert[currentLang]); setHoldingItem(null); return; }
+            if (item.price > 0 && carrotCoins < item.price) { playSound?.('error'); setGlobalAlert(T.notEnoughCoins[currentLang]); setHoldingItem(null); return; }
+
             playSound?.('success');
-            // 👇 加上这行，区分吃喝和洗澡梳毛
             showBubble(item.id === 'cookie' || item.id === 'milk' ? item.id : 'groom');
 
-            // 触发货币扣除动画 (从钱包飞向兔子)
-            animateToken('farm-wallet-carrot', `avatar-container-${petId}`, '🥕', false);
+            if (item.price > 0) {
+                animateToken('farm-wallet-carrot', `avatar-container-${petId}`, '🥕', false);
+                onUpdateCoins(-item.price);
+            }
 
-            onUpdateCoins(-item.price);
             onUpdatePassport(petId, 'hunger', Math.min(100, (pet.hunger ?? 80) + item.hun));
             onUpdatePassport(petId, 'intimacy', Math.min(100, (pet.intimacy ?? 0) + item.int));
             onUpdatePassport(petId, 'lastSyncTime', Date.now());
 
-            // 触发好感度爆出特效
             setInteractEffectId(petId);
             setTimeout(() => setInteractEffectId(null), 1000);
         }
@@ -271,10 +274,10 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
             onUnlockPart(won.id); playSound?.('achievement'); resultData = { type: 'char_part', item: won, reward };
         } else if (roll <= 25 && lockedFurniture.length > 0) {
             const won = lockedFurniture[Math.floor(Math.random() * lockedFurniture.length)];
-            onUnlockShopItem(won.id); playSound?.('success'); resultData = { type: 'furniture', item: won, reward };
+            onUnlockShopItem(won.id); playSound?.('achievement'); resultData = { type: 'furniture', item: won, reward };
         } else if (roll <= 50 && availableEvents.length > 0) {
             const won = availableEvents[Math.floor(Math.random() * availableEvents.length)];
-            playSound?.('achievement'); resultData = { type: 'event', event: won, reward };
+            playSound?.('success'); resultData = { type: 'event', event: won, reward };
         } else {
             playSound?.('success');
         }
@@ -628,6 +631,9 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                         const allShopItems = [
                             { id: 'cookie', cursor: '🍪', name: { cn: "元气曲奇", en: "Cookie", se: "Kaka" }, price: 5, int: 5, hun: 20, icon: <div className="w-8 h-8"><FarmIcons.Hunger className="w-full h-full" /></div> },
                             { id: 'milk', cursor: '🍓', name: { cn: "星间奶昔", en: "Milkshake", se: "Mjölkshake" }, price: 15, int: 20, hun: 10, icon: <div className="w-8 h-8"><FarmIcons.MilkFood /></div> },
+                            // 👇 新增：读取你在雷达解锁(买到)的虫洞杯！(显示在补给列表，但价格为0，因为你已经买过了，可以直接拿起来用)
+                            ...(unlockedShopItems.includes('wormhole_cup') ? [{ id: 'wormhole_cup', cursor: '🌌', name: { cn: "虫洞杯", en: "Wormhole Cup", se: "Maskhål Kopp" }, price: 0, int: 0, hun: 0, isMagic: true, icon: <div className="w-8 h-8 flex items-center justify-center text-2xl">🌌</div> }] : []),
+                            // 👇 原有的家具
                             ...FURNITURE_DB.filter(f => unlockedShopItems.includes(f.id)).map(f => ({ id: f.id, cursor: (f as any).cursor, name: f.name, price: f.price, int: f.int, hun: 0, imgUrl: f.imgUrl, icon: f.imgUrl ? <img src={f.imgUrl} alt="item" className="w-8 h-8" /> : <div className="w-8 h-8">{f.svg}</div> }))
                         ];
 

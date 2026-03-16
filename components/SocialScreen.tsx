@@ -535,14 +535,33 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                                     </>
                                 )}
 
-                                {/* 3.3 未知配件 */}
+                                {/* 3.3 未知配件 (古代遗迹) */}
                                 {activeEntity.type === 'part' && (
                                     <>
                                         <SocialIcons.MysteryGift className="w-20 h-20 mb-4 animate-bounce" />
-                                        <h3 className="font-black text-2xl uppercase tracking-widest text-center mb-2">{currentLang === 'cn' ? '发现神秘遗迹' : 'ANCIENT RELIC'}</h3>
-                                        <p className="font-bold text-gray-500 text-sm mb-6 text-center">{currentLang === 'cn' ? `这是一个名为 [${activeEntity.data.name[currentLang]}] 的星球配方！\n要把它加入创造器吗？` : `Found ${activeEntity.data.name[currentLang]}! Add to Creator?`}</p>
-                                        <button onClick={() => handleClaimEntity('unlock_part')} className="w-full bg-[#82E0AA] border-[4px] border-black py-4 rounded-2xl font-black text-lg shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none transition-all">
-                                            {currentLang === 'cn' ? '吸收配方' : 'ABSORB DATA'}
+                                        <h3 className="font-black text-2xl uppercase tracking-widest text-center mb-2">
+                                            {currentLang === 'cn' ? '发现神秘遗迹' : 'ANCIENT RELIC'}
+                                        </h3>
+                                        <p className="font-bold text-gray-500 text-sm mb-6 text-center">
+                                            {currentLang === 'cn'
+                                                ? `扫描到一个未知的星球配件：\n[ ${activeEntity.data.name[currentLang]} ]\n要花 20 胡萝卜币破译并加入创造器吗？`
+                                                : `Found [ ${activeEntity.data.name[currentLang]} ]!\nDecode and add to Creator for 20 Carrots?`}
+                                        </p>
+                                        <button
+                                            onClick={() => {
+                                                if (carrotCoins < 20) {
+                                                    playSound('error');
+                                                    setGlobalAlert(currentLang === 'cn' ? '胡萝卜币不够破译这个遗迹啦！' : 'Not enough carrots to decode!');
+                                                    return;
+                                                }
+                                                // 扣钱、发货、飞行动效
+                                                onUpdateCoins(-20);
+                                                animateToken('social-wallet-carrot', `ent_${activeEntity.uid}`, '🥕', false);
+                                                setTimeout(() => handleClaimEntity('unlock_part'), 500);
+                                            }}
+                                            className="w-full bg-[#82E0AA] border-[4px] border-black py-4 rounded-2xl font-black text-lg shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 hover:bg-[#6EE7B7]"
+                                        >
+                                            {currentLang === 'cn' ? '破译配方' : 'DECODE DATA'} <CarrotCoinIcon className="w-5 h-5" /> -20
                                         </button>
                                     </>
                                 )}
