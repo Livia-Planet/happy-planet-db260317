@@ -242,7 +242,7 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
         if (!selectedPet) return;
         if ((selectedPet.hunger ?? 80) < opt.hungerCost) { playSound?.('error'); setGlobalAlert(currentLang === 'cn' ? `肚子太饿了，没力气飞那么远！\n需要 ${opt.hungerCost} 饥饿度。` : `Too hungry!\nNeeds ${opt.hungerCost} hunger.`); return; }
 
-        playSound?.('camera');
+        playSound?.('start');
         showBubble('explore'); // 👈 加上这行，喊出探险口号！
         onUpdatePassport(selectedPet.id, 'hunger', (selectedPet.hunger ?? 80) - opt.hungerCost);
         onUpdatePassport(selectedPet.id, 'isOnExpedition', true);
@@ -274,7 +274,7 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
             onUnlockShopItem(won.id); playSound?.('success'); resultData = { type: 'furniture', item: won, reward };
         } else if (roll <= 50 && availableEvents.length > 0) {
             const won = availableEvents[Math.floor(Math.random() * availableEvents.length)];
-            playSound?.('camera'); resultData = { type: 'event', event: won, reward };
+            playSound?.('achievement'); resultData = { type: 'event', event: won, reward };
         } else {
             playSound?.('success');
         }

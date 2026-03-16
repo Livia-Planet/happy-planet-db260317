@@ -203,7 +203,7 @@ export const App: React.FC = () => {
   const buffers = useRef<Record<string, AudioBuffer>>({});
 
   // 统一的音效发射台（带休眠唤醒功能）
-  const playSound = useCallback((type: 'camera' | 'stamp' | 'coins' | 'error' | 'success' | 'achievement' | 'click') => {
+  const playSound = useCallback((type: 'camera' | 'stamp' | 'coins' | 'error' | 'success' | 'achievement' | 'click' | 'whoosh' | 'start') => {
     if (!audioCtx.current) return;
 
     // 强制唤醒被浏览器拦截的音频系统
@@ -225,7 +225,7 @@ export const App: React.FC = () => {
     const preload = async () => {
       if (!audioCtx.current) return;
       try {
-        const [cameraB, stampB, coinsB, errorB, successB, achievementB, clickB] = await Promise.all([
+        const [cameraB, stampB, coinsB, errorB, successB, achievementB, clickB, whooshB, startB,] = await Promise.all([
           loadAudioBuffer('/camera.wav', audioCtx.current),
           loadAudioBuffer('/stamp.wav', audioCtx.current),
           loadAudioBuffer('/coins.ogg', audioCtx.current),
@@ -233,10 +233,13 @@ export const App: React.FC = () => {
           loadAudioBuffer('/success.ogg', audioCtx.current),
           loadAudioBuffer('/achievement.wav', audioCtx.current),
           loadAudioBuffer('/click.wav', audioCtx.current), // 👈 click 完璧归赵！
+          loadAudioBuffer('/whoosh.wav', audioCtx.current), // 👈 新增加载 whoosh
+          loadAudioBuffer('/start.wav', audioCtx.current)  // 👈 新增加载 start
         ]);
         buffers.current = {
           camera: cameraB, stamp: stampB, coins: coinsB,
-          error: errorB, success: successB, achievement: achievementB, click: clickB
+          error: errorB, success: successB, achievement: achievementB, click: clickB, 
+          whoosh: whooshB, start: startB // 👈 存入引擎
         };
       } catch (err) { console.error("Audio Load Error:", err); }
     };
@@ -779,6 +782,11 @@ export const App: React.FC = () => {
               }}
               playSound={playSound}
               onUpdatePassport={handleUpdatePassportData}
+              // 👇 必须补上这 4 行！这样雷达才能真正获得解锁能力！
+              unlockedParts={unlockedParts}
+              onUnlockPart={(part) => setUnlockedParts(prev => [...prev, part])}
+              unlockedShopItems={unlockedShopItems}
+              onUnlockShopItem={(item) => setUnlockedShopItems(prev => [...prev, item])}
             />
           )}
 
