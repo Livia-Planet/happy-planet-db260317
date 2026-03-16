@@ -216,13 +216,30 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
             setTimeout(() => setInteractEffectId(null), 1000);
 
         } else {
-            // 普通补给品喂食/互动逻辑... (保持不变)
+            // 普通补给品喂食/互动逻辑...
             const pet = activePets.find(p => p.id === petId);
             if (!pet) return;
             if (pet.isOnExpedition) { playSound?.('error'); setGlobalAlert(T.exploringAlert[currentLang]); setHoldingItem(null); return; }
             if (item.price > 0 && carrotCoins < item.price) { playSound?.('error'); setGlobalAlert(T.notEnoughCoins[currentLang]); setHoldingItem(null); return; }
 
-            playSound?.('success');
+            // 🌟 智能音频分发！根据你在商店点击的不同家具，播放对应的拟真音效！
+            if (item.id === 'cookie') {
+                playSound?.('chewing');
+            } else if (item.id === 'milk') {
+                playSound?.('drinking');
+            } else if (item.id === 'shower') {
+                playSound?.('wiping');
+            } else if (item.id === 'dryer') {
+                playSound?.('blowing');
+            } else if (item.id === 'comb') {
+                playSound?.('brushing');
+            } else if (item.id === 'towel') {
+                playSound?.('bubble');
+            } else {
+                playSound?.('success'); // 兜底音效
+            }
+
+            // 对话气泡分发逻辑
             showBubble(item.id === 'cookie' || item.id === 'milk' ? item.id : 'groom');
 
             if (item.price > 0) {

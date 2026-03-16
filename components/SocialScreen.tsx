@@ -572,9 +572,15 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                                         <SocialIcons.BobaShip className="w-24 h-24 mb-4" />
                                         <h3 className="font-black text-2xl uppercase tracking-widest mb-2">{currentLang === 'cn' ? '星际流浪商铺' : 'SPACE BOBA'}</h3>
                                         <p className="font-bold text-gray-500 text-sm mb-6 text-center">{currentLang === 'cn' ? '神秘的商人向你推销传说中的【虫洞杯】！\n可以秒杀农场里的探险倒计时哦！' : 'Buy the legendary Wormhole Cup?'}</p>
-                                        <button onClick={() => handleClaimEntity('buy_boba')} className="w-full bg-[#FF90E8] border-[4px] border-black py-4 rounded-2xl font-black text-lg shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 hover:bg-[#FF7CE0]">
-                                            {currentLang === 'cn' ? '购买虫洞杯' : 'BUY WORMHOLE'} <SocialIcons.StarSand className="w-5 h-5" /> -30
-                                        </button>
+                                        <div className="flex gap-3 w-full">
+                                            {/* 🌟 补上这颗拒绝按钮，点完直接把它删掉，就能继续扫描了！ */}
+                                            <button onClick={() => { playSound('whoosh'); setEntities(prev => prev.filter(e => e.uid !== activeEntity.uid)); setActiveEntity(null); }} className="flex-1 bg-white border-[4px] border-black py-4 rounded-2xl font-black text-sm active:translate-y-1 transition-all hover:bg-gray-100">
+                                                {currentLang === 'cn' ? '不用了' : 'NO THANKS'}
+                                            </button>
+                                            <button onClick={() => handleClaimEntity('buy_boba')} className="flex-[2] bg-[#FF90E8] border-[4px] border-black py-4 rounded-2xl font-black text-lg shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 hover:bg-[#FF7CE0]">
+                                                {currentLang === 'cn' ? '购买' : 'BUY'} <SocialIcons.StarSand className="w-4 h-4" /> -30
+                                            </button>
+                                        </div>
                                     </>
                                 )}
                             </div>
