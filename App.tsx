@@ -236,7 +236,7 @@ export const App: React.FC = () => {
           loadAudioBuffer('/whoosh.wav', audioCtx.current), // 👈 新增加载 whoosh
           loadAudioBuffer('/start.wav', audioCtx.current),  // 👈 新增加载 start
           loadAudioBuffer('/chewing.wav', audioCtx.current),   // 👈 新增加载 chew
-          loadAudioBuffer('/drinking.wav', audioCtx.current),    // 👈 新增加载 drink
+          loadAudioBuffer('/drinking.mp3', audioCtx.current),    // 👈 新增加载 drink
           loadAudioBuffer('/bubble.wav', audioCtx.current),    // 👈 新增加载 bubble
           loadAudioBuffer('/blowing.wav', audioCtx.current),    // 👈 新增加载 blow
           loadAudioBuffer('/brushing.wav', audioCtx.current),    // 👈 新增加载 brush

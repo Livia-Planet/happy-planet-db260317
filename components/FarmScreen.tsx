@@ -228,13 +228,13 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
             } else if (item.id === 'milk') {
                 playSound?.('drinking');
             } else if (item.id === 'shower') {
-                playSound?.('wiping');
+                playSound?.('bubble');
             } else if (item.id === 'dryer') {
                 playSound?.('blowing');
             } else if (item.id === 'comb') {
                 playSound?.('brushing');
             } else if (item.id === 'towel') {
-                playSound?.('bubble');
+                playSound?.('wiping');
             } else {
                 playSound?.('success'); // 兜底音效
             }
