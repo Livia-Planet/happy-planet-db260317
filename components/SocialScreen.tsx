@@ -6,24 +6,29 @@ import { getDominantStat, calculateStats, getStarDate } from '../utils/gameLogic
 import { CarrotCoinIcon } from './Icons';
 import { SpaceBackground } from './SpaceBackground';
 import { useAnimateTokens } from '../hooks/useAnimateTokens';
-import { PLANET_PARTS_DB } from '../data/parts'; // 用于抽取未解锁的星球配件
+import { PLANET_PARTS_DB } from '../data/parts';
 
-// 🌟 全新 SVG 图标库
+// 🌟 全新 SVG 图标库 (包含奶茶和充能状态)
 const SocialIcons = {
     StarSand: ({ className = "w-6 h-6" }) => (<svg viewBox="0 0 24 24" fill="#60EFFF" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 2l2.4 7.6H22l-6.2 4.5 2.4 7.6-6.2-4.5-6.2 4.5 2.4-7.6L2 9.6h7.6z" /><circle cx="12" cy="12" r="3" fill="white" /></svg>),
     Bottle: ({ className = "w-8 h-8" }) => (<svg viewBox="0 0 24 24" fill="#E0F2FE" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M8 3h8v3l3 4v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V10l3-4V3z" /><path d="M8 3V2h8v1" /><path d="M5 10h14" opacity="0.4" /><path d="M12 12l1.5 3h3l-2.5 2 1 3-2.5-2-2.5 2 1-3-2.5-2h3z" fill="#FFD700" stroke="none" /></svg>),
     Crosshair: ({ className = "w-6 h-6" }) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10" /><line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" /><circle cx="12" cy="12" r="3" fill="#60EFFF" /></svg>),
-    Battery: ({ level }: { level: number }) => (
-        <svg viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-            <rect x="2" y="7" width="18" height="10" rx="2" fill="white" />
-            <line x1="22" y1="10" x2="22" y2="14" />
-            {level >= 1 && <rect x="4" y="9" width="4" height="6" fill="#82E0AA" stroke="none" />}
-            {level >= 2 && <rect x="9" y="9" width="4" height="6" fill="#82E0AA" stroke="none" />}
-            {level >= 3 && <rect x="14" y="9" width="4" height="6" fill="#82E0AA" stroke="none" />}
-        </svg>
-    ),
-    BobaShip: ({ className = "w-10 h-10" }) => (
-        <svg viewBox="0 0 24 24" fill="#FF90E8" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    Battery: ({ level, phase }: { level: number, phase: 'red' | 'yellow' | null }) => {
+        const color1 = phase === 'red' ? '#EF4444' : phase === 'yellow' ? '#FBBF24' : '#82E0AA';
+        const color2 = phase === 'red' ? 'none' : phase === 'yellow' ? '#FBBF24' : '#82E0AA';
+        const color3 = phase === 'red' ? 'none' : phase === 'yellow' ? 'none' : '#82E0AA';
+        return (
+            <svg viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 transition-colors duration-500">
+                <rect x="2" y="7" width="18" height="10" rx="2" fill="white" />
+                <line x1="22" y1="10" x2="22" y2="14" />
+                {(level >= 1 || phase) && <rect x="4" y="9" width="4" height="6" fill={color1} stroke="none" className="transition-colors duration-500" />}
+                {(level >= 2 || phase) && <rect x="9" y="9" width="4" height="6" fill={color2} stroke="none" className="transition-colors duration-500" />}
+                {(level >= 3 || phase) && <rect x="14" y="9" width="4" height="6" fill={color3} stroke="none" className="transition-colors duration-500" />}
+            </svg>
+        )
+    },
+    BobaShip: ({ className = "w-10 h-10", color = "#FF90E8" }) => (
+        <svg viewBox="0 0 24 24" fill={color} stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
             <ellipse cx="12" cy="14" rx="10" ry="6" />
             <path d="M6 14v-4a6 6 0 0 1 12 0v4" fill="#E0F2FE" />
             <line x1="12" y1="10" x2="15" y2="2" stroke="#FFD700" strokeWidth="3" />
@@ -31,30 +36,53 @@ const SocialIcons = {
             <circle cx="14" cy="15" r="1.5" fill="black" stroke="none" />
         </svg>
     ),
-    MysteryGift: ({ className = "w-10 h-10" }) => (
-        <svg viewBox="0 0 24 24" fill="#A8E6CF" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-        </svg>
-    ),
-    CarePackage: ({ className = "w-6 h-6" }) => (
-        <svg viewBox="0 0 24 24" fill="#FF90E8" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="8" width="18" height="13" rx="2" /><path d="M12 8v13" /><path d="M19 12H5" /><path d="M12 8c-2-3-5-2-5 0s5 2 5 2 5-1 5-2-3-3-5 0z" fill="#FFD700" /></svg>
-    ),
-    Envelope: ({ className = "w-6 h-6" }) => (
-        <svg viewBox="0 0 24 24" fill="#FFFBEB" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 8l9 6 9-6" /><rect x="3" y="6" width="18" height="12" rx="2" /></svg>
-    )
+    MysteryGift: ({ className = "w-10 h-10" }) => (<svg viewBox="0 0 24 24" fill="#A8E6CF" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>),
+    CarePackage: ({ className = "w-6 h-6" }) => (<svg viewBox="0 0 24 24" fill="#FF90E8" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="8" width="18" height="13" rx="2" /><path d="M12 8v13" /><path d="M19 12H5" /><path d="M12 8c-2-3-5-2-5 0s5 2 5 2 5-1 5-2-3-3-5 0z" fill="#FFD700" /></svg>),
+    Envelope: ({ className = "w-6 h-6" }) => (<svg viewBox="0 0 24 24" fill="#FFFBEB" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 8l9 6 9-6" /><rect x="3" y="6" width="18" height="12" rx="2" /></svg>)
 };
 
-// 🌟 神明传说 (放入漂流瓶)
+// 🌟 史诗级神谕漂流瓶扩充 (10+ 传说故事)
 const LORE_BOTTLES = [
     { id: 'lore_1', author: 'Mummis', date: 'Era I', title: { cn: '创世之风', en: 'Birth of Wind', se: 'Vindens Födelse' }, content: { cn: '当我们在沙漠中抚摸沙子，沙砾学会了在风中舞蹈，寂静中诞生了世界的第一首旋律。', en: 'When we stroke the desert sand, the dust learns to dance in the wind, and the world\'s first melody is born.', se: 'När vi smeker öknens sand, lär sig stoftet dansa i vinden, och ur tystnaden föds världens första melodi.' } },
-    { id: 'lore_2', author: 'Puppis', date: 'Era II', title: { cn: '海的梦境', en: 'Ocean Dreams', se: 'Havets Drömmar' }, content: { cn: '我睡在地表深处，我的梦境化作了河流与湖泊。当水面闪烁时，我就醒来了。', en: 'I sleep beneath the surface, and my dreams form rivers and lakes. When the water gleams, I have awakened.', se: 'Jag sover under planetens yta, och mina drömmar formar floder och sjöar. När vattnet glimmar, har jag just vaknat.' } }
+    { id: 'lore_2', author: 'Puppis', date: 'Era II', title: { cn: '海的梦境', en: 'Ocean Dreams', se: 'Havets Drömmar' }, content: { cn: '我睡在地表深处，我的梦境化作了河流与湖泊。当水面闪烁时，我就醒来了。', en: 'I sleep beneath the surface, and my dreams form rivers and lakes. When the water gleams, I have awakened.', se: 'Jag sover under planetens yta, och mina drömmar formar floder och sjöar. När vattnet glimmar, har jag just vaknat.' } },
+    { id: 'lore_3', author: 'Luma.I', date: 'Era I', title: { cn: '光之记忆', en: 'Memory of Light', se: 'Ljuset som minns' }, content: { cn: '当黑夜合上眼，我将光明折叠。每一束光，都是宇宙未曾遗忘的叹息。', en: 'When the night closes its eyes, I fold the light. Every beam is a sigh the universe never forgot.', se: 'När mörkret sjunker, minns jag allt. Min blick är stjärnornas språk.' } },
+    { id: 'lore_4', author: 'Noctu.R', date: 'Era I', title: { cn: '黑夜的守护', en: 'Guard of the Night', se: 'Nattens Väktare' }, content: { cn: '我将黑暗如布匹般铺展，藏起繁星，只为让疲惫的心能在梦中安息。', en: 'I unfold the darkness like a cloth, hiding the stars so tired hearts can rest.', se: 'Han viker mörkret som tyg, och gömmer stjärnorna tills de behövs.' } },
+    { id: 'lore_5', author: 'Aeri.T', date: 'Era I', title: { cn: '风中的笑声', en: 'Laughter in the Wind', se: 'Skratt i Vinden' }, content: { cn: '你在风暴中听到的不是呼啸，那是我和沙尘追逐时留下的笑声！', en: 'What you hear in the storm is not howling, it is my laughter chasing the dust!', se: 'I varje virvel gömmer sig ett skratt. Vindens dans slutar aldrig.' } },
+    { id: 'lore_6', author: 'Skyni.E', date: 'Era I', title: { cn: '云的静默', en: 'Silence of Clouds', se: 'Molnens Tystnad' }, content: { cn: '当风暴沉睡，我将低语收集成雨。降落在火星上的，是天空的眼泪。', en: 'When the storm sleeps, I gather whispers into rain. It is the sky crying over Mars.', se: 'När stormen sover, vakar hon. Hon samlar viskningarna till regn.' } },
+    { id: 'lore_7', author: 'Vilde.A', date: 'Era II', title: { cn: '山脉的童年', en: 'Childhood of Mountains', se: 'Bergens Barndom' }, content: { cn: '石头裂开时，我在微笑。我让种子做梦，让山脉记起它们还是沙粒的童年。', en: 'I smile when the stone cracks. I let seeds dream and make mountains remember their sandy childhood.', se: 'Hon låter frön drömma, och berget minns sin barndom.' } },
+    { id: 'lore_8', author: 'Indi.A', date: 'Era II', title: { cn: '水晶的心跳', en: 'Crystal Heartbeat', se: 'Kristallens Puls' }, content: { cn: '在洞穴最深处，水晶随我的心跳歌唱。光与暗，原来饮着同一眼泉水。', en: 'Deep in the cave, crystals sing to my heartbeat. Light and dark drink from the same spring.', se: 'När hjärtat slår i grottans mörker, börjar kristallerna sjunga.' } },
+    { id: 'lore_9', author: 'Doddi.D', date: 'Era III', title: { cn: '当神明变小', en: 'When Gods Grew Small', se: 'När Gudarna Blev Små' }, content: { cn: '伟大的声音沉寂了，但回声变成了心。真正的力量，来自我们彼此的拥抱。', en: 'Great voices fell silent, but echoes became hearts. True power comes from holding each other.', se: 'De stora rösterna tystnade, men ekot blev till hjärta.' } },
+    { id: 'lore_10', author: 'Talrris.A', date: 'Era V', title: { cn: '不需镜子的歌', en: 'Song Without Mirror', se: 'Sång Utan Spegel' }, content: { cn: '世界一起跳舞时，没有谁的形状是错的。我的大嘴巴，是通往快乐的门！', en: 'When the world dances together, no shape is wrong. My big mouth is a door to joy!', se: 'Ingen är fel form när världen dansar tillsammans.' } }
 ];
 
-// 🌟 原住民 (盲盒抽取) -> 图片预留了 imgUrl，随时可以换成你画的 160x160 png！
-const NATIVES_DB = [
-    { id: 'native_ufoni', name: 'UFONi.A', imgUrl: '', parts: { body: 'body_white', ears: 'ears_none', face: 'face_innocent', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_robot' }, pParts: { base: 'planet_base_purple', surface: 'planet_surf_rings', atmosphere: 'planet_atmo_glow', companion: 'planet_comp_ufo' }, stats: { mod: 2, bus: 5, klurighet: 8 }, dialog: { cn: '光是由各种颜色组成的，你看到了吗？这是宇宙的秘密。', en: 'Light is made of all colors, do you see it?', se: 'Ljus består av alla färger, ser du det?' } },
-    { id: 'native_kitty', name: 'Kitty.A', imgUrl: '', parts: { body: 'body_mimosa', ears: 'ears_mimosa', face: 'eyes_glasses', hair: 'hair_fashion', hair_b: 'hair_b_none', access: 'access_beret' }, pParts: { base: 'planet_base_green', surface: 'planet_surf_crystal', atmosphere: 'planet_atmo_aurora', companion: 'planet_comp_moon' }, stats: { mod: 7, bus: 4, klurighet: 6 }, dialog: { cn: '我刚才在种花，不小心吹起了一阵香气风暴！送你一点火星特产吧！', en: 'I was planting flowers and started a scent storm!', se: 'Jag planterade blommor och startade en doftstorm!' } }
+// 🌟 十二杯星际奶茶库 (12 Boba Teas)
+const BOBA_DB = [
+    { id: 'boba_mars', name: { cn: '火星杯 (Marskopp)', en: 'Mars Cup', se: 'Marskopp' }, color: '#EF4444', desc: { cn: '红色的液体像岩浆般涌动，喝下它能获得无尽的勇气。', en: 'Red liquid surging like magma, granting endless bravery.', se: 'Röd vätska som magma, ger oändligt mod.' } },
+    { id: 'boba_jupiter', name: { cn: '木星杯 (Jupiterkopp)', en: 'Jupiter Cup', se: 'Jupiterkopp' }, color: '#F59E0B', desc: { cn: '巨大的杯子里充满智慧的风暴，一口喝下聪明绝顶！', en: 'A huge cup filled with storms of wisdom!', se: 'En stor kopp fylld med visdomens stormar!' } },
+    { id: 'boba_saturn', name: { cn: '土星杯 (Saturnuskopp)', en: 'Saturn Cup', se: 'Saturnuskopp' }, color: '#FDE047', desc: { cn: '带着一圈冰晶星环，喝了会忍不住在空中翻跟头！', en: 'Comes with an ice ring. Makes you do backflips!', se: 'Med en isring. Får dig att göra bakåtkullerbyttor!' } },
+    { id: 'boba_mercury', name: { cn: '水星杯 (Merkuriuskopp)', en: 'Mercury Cup', se: 'Merkuriuskopp' }, color: '#94A3B8', desc: { cn: '速度的化身！喝完感觉连光都追不上你。', en: 'The embodiment of speed! Even light cannot catch you.', se: 'Hastighetens inkarnation! Snabbare än ljuset.' } },
+    { id: 'boba_uranus', name: { cn: '天王星杯 (Uranuskopp)', en: 'Uranus Cup', se: 'Uranuskopp' }, color: '#38BDF8', desc: { cn: '冰冷的蓝色液体，据说能让人看透命运的轨迹。', en: 'Cold blue liquid, said to let you see the tracks of fate.', se: 'Kall blå vätska, låter dig se ödets spår.' } },
+    { id: 'boba_neptune', name: { cn: '海王星杯 (Neptunuskopp)', en: 'Neptune Cup', se: 'Neptunuskopp' }, color: '#1D4ED8', desc: { cn: '深邃如海，喝下它，所有的错误都会被宇宙原谅。', en: 'Deep as the ocean. All mistakes are forgiven by the cosmos.', se: 'Djup som havet. Alla misstag förlåts av kosmos.' } },
+    { id: 'boba_sun', name: { cn: '太阳杯 (Solkopp)', en: 'Sun Cup', se: 'Solkopp' }, color: '#FACC15', desc: { cn: '极其烫嘴！燃烧的能量让人全属性爆发！', en: 'Extremely hot! Burning energy boosts all stats!', se: 'Extremt het! Brännande energi ökar allt!' } },
+    { id: 'boba_moon', name: { cn: '月亮杯 (Månkopp)', en: 'Moon Cup', se: 'Månkopp' }, color: '#E2E8F0', desc: { cn: '安静的银色茶汤，让人能在黑暗中看到未来。', en: 'Quiet silver tea, lets you see the future in the dark.', se: 'Tyst silverte, låter dig se framtiden i mörkret.' } },
+    { id: 'boba_venus', name: { cn: '金星杯 (Venuskopp)', en: 'Venus Cup', se: 'Venuskopp' }, color: '#F472B6', desc: { cn: '粉色的浪漫泡泡，喝完周围的人都会莫名其妙变得开心。', en: 'Pink romantic bubbles. Everyone around becomes happy.', se: 'Rosa romantiska bubblor. Alla runt omkring blir glada.' } },
+    { id: 'boba_earth', name: { cn: '地球杯 (Jordkopp)', en: 'Earth Cup', se: 'Jordkopp' }, color: '#4ADE80', desc: { cn: '充满生机的绿色，拥有起死回生、重头再来的魔力！', en: 'Vibrant green. Holds the magic to start over and revive!', se: 'Levande grön. Har magin att börja om och återuppliva!' } },
+    { id: 'wormhole_cup', name: { cn: '虫洞杯 (Maskhålskopp)', en: 'Wormhole Cup', se: 'Maskhålskopp' }, color: '#C084FC', desc: { cn: '传说中的宇宙捷径！直接带回农场，秒杀探险时间！', en: 'Legendary shortcut! Instantly finishes farm expeditions!', se: 'Legendarisk genväg! Avslutar expeditioner direkt!' } },
+    { id: 'blackhole_cup', name: { cn: '黑洞杯 (Svarthålskopp)', en: 'Blackhole Cup', se: 'Svarthålskopp' }, color: '#1E293B', desc: { cn: '极度危险！会吸走胡萝卜币，但也会吐出意想不到的宝物！', en: 'Extremely dangerous! Sucks coins but spits out treasures!', se: 'Extremt farlig! Suger mynt men spottar ut skatter!' } }
 ];
+
+// 🌟 全宇宙原住民图鉴 (每次随机抽3句台词，绝对不重样)
+const NATIVES_DB = [
+    { id: 'n_mummis', name: 'Mummis', imgUrl: '', parts: { body: 'body_classic', ears: 'ears_classic', face: 'eyes_dot', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_none' }, pParts: { base: 'planet_base_yellow', surface: 'planet_surf_none', atmosphere: 'planet_atmo_none', companion: 'planet_comp_none' }, stats: { mod: 5, bus: 5, klurighet: 9 }, dialogs: { cn: ['嘘...你听，沙子在唱歌。', '第一首火星的旋律，是由风写下的。', '不要害怕寂静，寂静是音乐的开始。'], en: ['Shh... listen to the sand singing.', 'The first Martian melody was written by the wind.', 'Do not fear silence; it is the start of music.'], se: ['Sch... lyssna på sanden som sjunger.', 'Mars första melodi skrevs av vinden.', 'Räds inte tystnaden, den är början på musik.'] } },
+    { id: 'n_puppis', name: 'Puppis', imgUrl: '', parts: { body: 'body_blue', ears: 'ears_white', face: 'mouth_smile', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_none' }, pParts: { base: 'planet_base_blue', surface: 'planet_surf_swirls', atmosphere: 'planet_atmo_none', companion: 'planet_comp_none' }, stats: { mod: 4, bus: 6, klurighet: 8 }, dialogs: { cn: ['我做了一个梦，梦变成了一条蓝色的河。', '水面闪烁的时候，就是我醒来的时候。', '眼泪也是一种很美的河流哦。'], en: ['I had a dream, and it became a blue river.', 'When the water gleams, I am awake.', 'Tears are a beautiful kind of river too.'], se: ['Jag drömde en dröm som blev till en blå flod.', 'När vattnet glimmar har jag vaknat.', 'Tårar är också en vacker flod.'] } },
+    { id: 'n_ufoni', name: 'UFONi.A', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/UFOni.png', parts: { body: 'body_white', ears: 'ears_none', face: 'face_innocent', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_robot' }, pParts: { base: 'planet_base_purple', surface: 'planet_surf_rings', atmosphere: 'planet_atmo_glow', companion: 'planet_comp_ufo' }, stats: { mod: 2, bus: 5, klurighet: 8 }, dialogs: { cn: ['光是由各种颜色组成的，你看到了吗？', '我收集星星的声音，把它翻译成笑声。', '飞得再远，也不如在杯子里看见自己。'], en: ['Light is made of all colors, see?', 'I translate star sounds into laughter.', 'Traveling far is nothing compared to finding yourself in a cup.'], se: ['Ljus består av alla färger, ser du?', 'Jag översätter stjärnljud till skratt.', 'Att resa långt är inget mot att finna sig själv i en kopp.'] } },
+    { id: 'n_kitty', name: 'Kitty.A', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Kitty.png', parts: { body: 'body_mimosa', ears: 'ears_mimosa', face: 'eyes_glasses', hair: 'hair_fashion', hair_b: 'hair_b_none', access: 'access_beret' }, pParts: { base: 'planet_base_green', surface: 'planet_surf_crystal', atmosphere: 'planet_atmo_aurora', companion: 'planet_comp_moon' }, stats: { mod: 7, bus: 4, klurighet: 6 }, dialogs: { cn: ['我刚才在种花，不小心吹起了一阵香气风暴！', '把光种进土里，花儿就会对你笑。', '用友情浇灌的土地，长出的胡萝卜特别甜！'], en: ['I was planting flowers and started a scent storm!', 'Plant light in soil, and flowers smile at you.', 'Carrots grown with friendship are the sweetest!'], se: ['Jag planterade blommor och startade en doftstorm!', 'Plantera ljus i jorden så ler blommorna mot dig.', 'Morötter odlade med vänskap är sötast!'] } },
+    { id: 'n_talrris', name: 'Talrris.A', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Talrris.A.png', parts: { body: 'body_amber', ears: 'ears_camel', face: 'mouth_open', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_none' }, pParts: { base: 'planet_base_white', surface: 'planet_surf_none', atmosphere: 'planet_atmo_aurora', companion: 'planet_comp_comet' }, stats: { mod: 8, bus: 8, klurighet: 4 }, dialogs: { cn: ['啊啊啊啊啊——我在唱歌，你听懂了吗？', '他们说我嘴巴大，但这能装下更多的快乐！', '没有镜子我也知道自己很可爱！'], en: ['Ahhhhh! I am singing, do you understand?', 'They say my mouth is big, but it holds more joy!', 'I know I am cute even without a mirror!'], se: ['Ahhhhh! Jag sjunger, förstår du?', 'De säger att min mun är stor, men den rymmer mer glädje!', 'Jag vet att jag är söt även utan spegel!'] } },
+    { id: 'n_algglaffen', name: 'Älgglaffen.A', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Algglaffen.png', parts: { body: 'body_dark', ears: 'ears_dark', face: 'eyes_dot', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_tophat' }, pParts: { base: 'planet_base_black', surface: 'planet_surf_stars', atmosphere: 'planet_atmo_nebula', companion: 'planet_comp_station' }, stats: { mod: 7, bus: 7, klurighet: 7 }, dialogs: { cn: ['原来宇宙里还有这么多奇形怪状的生命！', '我的角像叉子？那是用来捕捉流星的！', '当世界一起跳舞，就没有谁是错的形状。'], en: ['So many weird lives in the universe!', 'My horns look like forks? They catch shooting stars!', 'When the world dances, no shape is wrong.'], se: ['Så många konstiga liv i universum!', 'Ser mina horn ut som gafflar? De fångar stjärnskott!', 'När världen dansar är ingen form fel.'] } },
+    { id: 'n_mimi', name: 'Mimi.V', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Mimi.V.png', parts: { body: 'body_white', ears: 'ears_white', face: 'eyes_dot', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_none' }, pParts: { base: 'planet_base_green', surface: 'planet_surf_river', atmosphere: 'planet_atmo_glow', companion: 'planet_comp_none' }, stats: { mod: 9, bus: 5, klurighet: 5 }, dialogs: { cn: ['喵～只要有一条河，我就能找到你。', '我的呼噜声，和火星的心跳是一个频率哦。', '在木头上睡觉，漂流到哪里就在哪里安家。'], en: ['Meow~ As long as there is a river, I will find you.', 'My purr matches the heartbeat of Mars.', 'Sleeping on a log, home is wherever I float.'], se: ['Mjau~ Så länge det finns en flod hittar jag dig.', 'Mitt spinnande matchar Mars hjärtslag.', 'Sover på en stock, hem är där jag flyter.'] } },
+    { id: 'n_kodo', name: 'Kodo.J', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Kodo.J.png', parts: { body: 'body_amber', ears: 'ears_dark', face: 'mouth_smile', hair: 'hair_fashion', hair_b: 'hair_b_none', access: 'access_none' }, pParts: { base: 'planet_base_yellow', surface: 'planet_surf_none', atmosphere: 'planet_atmo_none', companion: 'planet_comp_none' }, stats: { mod: 5, bus: 6, klurighet: 8 }, dialogs: { cn: ['走错路了？没关系，正好在这里办个野餐！', '迷宫里找不到出口，那就把迷宫吃掉！', '只要有蛋糕，哪里都是家。'], en: ['Lost? No problem, let us have a picnic right here!', 'Can not find the exit? Let us eat the maze!', 'Anywhere with cake is home.'], se: ['Vilse? Inga problem, vi har picknick precis här!', 'Hittar du inte ut? Vi äter upp labyrinten!', 'Överallt med tårta är hemma.'] } }
+];
+
 
 interface SocialScreenProps {
     currentLang: Language; carrotCoins: number; starSand: number;
@@ -71,29 +99,23 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
     const { animateToken } = useAnimateTokens();
 
     const [globalAlert, setGlobalAlert] = useState<string | null>(null);
-    const [selectedNeighbor, setSelectedNeighbor] = useState<PassportData | null>(null); // 自己的兔子
-    const [activeEntity, setActiveEntity] = useState<any | null>(null); // 抽出的盲盒实体
+    const [selectedNeighbor, setSelectedNeighbor] = useState<PassportData | null>(null);
+    const [activeEntity, setActiveEntity] = useState<any | null>(null);
     const [stampPrompt, setStampPrompt] = useState<PassportData | null>(null);
-
-    // 气泡系统
     const [speechBubble, setSpeechBubble] = useState<{ text: string, id: string } | null>(null);
 
-    // 扫描动画
     const [isScanning, setIsScanning] = useState(false);
-
-    // 曲率控制
     const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
     const [isDragging, setIsDragging] = useState(false);
     const [isWarping, setIsWarping] = useState(false);
     const dragStart = useRef({ x: 0, y: 0 });
 
-    // 电池系统
     const BATTERY_MAX = 3;
     const RECHARGE_TIME_MS = 4 * 60 * 60 * 1000;
     const [battery, setBattery] = useState<number>(() => parseInt(localStorage.getItem('hp_radar_bat') || '3'));
     const [lastScanTime, setLastScanTime] = useState<number>(() => parseInt(localStorage.getItem('hp_radar_time') || Date.now().toString()));
+    const [chargePhase, setChargePhase] = useState<'red' | 'yellow' | null>(null); // 充能动画阶段
 
-    // 盲盒实体状态
     const [entities, setEntities] = useState<any[]>(() => {
         const saved = localStorage.getItem('hp_radar_entities');
         return saved ? JSON.parse(saved) : [];
@@ -109,7 +131,6 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
     useEffect(() => { localStorage.setItem('hp_radar_time', lastScanTime.toString()); }, [lastScanTime]);
     useEffect(() => { localStorage.setItem('hp_radar_readBottles', JSON.stringify(readBottles)); }, [readBottles]);
 
-    // 电池恢复计算
     useEffect(() => {
         if (battery < BATTERY_MAX) {
             const now = Date.now();
@@ -121,48 +142,64 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
         }
     }, [battery, lastScanTime]);
 
-    // 🌟 常驻层：你档案室里的所有兔子！(一只有几只就显示几只)
     const permanentNeighbors = useMemo(() => passports.filter(p => !p.isAssignedToFarm), [passports]);
 
-    // 坐标分配引擎
     const getCoordinates = (index: number, baseRadius: number = 20) => {
         const radius = baseRadius + index * 8;
         const angle = index * (Math.PI * 2 * 0.618);
         return { x: 50 + radius * Math.cos(angle), y: 50 + radius * Math.sin(angle) };
     };
 
-    // 🌟 核心：生成盲盒
+    // 🌟 核心：生成不重样的盲盒实体
     const generateUniverse = () => {
         const count = Math.floor(Math.random() * 3) + 3; // 3 to 5
         const newEntities = [];
 
-        // 读取玩家写的故事
         const playerBottles = passports.flatMap(p => (p.stories || []).filter(s => s.isBottled).map(s => ({ id: s.id, author: p.starName || p.name, date: s.date, title: s.title, content: s.content })));
         const allBottles = [...LORE_BOTTLES, ...playerBottles].filter(b => !readBottles.includes(b.id));
 
         const lockedParts = Object.values(PLANET_PARTS_DB).filter(p => p.isUnlockable && !unlockedParts.includes(p.id));
 
+        const usedNatives = new Set<string>(); // 记录已经抽出的原住民，防止重样！
+
         for (let i = 0; i < count; i++) {
             const rand = Math.random();
-            const pos = getCoordinates(i, 40); // 盲盒的外圈半径更大
+            const pos = getCoordinates(i, 40);
 
             if (rand < 0.5 && allBottles.length > 0) {
                 const bottle = allBottles[Math.floor(Math.random() * allBottles.length)];
                 newEntities.push({ uid: `ent_${Date.now()}_${i}`, type: 'bottle', pos, data: bottle });
             } else if (rand < 0.7) {
-                const native = NATIVES_DB[Math.floor(Math.random() * NATIVES_DB.length)];
-                newEntities.push({ uid: `ent_${Date.now()}_${i}`, type: 'native', pos, data: native });
+                const availableNatives = NATIVES_DB.filter(n => !usedNatives.has(n.id));
+                if (availableNatives.length > 0) {
+                    const native = availableNatives[Math.floor(Math.random() * availableNatives.length)];
+                    usedNatives.add(native.id); // 锁定该原住民
+                    // 随机挑一句台词
+                    const selectedDialog = {
+                        cn: native.dialogs.cn[Math.floor(Math.random() * native.dialogs.cn.length)],
+                        en: native.dialogs.en[Math.floor(Math.random() * native.dialogs.en.length)],
+                        se: native.dialogs.se[Math.floor(Math.random() * native.dialogs.se.length)]
+                    };
+                    // 随机给 1 到 5 个胡萝卜币
+                    const rewardCoins = Math.floor(Math.random() * 5) + 1;
+                    newEntities.push({ uid: `ent_${Date.now()}_${i}`, type: 'native', pos, data: { ...native, dialog: selectedDialog, rewardCoins } });
+                } else {
+                    // 如果原住民全抽完了，用奶茶代替
+                    const boba = BOBA_DB[Math.floor(Math.random() * BOBA_DB.length)];
+                    newEntities.push({ uid: `ent_${Date.now()}_${i}`, type: 'boba', pos, data: boba });
+                }
             } else if (rand < 0.9 && lockedParts.length > 0) {
                 const part = lockedParts[Math.floor(Math.random() * lockedParts.length)];
                 newEntities.push({ uid: `ent_${Date.now()}_${i}`, type: 'part', pos, data: part });
             } else {
-                newEntities.push({ uid: `ent_${Date.now()}_${i}`, type: 'boba', pos, data: null });
+                // 抽取 12 杯奶茶之一
+                const boba = BOBA_DB[Math.floor(Math.random() * BOBA_DB.length)];
+                newEntities.push({ uid: `ent_${Date.now()}_${i}`, type: 'boba', pos, data: boba });
             }
         }
         setEntities(newEntities);
     };
 
-    // --- 互动逻辑 ---
     const showBubble = (type: 'greet' | 'feed', targetId: string) => {
         const texts = type === 'greet'
             ? { cn: ['哇！是遥远星系的信号！', '你好呀！', '接收到脑电波！'], en: ['Signal received!', 'Hello there!', 'Friendly brainwaves!'], se: ['Signal mottagen!', 'Hej där!', 'Vänliga hjärnvågor!'] }
@@ -174,7 +211,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
     };
 
     const triggerWarp = () => {
-        playSound('whoosh'); // 👈 曲率引擎加速音效！
+        playSound('whoosh');
         setIsWarping(true);
         setTimeout(() => setIsWarping(false), 300);
     };
@@ -186,35 +223,25 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
     const handlePointerMove = (e: React.PointerEvent) => { if (!isDragging) return; setTransform(prev => ({ ...prev, x: e.clientX - dragStart.current.x, y: e.clientY - dragStart.current.y })); };
     const handlePointerUp = () => setIsDragging(false);
 
-    // 1. 给常驻兔子投喂
     const handleFeedNeighbor = () => {
         if (!selectedNeighbor) return;
-        if (carrotCoins < 5) {
-            playSound('error'); setGlobalAlert(currentLang === 'cn' ? '胡萝卜币不够啦！\n快回农场赚点吧！' : 'Not enough carrots!'); return;
-        }
+        if (carrotCoins < 5) { playSound('error'); setGlobalAlert(currentLang === 'cn' ? '胡萝卜币不够啦！' : 'Not enough carrots!'); return; }
 
-        playSound('success');
-        showBubble('feed', selectedNeighbor.id);
+        playSound('success'); showBubble('feed', selectedNeighbor.id);
         animateToken('social-wallet-carrot', `perm-${selectedNeighbor.id}`, '🥕', false);
         onUpdateCoins(-5);
 
-        setTimeout(() => {
-            playSound('achievement');
-            animateToken(`perm-${selectedNeighbor.id}`, 'social-wallet-starsand', '✨', true);
-            onUpdateStarSand(10);
-        }, 500);
+        setTimeout(() => { playSound('achievement'); animateToken(`perm-${selectedNeighbor.id}`, 'social-wallet-starsand', '✨', true); onUpdateStarSand(10); }, 500);
 
         const curHunger = selectedNeighbor.hunger ?? 80;
         onUpdatePassport(selectedNeighbor.id, 'hunger', Math.min(100, curHunger + 30));
-        setStampPrompt(selectedNeighbor);
-        setSelectedNeighbor(null);
+        setStampPrompt(selectedNeighbor); setSelectedNeighbor(null);
     };
 
-    // 1.5 盖章写日记
     const handleWriteStamp = () => {
+        //... 写入手帐逻辑 (保持不变) ...
         if (!stampPrompt) return;
         playSound('stamp');
-
         const storageKey = `happyPlanet_stories_${stampPrompt.id}`;
         const localRaw = localStorage.getItem(storageKey);
         const existingStories: StoryEntry[] = localRaw ? JSON.parse(localRaw) : (stampPrompt.stories || []);
@@ -234,102 +261,93 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
         if (found) {
             const activeFarmPet = passports.find(p => p.isAssignedToFarm);
             const visitorName = activeFarmPet ? activeFarmPet.name : (currentLang === 'cn' ? '神秘旅人' : 'A Traveler');
-
-            const newStory: StoryEntry = {
-                id: `${targetGalaxy}-${targetStar}`, date: getStarDate(),
-                title: { cn: '星际馈赠', en: 'Stellar Gift', se: 'Stjärngåva' },
-                content: {
-                    cn: `今天，来自远方的 ${visitorName} 穿过了星云来看我！\n\n感谢三众神的恩赐，让我在浩瀚的宇宙中不再孤单。收到关怀包裹时，连火星的沙子都在为我们跳舞呢！`,
-                    en: `Today, ${visitorName} crossed the nebula to visit me!\n\nThanks to the Three Gods, I'm no longer alone in this universe. The Martian sand danced when the care package arrived!`,
-                    se: `Idag korsade ${visitorName} nebulosan för att besöka mig!\n\nTack vare De Tre Gudarna är jag inte längre ensam. Mars-sanden dansade för oss när paketet kom!`
-                },
-                galaxyIndex: targetGalaxy, starIndex: targetStar, hasReceivedReward: true
-            };
-
+            const newStory: StoryEntry = { id: `${targetGalaxy}-${targetStar}`, date: getStarDate(), title: { cn: '星际馈赠', en: 'Stellar Gift', se: 'Stjärngåva' }, content: { cn: `今天，来自远方的 ${visitorName} 穿过了星云来看我！\n感谢三众神的恩赐。`, en: `Today, ${visitorName} visited! Thanks to the Three Gods.`, se: `Idag besökte ${visitorName} mig! Tack vare De Tre Gudarna.` }, galaxyIndex: targetGalaxy, starIndex: targetStar, hasReceivedReward: true };
             const updatedStories = [...existingStories, newStory];
             localStorage.setItem(storageKey, JSON.stringify(updatedStories));
             onUpdatePassport(stampPrompt.id, 'stories', updatedStories);
-        } else {
-            setGlobalAlert(currentLang === 'cn' ? '手帐已经贴满啦！' : 'Storybook is full!');
-        }
+        } else { setGlobalAlert(currentLang === 'cn' ? '手帐贴满啦！' : 'Storybook full!'); }
         setStampPrompt(null);
     };
 
-    // 2. 雷达盲盒扫描
     const handleRescan = () => {
-        if (battery <= 0) {
-            playSound('error'); setGlobalAlert(currentLang === 'cn' ? '雷达能量耗尽啦！\n每 4 小时恢复一格，或者点击电池花 20 🥕 强制充能！' : 'Radar out of energy!'); return;
-        }
-        playSound('camera');
-        setBattery(prev => prev - 1);
-        setLastScanTime(Date.now());
-        setIsScanning(true);
-        setEntities([]); // 清空旧盲盒
-
-        setTimeout(() => {
-            generateUniverse();
-            setIsScanning(false);
-            triggerWarp(); // 扫描完有个加速冲击感！
-        }, 2000);
+        if (battery <= 0) { playSound('error'); setGlobalAlert(currentLang === 'cn' ? '雷达能量耗尽啦！\n每 4 小时恢复一格，或者花 20 🥕 强制充能！' : 'Radar out of energy!'); return; }
+        playSound('searching'); setBattery(prev => prev - 1); setLastScanTime(Date.now());
+        setIsScanning(true); setEntities([]);
+        setTimeout(() => { generateUniverse(); setIsScanning(false); triggerWarp(); }, 2000);
     };
 
-    // 2.5 充能
+    // 🌟 沉浸式充能动画 (红 -> 黄 -> 绿充满)
     const handleRecharge = () => {
         if (battery >= BATTERY_MAX) return;
         if (carrotCoins >= 20) {
-            playSound('success'); onUpdateCoins(-20); setBattery(BATTERY_MAX); setLastScanTime(Date.now());
+            onUpdateCoins(-20);
+            playSound('whirring'); // 播放类似引擎启动的轰鸣声
+            setChargePhase('red');
+            setTimeout(() => setChargePhase('yellow'), 1000);
+            setTimeout(() => {
+                setChargePhase(null);
+                setBattery(BATTERY_MAX);
+                setLastScanTime(Date.now());
+                playSound('click'); // 充满时叮一声
+            }, 2500); // 大约 2.5 秒充满
         } else {
-            playSound('error'); setGlobalAlert(currentLang === 'cn' ? '需要 20 胡萝卜币才能强制充能！' : 'Need 20 carrots to recharge!');
+            playSound('error'); setGlobalAlert(currentLang === 'cn' ? '需要 20 胡萝卜币才能强制充能！' : 'Need 20 carrots!');
         }
     };
 
-    // 3. 认领盲盒实体 (阅后即焚)
+    // 认领盲盒实体 (阅后即焚)
     const handleClaimEntity = (action: 'like_bottle' | 'listen_native' | 'unlock_part' | 'buy_boba') => {
         if (!activeEntity) return;
 
         if (action === 'buy_boba') {
-            if (starSand < 30) { playSound('error'); setGlobalAlert(currentLang === 'cn' ? '星砂不够买虫洞杯！' : 'Not enough Star Sand!'); return; }
+            if (starSand < 30) { playSound('error'); setGlobalAlert(currentLang === 'cn' ? '星砂不够！' : 'Not enough Star Sand!'); return; }
             onUpdateStarSand(-30);
-            if (onUnlockShopItem && !unlockedShopItems?.includes('wormhole_cup')) onUnlockShopItem('wormhole_cup');
-            playSound('success'); setGlobalAlert(currentLang === 'cn' ? '🥤 成功购买虫洞杯！\n已存入农场补给包，可用于秒杀探险时间！' : 'Bought Wormhole Cup!');
+            if (onUnlockShopItem && !unlockedShopItems?.includes(activeEntity.data.id)) onUnlockShopItem(activeEntity.data.id);
+            playSound('success'); setGlobalAlert(currentLang === 'cn' ? `🥤 成功购买 [${activeEntity.data.name.cn}]！\n已存入农场背包！` : `Bought ${activeEntity.data.name.en}!`);
         }
         else if (action === 'unlock_part') {
-            playSound('achievement');
-            if (onUnlockPart) onUnlockPart(activeEntity.data.id);
-            setGlobalAlert(currentLang === 'cn' ? `🎁 发现新星球配件！\n[${activeEntity.data.name[currentLang]}] 已加入创造器！` : 'New Planet Part Unlocked!');
+            if (carrotCoins < 20) { playSound('error'); setGlobalAlert(currentLang === 'cn' ? '胡萝卜币不够破译遗迹！' : 'Not enough carrots!'); return; }
+            onUpdateCoins(-20);
+            animateToken('social-wallet-carrot', `ent_${activeEntity.uid}`, '🥕', false);
+            setTimeout(() => {
+                playSound('achievement');
+                if (onUnlockPart) onUnlockPart(activeEntity.data.id);
+                setGlobalAlert(currentLang === 'cn' ? `🎁 遗迹破译成功！\n[${activeEntity.data.name[currentLang]}] 已加入创造器！` : 'New Planet Part Unlocked!');
+
+                playSound('whoosh');
+                setEntities(prev => prev.filter(e => e.uid !== activeEntity.uid));
+                setActiveEntity(null);
+            }, 500);
+            return; // 提前退出，等待动画
         }
         else if (action === 'listen_native') {
-            playSound('coins'); animateToken('avatar-center', 'social-wallet-carrot', '🥕', true); onUpdateCoins(10);
-            setGlobalAlert(currentLang === 'cn' ? '原住民微笑着塞给你 10 个 🥕！' : 'Received 10 Carrots!');
+            playSound('coins');
+            animateToken('avatar-center', 'social-wallet-carrot', '🥕', true);
+            onUpdateCoins(activeEntity.data.rewardCoins); // 随机 1-5 个金币！
+            setGlobalAlert(currentLang === 'cn' ? `${activeEntity.data.name} 笑着送给你 ${activeEntity.data.rewardCoins} 个 🥕！` : `Received ${activeEntity.data.rewardCoins} Carrots!`);
         }
         else if (action === 'like_bottle') {
             playSound('stamp'); animateToken('avatar-center', 'social-wallet-starsand', '✨', true); onUpdateStarSand(1);
             setReadBottles(prev => [...prev, activeEntity.data.id]);
         }
 
-        // 🌟 互动完毕，伴随 whoosh 飞走消失！
         playSound('whoosh');
         setEntities(prev => prev.filter(e => e.uid !== activeEntity.uid));
         setActiveEntity(null);
     };
 
     return (
-        <div
-            className={`fixed inset-0 z-40 bg-[#0a0a12] overflow-hidden font-rounded select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-            onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}
-        >
+        <div className={`fixed inset-0 z-40 bg-[#0a0a12] overflow-hidden font-rounded select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}>
             <div className="absolute inset-0 z-0 opacity-70 pointer-events-none">
                 <SpaceBackground bpm={30} themeColor="#60EFFF" meteorDensity={3} />
             </div>
 
-            {/* 雷达波背景 */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-80 z-10">
                 <div className="absolute w-[30vw] h-[30vw] rounded-full border-2 border-[#60EFFF] opacity-40 shadow-[0_0_30px_rgba(96,239,255,0.3)]" />
                 <div className="absolute w-[60vw] h-[60vw] rounded-full border border-[#60EFFF] opacity-20 border-dashed" />
                 <div className="absolute w-[120vw] h-[120vw] rounded-full radar-sweep pointer-events-none" />
             </div>
 
-            {/* 🌟 顶部信息栏：双货币 + 电池 */}
             <div className="absolute top-6 left-6 z-50 pointer-events-auto flex flex-col gap-3">
                 <div className="flex gap-3">
                     <div id="social-wallet-starsand" className="bg-white/10 backdrop-blur-md px-4 py-2 border-[3px] border-[#60EFFF] rounded-2xl flex items-center gap-2 shadow-[4px_4px_0_black]">
@@ -341,20 +359,20 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                         <span className="font-black text-xl text-white tracking-widest">{carrotCoins}</span>
                     </div>
                 </div>
-                <button onClick={handleRecharge} className="bg-white/10 backdrop-blur-md px-4 py-2 border-[3px] border-[#82E0AA] rounded-2xl flex items-center gap-2 shadow-[4px_4px_0_black] w-max hover:bg-white/20 transition-colors">
-                    <SocialIcons.Battery level={battery} />
-                    <span className="font-black text-sm text-[#82E0AA] uppercase ml-1">{battery < BATTERY_MAX ? `${currentLang === 'cn' ? '充能中' : 'CHARGING'}` : 'MAX'}</span>
-                    {battery < BATTERY_MAX && <div className="ml-2 flex items-center gap-1 text-[10px] text-yellow-300 border-l border-white/20 pl-2"><CarrotCoinIcon className="w-3 h-3" /> 20</div>}
+                <button onClick={handleRecharge} disabled={chargePhase !== null} className={`bg-white/10 backdrop-blur-md px-4 py-2 border-[3px] border-[#82E0AA] rounded-2xl flex items-center gap-2 shadow-[4px_4px_0_black] w-max transition-colors ${chargePhase !== null ? 'opacity-80' : 'hover:bg-white/20'}`}>
+                    <SocialIcons.Battery level={battery} phase={chargePhase} />
+                    <span className="font-black text-sm text-[#82E0AA] uppercase ml-1">
+                        {chargePhase ? (currentLang === 'cn' ? '充能中...' : 'CHARGING...') : battery < BATTERY_MAX ? (currentLang === 'cn' ? '等待充能' : 'CHARGING') : 'MAX'}
+                    </span>
+                    {battery < BATTERY_MAX && !chargePhase && <div className="ml-2 flex items-center gap-1 text-[10px] text-yellow-300 border-l border-white/20 pl-2"><CarrotCoinIcon className="w-3 h-3" /> 20</div>}
                 </button>
             </div>
 
-            {/* 🌟 缩放控制 */}
             <div className="absolute bottom-28 right-6 z-50 flex flex-col gap-2 pointer-events-auto">
                 <button onClick={zoomIn} className="w-10 h-10 bg-white/10 backdrop-blur-md border-2 border-[#60EFFF] text-[#60EFFF] rounded-xl flex items-center justify-center text-xl font-black hover:bg-[#60EFFF] hover:text-black transition-colors">+</button>
                 <button onClick={zoomOut} className="w-10 h-10 bg-white/10 backdrop-blur-md border-2 border-[#60EFFF] text-[#60EFFF] rounded-xl flex items-center justify-center text-xl font-black hover:bg-[#60EFFF] hover:text-black transition-colors">-</button>
             </div>
 
-            {/* 🌟 底部雷达扫描按钮 */}
             {entities.length === 0 && !isScanning && (
                 <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
                     <button onClick={handleRescan} className="bg-black/60 backdrop-blur-sm border-[4px] border-[#60EFFF] text-[#60EFFF] px-8 py-4 rounded-full font-black uppercase tracking-widest shadow-[0_0_30px_rgba(96,239,255,0.8)] hover:bg-[#60EFFF] hover:text-black hover:scale-110 transition-all flex items-center gap-3">
@@ -364,7 +382,6 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                 </div>
             )}
 
-            {/* 🌟 疯狂扫描时的十字准星 */}
             {isScanning && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
                     <div className="text-[#60EFFF] animate-frantic">
@@ -373,36 +390,21 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                 </div>
             )}
 
-            {/* 🌟 宇宙交互图层 + 曲率加速动画 */}
-            <div className={`absolute inset-0 z-30 transition-all duration-300 ease-out ${isWarping ? 'animate-warp-speed' : ''}`}
-                style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})` }}>
-
+            <div className={`absolute inset-0 z-30 transition-all duration-300 ease-out ${isWarping ? 'animate-warp-speed' : ''}`} style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})` }}>
                 <div id="avatar-center" className="absolute top-1/2 left-1/2 w-1 h-1 pointer-events-none" />
 
-                {/* --- 永远常驻的档案室兔子 --- */}
+                {/* 常驻兔子 */}
                 {permanentNeighbors.map((neighbor, idx) => {
-                    const pos = getCoordinates(idx, 15); // 内圈
+                    const pos = getCoordinates(idx, 15);
                     return (
-                        <div
-                            key={neighbor.id} id={`perm-${neighbor.id}`}
-                            onClick={(e) => { e.stopPropagation(); playSound('click'); setSelectedNeighbor(neighbor); showBubble('greet', neighbor.id); }}
-                            className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-pointer group hover:scale-110 transition-transform duration-300 pointer-events-auto"
-                            style={{ left: `${pos.x}%`, top: `${pos.y}%`, animation: `planet-float ${4 + idx}s ease-in-out infinite` }}
-                        >
+                        <div key={neighbor.id} id={`perm-${neighbor.id}`} onClick={(e) => { e.stopPropagation(); playSound('click'); setSelectedNeighbor(neighbor); showBubble('greet', neighbor.id); }} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-pointer group hover:scale-110 transition-transform duration-300 pointer-events-auto" style={{ left: `${pos.x}%`, top: `${pos.y}%`, animation: `planet-float ${4 + idx}s ease-in-out infinite` }}>
                             {speechBubble?.id === neighbor.id && (
                                 <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-[100] animate-bubble-pop pointer-events-none w-max max-w-[160px]">
-                                    <div className="bg-white border-[3px] border-black px-3 py-1.5 rounded-2xl shadow-[4px_4px_0_black] relative">
-                                        <span className="font-black text-xs leading-tight block text-center text-black">{speechBubble.text}</span>
-                                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-b-[3px] border-r-[3px] border-black transform rotate-45" />
-                                    </div>
+                                    <div className="bg-white border-[3px] border-black px-3 py-1.5 rounded-2xl shadow-[4px_4px_0_black] relative"><span className="font-black text-xs leading-tight block text-center text-black">{speechBubble.text}</span><div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-b-[3px] border-r-[3px] border-black transform rotate-45" /></div>
                                 </div>
                             )}
-
-                            {/* 🌟 这里是你要求的坐标 绝对保留！ */}
                             <div className="w-16 h-16 bg-[#2c3e50] border-[3px] border-[#60EFFF] rounded-full overflow-hidden flex items-center justify-center relative shadow-[0_0_20px_rgba(96,239,255,0.4)] group-hover:shadow-[0_0_30px_rgba(96,239,255,0.9)]">
-                                <div className="scale-[0.5] origin-center translate-y-0">
-                                    <Avatar selectedParts={neighbor.selectedParts} dominantStat={getDominantStat(calculateStats(neighbor.selectedParts, neighbor.stats))} transparent />
-                                </div>
+                                <div className="scale-[0.5] origin-center translate-y-0"><Avatar selectedParts={neighbor.selectedParts} dominantStat={getDominantStat(calculateStats(neighbor.selectedParts, neighbor.stats))} transparent /></div>
                                 {(neighbor.hunger ?? 80) < 50 && (<div className="absolute top-0 right-2 bg-white rounded-full p-1 border-2 border-black animate-bounce"><SocialIcons.CarePackage className="w-4 h-4" /></div>)}
                             </div>
                             <span className="mt-2 bg-black/80 text-[#60EFFF] text-[8px] font-mono font-bold px-2 py-0.5 rounded border border-[#60EFFF]/30 tracking-widest uppercase">{neighbor.name}</span>
@@ -410,87 +412,47 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                     );
                 })}
 
-                {/* --- 盲盒生成的实体 (阅后即焚) --- */}
+                {/* 盲盒实体 */}
                 {entities.map((entity, idx) => {
                     return (
-                        <div
-                            key={entity.uid}
-                            onClick={(e) => { e.stopPropagation(); playSound('click'); setActiveEntity(entity); }}
-                            className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-pointer group hover:scale-110 transition-transform duration-300 pointer-events-auto"
-                            style={{ left: `${entity.pos.x}%`, top: `${entity.pos.y}%`, animation: `planet-float ${5 + idx}s ease-in-out infinite alternate` }}
-                        >
+                        <div key={entity.uid} id={`ent_${entity.uid}`} onClick={(e) => { e.stopPropagation(); playSound('click'); setActiveEntity(entity); }} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-pointer group hover:scale-110 transition-transform duration-300 pointer-events-auto" style={{ left: `${entity.pos.x}%`, top: `${entity.pos.y}%`, animation: `planet-float ${5 + idx}s ease-in-out infinite alternate` }}>
                             {entity.type === 'native' && (
                                 <>
                                     <div className="w-16 h-16 bg-[#2c3e50] border-[3px] border-[#FF90E8] rounded-full overflow-hidden flex items-center justify-center relative shadow-[0_0_20px_rgba(255,144,232,0.4)] group-hover:shadow-[0_0_30px_rgba(255,144,232,0.9)]">
-                                        {/* 🌟 这里是替换图片的智能接口 */}
-                                        {entity.data.imgUrl ? (
-                                            <img src={entity.data.imgUrl} alt={entity.data.name} className="w-full h-full object-contain scale-125" />
-                                        ) : (
-                                            <div className="scale-[0.5] origin-center translate-y-0">
-                                                <Avatar selectedParts={entity.data.parts} dominantStat={getDominantStat(calculateStats(entity.data.parts, entity.data.stats))} transparent />
-                                            </div>
-                                        )}
+                                        {entity.data.imgUrl ? <img src={entity.data.imgUrl} alt={entity.data.name} className="w-full h-full object-contain scale-125" /> : <div className="scale-[0.5] origin-center translate-y-0"><Avatar selectedParts={entity.data.parts} dominantStat={getDominantStat(calculateStats(entity.data.parts, entity.data.stats))} transparent /></div>}
                                     </div>
                                     <span className="mt-2 bg-black/80 text-[#FF90E8] text-[8px] font-mono font-bold px-2 py-0.5 rounded border border-[#FF90E8]/30 tracking-widest uppercase">{entity.data.name}</span>
                                 </>
                             )}
-                            {entity.type === 'bottle' && (
-                                <div className="relative transform animate-spin-slow">
-                                    <SocialIcons.Bottle className="w-10 h-10 drop-shadow-[0_0_15px_rgba(96,239,255,0.8)]" />
-                                </div>
-                            )}
-                            {entity.type === 'part' && (
-                                <div className="relative">
-                                    <SocialIcons.MysteryGift className="w-12 h-12 drop-shadow-[0_0_15px_rgba(168,230,207,0.8)] animate-pulse" />
-                                </div>
-                            )}
-                            {entity.type === 'boba' && (
-                                <div className="relative transform animate-float">
-                                    <SocialIcons.BobaShip className="w-14 h-14 drop-shadow-[0_0_20px_rgba(255,144,232,0.8)]" />
-                                    <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-black/80 text-[#FF90E8] text-[8px] font-mono font-bold px-2 py-0.5 rounded uppercase whitespace-nowrap">BOBA SHOP</span>
-                                </div>
-                            )}
+                            {entity.type === 'bottle' && (<div className="relative transform animate-spin-slow"><SocialIcons.Bottle className="w-10 h-10 drop-shadow-[0_0_15px_rgba(96,239,255,0.8)]" /></div>)}
+                            {entity.type === 'part' && (<div className="relative"><SocialIcons.MysteryGift className="w-12 h-12 drop-shadow-[0_0_15px_rgba(168,230,207,0.8)] animate-pulse" /></div>)}
+                            {entity.type === 'boba' && (<div className="relative transform animate-float"><SocialIcons.BobaShip color={entity.data.color} className="w-14 h-14 drop-shadow-[0_0_20px_rgba(255,144,232,0.8)]" /><span className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-black/80 text-[#FF90E8] text-[8px] font-mono font-bold px-2 py-0.5 rounded uppercase whitespace-nowrap">BOBA</span></div>)}
                         </div>
                     );
                 })}
             </div>
 
-            {/* --- 🌟 完美居中的 Portal 传送门 --- */}
+            {/* Portal 弹窗 */}
             {typeof document !== 'undefined' && createPortal(
                 <>
-                    {/* 弹窗1：投喂自己的常驻兔子 */}
                     {selectedNeighbor && (
                         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in pointer-events-auto">
                             <div className="bg-[#fdfdf9] border-[5px] border-black rounded-[3rem] p-8 w-full max-w-sm shadow-[15px_15px_0_black] flex flex-col items-center animate-scale-in relative">
                                 <button onClick={() => setSelectedNeighbor(null)} className="absolute top-4 right-6 text-4xl font-black text-gray-400 hover:text-black transition-colors">&times;</button>
-                                <div className="w-24 h-24 bg-gray-100 border-[4px] border-black rounded-full overflow-hidden flex items-center justify-center shadow-inner mb-4">
-                                    <div className="scale-[0.7] origin-center translate-y-0"><Avatar selectedParts={selectedNeighbor.selectedParts} dominantStat={getDominantStat(calculateStats(selectedNeighbor.selectedParts, selectedNeighbor.stats))} transparent /></div>
-                                </div>
+                                <div className="w-24 h-24 bg-gray-100 border-[4px] border-black rounded-full overflow-hidden flex items-center justify-center shadow-inner mb-4"><div className="scale-[0.7] origin-center translate-y-0"><Avatar selectedParts={selectedNeighbor.selectedParts} dominantStat={getDominantStat(calculateStats(selectedNeighbor.selectedParts, selectedNeighbor.stats))} transparent /></div></div>
                                 <h3 className="font-black text-2xl uppercase tracking-widest">{selectedNeighbor.name}</h3>
                                 <p className="font-bold text-gray-500 text-xs mb-6 uppercase text-center px-2">{selectedNeighbor.bio || 'Resident of Happy Planet'}</p>
-
-                                <button onClick={handleFeedNeighbor} className="w-full bg-[#82E0AA] border-[4px] border-black py-4 rounded-2xl font-black text-lg shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none transition-all flex flex-col items-center gap-1 hover:bg-[#6EE7B7]">
-                                    <span className="uppercase tracking-widest">{currentLang === 'cn' ? '投喂关怀包裹' : 'SEND CARE PACKAGE'}</span>
-                                    <div className="flex items-center gap-4 text-[10px]">
-                                        <span className="flex items-center text-red-600"><CarrotCoinIcon className="w-3 h-3 mr-1" /> -5</span>
-                                        <span className="flex items-center text-blue-800"><SocialIcons.StarSand className="w-3 h-3 mr-1" /> +10</span>
-                                    </div>
-                                </button>
+                                <button onClick={handleFeedNeighbor} className="w-full bg-[#82E0AA] border-[4px] border-black py-4 rounded-2xl font-black text-lg shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none transition-all flex flex-col items-center gap-1 hover:bg-[#6EE7B7]"><span className="uppercase tracking-widest">{currentLang === 'cn' ? '投喂关怀包裹' : 'SEND CARE PACKAGE'}</span><div className="flex items-center gap-4 text-[10px]"><span className="flex items-center text-red-600"><CarrotCoinIcon className="w-3 h-3 mr-1" /> -5</span><span className="flex items-center text-blue-800"><SocialIcons.StarSand className="w-3 h-3 mr-1" /> +10</span></div></button>
                             </div>
                         </div>
                     )}
 
-                    {/* 弹窗2：日记盖章 */}
                     {stampPrompt && (
                         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in pointer-events-auto">
                             <div className="bg-[#FFFBEB] border-[5px] border-black rounded-[2rem] p-6 w-full max-w-xs shadow-[10px_10px_0_black] flex flex-col items-center animate-bounce-in relative">
-                                <div className="w-16 h-16 bg-[#FFD700] rounded-full border-[3px] border-black flex items-center justify-center -mt-12 mb-4 shadow-[4px_4px_0_black]">
-                                    <SocialIcons.Envelope className="w-8 h-8" />
-                                </div>
+                                <div className="w-16 h-16 bg-[#FFD700] rounded-full border-[3px] border-black flex items-center justify-center -mt-12 mb-4 shadow-[4px_4px_0_black]"><SocialIcons.Envelope className="w-8 h-8" /></div>
                                 <h3 className="font-black text-xl mb-2">{currentLang === 'cn' ? '包裹送达啦！' : 'Package Delivered!'}</h3>
-                                <p className="text-gray-600 text-center text-sm font-bold mb-6">
-                                    {currentLang === 'cn' ? `你想把这次拜访，记录到 ${stampPrompt.name} 的手帐里吗？` : `Write a visitor diary in ${stampPrompt.name}'s notebook?`}
-                                </p>
+                                <p className="text-gray-600 text-center text-sm font-bold mb-6">{currentLang === 'cn' ? `你想把这次拜访，记录到 ${stampPrompt.name} 的手帐里吗？` : `Write a visitor diary in ${stampPrompt.name}'s notebook?`}</p>
                                 <div className="flex gap-3 w-full">
                                     <button onClick={() => setStampPrompt(null)} className="flex-1 border-2 border-black py-3 rounded-xl font-black text-xs hover:bg-gray-100">{currentLang === 'cn' ? '不用了' : 'NO THANKS'}</button>
                                     <button onClick={handleWriteStamp} className="flex-1 bg-black text-white border-2 border-black py-3 rounded-xl font-black text-xs hover:bg-gray-800 shadow-[3px_3px_0_rgba(0,0,0,0.3)]">{currentLang === 'cn' ? '盖上访客章' : 'STAMP DIARY'}</button>
@@ -499,7 +461,6 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                         </div>
                     )}
 
-                    {/* 弹窗3：与盲盒实体交互 (原住民、瓶子、奶茶、配件) */}
                     {activeEntity && (
                         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in pointer-events-auto">
                             <div className="bg-white border-[5px] border-black rounded-[3rem] p-8 w-full max-w-sm shadow-[15px_15px_0_black] flex flex-col items-center animate-scale-in relative" style={{ backgroundImage: 'radial-gradient(#e0e0dc 1.2px, transparent 1.2px)', backgroundSize: '18px 18px' }}>
@@ -517,7 +478,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                                             <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#E0F2FE] border-t-[3px] border-l-[3px] border-black transform rotate-45" />
                                         </div>
                                         <button onClick={() => handleClaimEntity('listen_native')} className="w-full bg-[#FFD700] border-[4px] border-black py-4 rounded-2xl font-black text-lg shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2">
-                                            {currentLang === 'cn' ? '聆听并告别' : 'LISTEN & BYE'} <CarrotCoinIcon className="w-5 h-5" />+10
+                                            {currentLang === 'cn' ? '聆听并告别' : 'LISTEN & BYE'} <CarrotCoinIcon className="w-5 h-5" />+{activeEntity.data.rewardCoins}
                                         </button>
                                     </>
                                 )}
@@ -535,45 +496,30 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                                     </>
                                 )}
 
-                                {/* 3.3 未知配件 (古代遗迹) */}
+                                {/* 3.3 未知配件 */}
                                 {activeEntity.type === 'part' && (
                                     <>
                                         <SocialIcons.MysteryGift className="w-20 h-20 mb-4 animate-bounce" />
-                                        <h3 className="font-black text-2xl uppercase tracking-widest text-center mb-2">
-                                            {currentLang === 'cn' ? '发现神秘遗迹' : 'ANCIENT RELIC'}
-                                        </h3>
-                                        <p className="font-bold text-gray-500 text-sm mb-6 text-center">
-                                            {currentLang === 'cn'
-                                                ? `扫描到一个未知的星球配件：\n[ ${activeEntity.data.name[currentLang]} ]\n要花 20 胡萝卜币破译并加入创造器吗？`
-                                                : `Found [ ${activeEntity.data.name[currentLang]} ]!\nDecode and add to Creator for 20 Carrots?`}
-                                        </p>
-                                        <button
-                                            onClick={() => {
-                                                if (carrotCoins < 20) {
-                                                    playSound('error');
-                                                    setGlobalAlert(currentLang === 'cn' ? '胡萝卜币不够破译这个遗迹啦！' : 'Not enough carrots to decode!');
-                                                    return;
-                                                }
-                                                // 扣钱、发货、飞行动效
-                                                onUpdateCoins(-20);
-                                                animateToken('social-wallet-carrot', `ent_${activeEntity.uid}`, '🥕', false);
-                                                setTimeout(() => handleClaimEntity('unlock_part'), 500);
-                                            }}
-                                            className="w-full bg-[#82E0AA] border-[4px] border-black py-4 rounded-2xl font-black text-lg shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 hover:bg-[#6EE7B7]"
-                                        >
-                                            {currentLang === 'cn' ? '破译配方' : 'DECODE DATA'} <CarrotCoinIcon className="w-5 h-5" /> -20
-                                        </button>
+                                        <h3 className="font-black text-2xl uppercase tracking-widest text-center mb-2">{currentLang === 'cn' ? '发现神秘遗迹' : 'ANCIENT RELIC'}</h3>
+                                        <p className="font-bold text-gray-500 text-sm mb-6 text-center">{currentLang === 'cn' ? `扫描到一个未知的星球配件：\n[ ${activeEntity.data.name[currentLang]} ]\n要花 20 胡萝卜币破译并加入创造器吗？` : `Found [ ${activeEntity.data.name[currentLang]} ]!\nDecode and add to Creator for 20 Carrots?`}</p>
+                                        <div className="flex gap-3 w-full">
+                                            <button onClick={() => { playSound('whoosh'); setEntities(prev => prev.filter(e => e.uid !== activeEntity.uid)); setActiveEntity(null); }} className="flex-1 bg-white border-[4px] border-black py-4 rounded-2xl font-black text-sm active:translate-y-1 transition-all hover:bg-gray-100">
+                                                {currentLang === 'cn' ? '放弃' : 'SKIP'}
+                                            </button>
+                                            <button onClick={() => handleClaimEntity('unlock_part')} className="flex-[2] bg-[#82E0AA] border-[4px] border-black py-4 rounded-2xl font-black text-lg shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 hover:bg-[#6EE7B7]">
+                                                {currentLang === 'cn' ? '破译' : 'DECODE'} <CarrotCoinIcon className="w-5 h-5" /> -20
+                                            </button>
+                                        </div>
                                     </>
                                 )}
 
-                                {/* 3.4 奶茶飞船 */}
+                                {/* 3.4 十二款星际奶茶 */}
                                 {activeEntity.type === 'boba' && (
                                     <>
-                                        <SocialIcons.BobaShip className="w-24 h-24 mb-4" />
-                                        <h3 className="font-black text-2xl uppercase tracking-widest mb-2">{currentLang === 'cn' ? '星际流浪商铺' : 'SPACE BOBA'}</h3>
-                                        <p className="font-bold text-gray-500 text-sm mb-6 text-center">{currentLang === 'cn' ? '神秘的商人向你推销传说中的【虫洞杯】！\n可以秒杀农场里的探险倒计时哦！' : 'Buy the legendary Wormhole Cup?'}</p>
+                                        <SocialIcons.BobaShip color={activeEntity.data.color} className="w-24 h-24 mb-4" />
+                                        <h3 className="font-black text-2xl uppercase tracking-widest mb-2" style={{ color: activeEntity.data.color }}>{activeEntity.data.name[currentLang]}</h3>
+                                        <p className="font-bold text-gray-500 text-sm mb-6 text-center">{activeEntity.data.desc[currentLang]}</p>
                                         <div className="flex gap-3 w-full">
-                                            {/* 🌟 补上这颗拒绝按钮，点完直接把它删掉，就能继续扫描了！ */}
                                             <button onClick={() => { playSound('whoosh'); setEntities(prev => prev.filter(e => e.uid !== activeEntity.uid)); setActiveEntity(null); }} className="flex-1 bg-white border-[4px] border-black py-4 rounded-2xl font-black text-sm active:translate-y-1 transition-all hover:bg-gray-100">
                                                 {currentLang === 'cn' ? '不用了' : 'NO THANKS'}
                                             </button>
@@ -587,7 +533,6 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                         </div>
                     )}
 
-                    {/* 全局报错 */}
                     {globalAlert && (
                         <div className="fixed inset-0 z-[11000] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm pointer-events-auto">
                             <div className="bg-white border-[6px] border-black p-8 rounded-[40px] shadow-[15px_15px_0_black] w-full max-w-[320px] flex flex-col items-center animate-bounce-in">
@@ -611,7 +556,6 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                 @keyframes radar-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
                 .radar-sweep { background: conic-gradient(from 0deg, transparent 70%, rgba(96, 239, 255, 0.1) 80%, rgba(96, 239, 255, 0.5) 100%); animation: radar-spin 6s linear infinite; }
                 
-                /* 🌟 曲率引擎模糊特效 */
                 @keyframes warp-speed {
                     0% { filter: blur(0px); transform: scale(1); }
                     50% { filter: blur(8px) brightness(1.5); }
@@ -619,7 +563,6 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                 }
                 .animate-warp-speed { animation: warp-speed 0.3s ease-out; }
                 
-                /* 🌟 疯狂十字瞄准镜 */
                 @keyframes frantic-search {
                     0% { transform: translate(0, 0) scale(1.5); }
                     20% { transform: translate(-50px, -30px) scale(2) rotate(-15deg); }
@@ -630,7 +573,6 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                 }
                 .animate-frantic { animation: frantic-search 0.4s ease-in-out infinite; }
                 
-                /* 气泡弹出 */
                 @keyframes bubble-pop {
                     0% { opacity: 0; transform: translateX(-50%) scale(0.5) translateY(10px); }
                     50% { transform: translateX(-50%) scale(1.1) translateY(0); }

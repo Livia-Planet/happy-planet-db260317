@@ -225,7 +225,7 @@ export const App: React.FC = () => {
     const preload = async () => {
       if (!audioCtx.current) return;
       try {
-        const [cameraB, stampB, coinsB, errorB, successB, achievementB, clickB, whooshB, startB, chewB, drinkB, bubbleB, blowB, brushB, wipB] = await Promise.all([
+        const [cameraB, stampB, coinsB, errorB, successB, achievementB, clickB, whooshB, startB, chewB, drinkB, bubbleB, blowB, brushB, wipB, searchB, whirB] = await Promise.all([
           loadAudioBuffer('/camera.wav', audioCtx.current),
           loadAudioBuffer('/stamp.wav', audioCtx.current),
           loadAudioBuffer('/coins.ogg', audioCtx.current),
@@ -240,12 +240,16 @@ export const App: React.FC = () => {
           loadAudioBuffer('/bubble.wav', audioCtx.current),    // 👈 新增加载 bubble
           loadAudioBuffer('/blowing.wav', audioCtx.current),    // 👈 新增加载 blow
           loadAudioBuffer('/brushing.wav', audioCtx.current),    // 👈 新增加载 brush
-          loadAudioBuffer('/wiping.wav', audioCtx.current)     // 👈 新增加载 wip
+          loadAudioBuffer('/wiping.wav', audioCtx.current),     // 👈 新增加载 wip
+          loadAudioBuffer('/searching.flac', audioCtx.current),      // 👈 新增加载 search
+          loadAudioBuffer('/whirring.wav', audioCtx.current)      // 👈 新增加载 whir
+
         ]);
         buffers.current = {
           camera: cameraB, stamp: stampB, coins: coinsB,
           error: errorB, success: successB, achievement: achievementB, click: clickB, 
-          whoosh: whooshB, start: startB, chewing: chewB, drinking: drinkB, bubble: bubbleB, blowing: blowB, brushing: brushB, wiping: wipB // 👈 存入引擎
+          whoosh: whooshB, start: startB, chewing: chewB, drinking: drinkB, bubble: bubbleB, blowing: blowB, brushing: brushB, wiping: wipB, 
+          searching: searchB, whirring: whirB // 👈 存入引擎
         };
       } catch (err) { console.error("Audio Load Error:", err); }
     };
