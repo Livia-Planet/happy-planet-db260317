@@ -12,7 +12,7 @@ import { SuccessOverlay } from './components/effects/SuccessOverlay';
 import { CharacterData, PartCategory, PlanetCategory, Language, PassportData, UnlockedMedal, AchievementDef, ViewMode } from './types';
 import { StartScreen } from './components/StartScreen';
 import { getPartList } from './data/parts';
-import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS, generateStarName, getWeightedRandomPart, calculateFinalRarity } from './utils/gameLogic';
+import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS, generateStarName, getWeightedRandomPart, calculateFinalRarity, getStarDate } from './utils/gameLogic';
 import { AchievementUnlockModal } from './components/AchievementUnlockModal';
 import { DevTools } from './components/DevTools';
 import { LoadingScreen } from './components/LoadingScreen';
@@ -22,6 +22,10 @@ import { MagicCursor } from './components/MagicCursor';
 import { FarmScreen } from './components/FarmScreen';
 import { FloatingFocus } from './components/FloatingFocus'; // 👈 新增引入
 import { SocialScreen } from './components/SocialScreen';
+
+import { auth, db } from './utils/firebase'; // 👈 确保这里有 db
+import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'; // 👈 引入 Firestore 操作函数
 
 // --- 专业的零延迟音效加载函数 ---
 const loadAudioBuffer = async (url: string, context: AudioContext) => {
@@ -129,6 +133,28 @@ export const App: React.FC = () => {
 
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.FARM_SLOTS, maxFarmSlots.toString()); }, [maxFarmSlots]);
   // 👆 新增结束
+
+  // 🌟 全局 UID 状态 (记录当前玩家的云端身份)
+  const [userUid, setUserUid] = useState<string | null>(null);
+
+  // 🌟 静默匿名登录逻辑
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // 如果已经登录过，记录下 UID
+        setUserUid(user.uid);
+        console.log("🛸 已连接至星际网络，当前身份 UID:", user.uid);
+      } else {
+        // 如果是第一次来，触发匿名登录
+        signInAnonymously(auth).catch((error) => {
+          console.error("星际网络连接失败:", error);
+        });
+      }
+    });
+
+    // 组件卸载时清理监听器
+    return () => unsubscribe();
+  }, []);
 
   // 👇 探险战利品资产库 (家具等永久物品)
   const [unlockedShopItems, setUnlockedShopItems] = useState<string[]>(() => {
@@ -427,6 +453,35 @@ export const App: React.FC = () => {
       return { ...prev, [id]: { ...prev[id], x, y } };
     });
   }, []);
+
+  // ==========================================
+  // 🚀 终极魔法：将漂流瓶写入 Firebase 云端
+  // ==========================================
+  const handleThrowBottle = async (title: Record<Language, string>, content: Record<Language, string>, authorName: string) => {
+    if (!userUid) {
+      console.warn("雷达报错：未连接到星际网络，无法发射漂流瓶！");
+      return;
+    }
+
+    try {
+      // 指向数据库中的 'bottles' 抽屉（集合）
+      const bottlesRef = collection(db, "bottles");
+
+      // 执行写入操作！
+      await addDoc(bottlesRef, {
+        uid: userUid,                 // 绑定你的匿名灵魂 ID
+        author: authorName,           // 角色名字
+        title: title,                 // 标题 (包含三种语言)
+        content: content,             // 内容 (包含三种语言)
+        createdAt: serverTimestamp(), // 云端服务器的绝对时间
+        date: getStarDate()           // 游戏内的格式化日期
+      });
+
+      console.log("🚀 Biu~ 漂流瓶已成功发射到 Firebase 的星海中！");
+    } catch (error) {
+      console.error("发射失败，漂流瓶坠毁:", error);
+    }
+  };
 
   // 👈 增加了 currency 参数，支持发胡萝卜和星砂！
   const handleReward = useCallback((amount: number, sourceId: string, currency: 'carrot' | 'starSand' = 'carrot') => {
@@ -753,6 +808,7 @@ export const App: React.FC = () => {
                 lang={currentLang}
                 onReward={handleReward}
                 onToggleFarm={handleToggleFarmStatus}
+                onThrowBottle={handleThrowBottle} // 👈 最后一棒：接上发射器！
               />
             </div>
           )}

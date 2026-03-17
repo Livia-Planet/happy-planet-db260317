@@ -10,6 +10,8 @@ interface AvatarProps {
 }
 
 export const Avatar: React.FC<AvatarProps> = ({ selectedParts, dominantStat, className = "", transparent = false }) => {
+  // 👇 加上这行超级防弹衣！如果没传部件数据，就显示一个灰色的占位圆圈，绝不崩溃！
+  if (!selectedParts) return <div className={`w-full h-full bg-gray-200 animate-pulse rounded-full ${className}`} />;
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Background color mapping

@@ -106,6 +106,8 @@ interface PassportBookProps {
   lang: Language;
   onReward?: (amount: number, sourceId: string, currency?: 'carrot' | 'starSand') => void; // <--- 新增这行
   onToggleFarm: (id: string) => void;
+  // 👇 新增这一行：接收三语标题、三语内容和作者名字
+  onThrowBottle?: (title: Record<Language, string>, content: Record<Language, string>, authorName: string) => void;
 }
 
 type Tab = 'profile' | 'personality' | 'relations' | 'story';
@@ -259,7 +261,8 @@ export const PassportBook: React.FC<PassportBookProps> = ({
   onDelete,
   lang,
   onReward,
-  onToggleFarm
+  onToggleFarm,
+  onThrowBottle // 👈 接住它
 }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -1634,6 +1637,10 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                   onUpdateStories={handleUpdateStories}
                   selectedId={selectedId}
                   onReward={onReward} // 👈 新增这一行：把发奖的方法传给故事本！
+                  // 👇 第二棒交接：带上作者名字，传给最顶层的 App.tsx！
+                  onThrowBottle={(title, content) => {
+                    if (onThrowBottle) onThrowBottle(title, content, activePassport.name);
+                  }}
                 />
               </div>
             )}

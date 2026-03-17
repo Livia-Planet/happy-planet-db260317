@@ -17,6 +17,8 @@ interface StoryTabProps {
     /** 用于持久化星系锁状态 */
     selectedId?: string | null;
     onReward?: (amount: number, sourceId: string, currency?: 'carrot' | 'starSand') => void; // 👈 接收它
+    // 👇 新增这一行：将发射信号传出去
+    onThrowBottle?: (title: Record<Language, string>, content: Record<Language, string>) => void;
 }
 
 /* ─────────────────────────────────────────────────────
@@ -131,7 +133,8 @@ export const StoryTab: React.FC<StoryTabProps> = ({
     isFlipped,
     onUpdateStories,
     selectedId,
-    onReward // 👈 接收它
+    onReward, // 👈 接收它
+    onThrowBottle // 👈 接住它
 }) => {
     const [currentPage, setCurrentPage] = useState(0);
     const [editingIdx, setEditingIdx] = useState<number | null>(null);
@@ -520,6 +523,8 @@ export const StoryTab: React.FC<StoryTabProps> = ({
                         // 如果在保存时收到了装瓶信号，就发 5 个星砂！
                         if (lockPayload?.isBottled && onReward) {
                             onReward(5, 'bottle_throw', 'starSand');
+                            // 👇 第一棒交接：把日记数据传给 PassportBook！
+                            if (onThrowBottle) onThrowBottle(title, content);
                         }
                     }}
                     onDelete={handleDelete}

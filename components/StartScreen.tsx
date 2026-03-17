@@ -131,9 +131,9 @@ export const StartScreen: React.FC<StartScreenProps> = ({
           style={{ WebkitTextStroke: '2px black' }}>
           {t.title}
         </h1>
-        <text x="230" y="220" className="font-black" fontSize="16" fill="white" opacity="0.6" textAnchor="middle" letterSpacing="2">
+        <span x="230" y="220" className="font-black" fontSize="16" fill="white" opacity="0.6" textAnchor="middle" letterSpacing="2">
           {t.author}
-        </text>
+        </span>
       </div>
 
       {/* --- 中心飞船区域 (Middle) --- */}
