@@ -114,3 +114,5 @@ export interface PetStatus {
   mood: number;         // 心情值 0-100
   lastCheckIn: number;  // 上次同步时间戳
 }
+// --- 消耗品库存系统 ---
+export type Inventory = Record<string, number>;

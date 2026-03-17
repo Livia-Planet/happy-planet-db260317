@@ -73,14 +73,14 @@ const BOBA_DB = [
 
 // 🌟 全宇宙原住民图鉴 (每次随机抽3句台词，绝对不重样)
 const NATIVES_DB = [
-    { id: 'n_mummis', name: 'Mummis', imgUrl: '', parts: { body: 'body_classic', ears: 'ears_classic', face: 'eyes_dot', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_none' }, pParts: { base: 'planet_base_yellow', surface: 'planet_surf_none', atmosphere: 'planet_atmo_none', companion: 'planet_comp_none' }, stats: { mod: 5, bus: 5, klurighet: 9 }, dialogs: { cn: ['嘘...你听，沙子在唱歌。', '第一首火星的旋律，是由风写下的。', '不要害怕寂静，寂静是音乐的开始。'], en: ['Shh... listen to the sand singing.', 'The first Martian melody was written by the wind.', 'Do not fear silence; it is the start of music.'], se: ['Sch... lyssna på sanden som sjunger.', 'Mars första melodi skrevs av vinden.', 'Räds inte tystnaden, den är början på musik.'] } },
-    { id: 'n_puppis', name: 'Puppis', imgUrl: '', parts: { body: 'body_blue', ears: 'ears_white', face: 'mouth_smile', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_none' }, pParts: { base: 'planet_base_blue', surface: 'planet_surf_swirls', atmosphere: 'planet_atmo_none', companion: 'planet_comp_none' }, stats: { mod: 4, bus: 6, klurighet: 8 }, dialogs: { cn: ['我做了一个梦，梦变成了一条蓝色的河。', '水面闪烁的时候，就是我醒来的时候。', '眼泪也是一种很美的河流哦。'], en: ['I had a dream, and it became a blue river.', 'When the water gleams, I am awake.', 'Tears are a beautiful kind of river too.'], se: ['Jag drömde en dröm som blev till en blå flod.', 'När vattnet glimmar har jag vaknat.', 'Tårar är också en vacker flod.'] } },
+    { id: 'n_mummis', name: 'Mummis', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Mummis.png', parts: { body: 'body_classic', ears: 'ears_classic', face: 'eyes_dot', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_none' }, pParts: { base: 'planet_base_yellow', surface: 'planet_surf_none', atmosphere: 'planet_atmo_none', companion: 'planet_comp_none' }, stats: { mod: 5, bus: 5, klurighet: 9 }, dialogs: { cn: ['嘘...你听，沙子在唱歌。', '第一首火星的旋律，是由风写下的。', '不要害怕寂静，寂静是音乐的开始。'], en: ['Shh... listen to the sand singing.', 'The first Martian melody was written by the wind.', 'Do not fear silence; it is the start of music.'], se: ['Sch... lyssna på sanden som sjunger.', 'Mars första melodi skrevs av vinden.', 'Räds inte tystnaden, den är början på musik.'] } },
+    { id: 'n_puppis', name: 'Puppis', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Puppis.png', parts: { body: 'body_blue', ears: 'ears_white', face: 'mouth_smile', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_none' }, pParts: { base: 'planet_base_blue', surface: 'planet_surf_swirls', atmosphere: 'planet_atmo_none', companion: 'planet_comp_none' }, stats: { mod: 4, bus: 6, klurighet: 8 }, dialogs: { cn: ['我做了一个梦，梦变成了一条蓝色的河。', '水面闪烁的时候，就是我醒来的时候。', '眼泪也是一种很美的河流哦。'], en: ['I had a dream, and it became a blue river.', 'When the water gleams, I am awake.', 'Tears are a beautiful kind of river too.'], se: ['Jag drömde en dröm som blev till en blå flod.', 'När vattnet glimmar har jag vaknat.', 'Tårar är också en vacker flod.'] } },
     { id: 'n_ufoni', name: 'UFONi.A', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/UFOni.png', parts: { body: 'body_white', ears: 'ears_none', face: 'face_innocent', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_robot' }, pParts: { base: 'planet_base_purple', surface: 'planet_surf_rings', atmosphere: 'planet_atmo_glow', companion: 'planet_comp_ufo' }, stats: { mod: 2, bus: 5, klurighet: 8 }, dialogs: { cn: ['光是由各种颜色组成的，你看到了吗？', '我收集星星的声音，把它翻译成笑声。', '飞得再远，也不如在杯子里看见自己。'], en: ['Light is made of all colors, see?', 'I translate star sounds into laughter.', 'Traveling far is nothing compared to finding yourself in a cup.'], se: ['Ljus består av alla färger, ser du?', 'Jag översätter stjärnljud till skratt.', 'Att resa långt är inget mot att finna sig själv i en kopp.'] } },
     { id: 'n_kitty', name: 'Kitty.A', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Kitty.png', parts: { body: 'body_mimosa', ears: 'ears_mimosa', face: 'eyes_glasses', hair: 'hair_fashion', hair_b: 'hair_b_none', access: 'access_beret' }, pParts: { base: 'planet_base_green', surface: 'planet_surf_crystal', atmosphere: 'planet_atmo_aurora', companion: 'planet_comp_moon' }, stats: { mod: 7, bus: 4, klurighet: 6 }, dialogs: { cn: ['我刚才在种花，不小心吹起了一阵香气风暴！', '把光种进土里，花儿就会对你笑。', '用友情浇灌的土地，长出的胡萝卜特别甜！'], en: ['I was planting flowers and started a scent storm!', 'Plant light in soil, and flowers smile at you.', 'Carrots grown with friendship are the sweetest!'], se: ['Jag planterade blommor och startade en doftstorm!', 'Plantera ljus i jorden så ler blommorna mot dig.', 'Morötter odlade med vänskap är sötast!'] } },
-    { id: 'n_talrris', name: 'Talrris.A', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Talrris.A.png', parts: { body: 'body_amber', ears: 'ears_camel', face: 'mouth_open', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_none' }, pParts: { base: 'planet_base_white', surface: 'planet_surf_none', atmosphere: 'planet_atmo_aurora', companion: 'planet_comp_comet' }, stats: { mod: 8, bus: 8, klurighet: 4 }, dialogs: { cn: ['啊啊啊啊啊——我在唱歌，你听懂了吗？', '他们说我嘴巴大，但这能装下更多的快乐！', '没有镜子我也知道自己很可爱！'], en: ['Ahhhhh! I am singing, do you understand?', 'They say my mouth is big, but it holds more joy!', 'I know I am cute even without a mirror!'], se: ['Ahhhhh! Jag sjunger, förstår du?', 'De säger att min mun är stor, men den rymmer mer glädje!', 'Jag vet att jag är söt även utan spegel!'] } },
-    { id: 'n_algglaffen', name: 'Älgglaffen.A', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Algglaffen.png', parts: { body: 'body_dark', ears: 'ears_dark', face: 'eyes_dot', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_tophat' }, pParts: { base: 'planet_base_black', surface: 'planet_surf_stars', atmosphere: 'planet_atmo_nebula', companion: 'planet_comp_station' }, stats: { mod: 7, bus: 7, klurighet: 7 }, dialogs: { cn: ['原来宇宙里还有这么多奇形怪状的生命！', '我的角像叉子？那是用来捕捉流星的！', '当世界一起跳舞，就没有谁是错的形状。'], en: ['So many weird lives in the universe!', 'My horns look like forks? They catch shooting stars!', 'When the world dances, no shape is wrong.'], se: ['Så många konstiga liv i universum!', 'Ser mina horn ut som gafflar? De fångar stjärnskott!', 'När världen dansar är ingen form fel.'] } },
-    { id: 'n_mimi', name: 'Mimi.V', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Mimi.V.png', parts: { body: 'body_white', ears: 'ears_white', face: 'eyes_dot', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_none' }, pParts: { base: 'planet_base_green', surface: 'planet_surf_river', atmosphere: 'planet_atmo_glow', companion: 'planet_comp_none' }, stats: { mod: 9, bus: 5, klurighet: 5 }, dialogs: { cn: ['喵～只要有一条河，我就能找到你。', '我的呼噜声，和火星的心跳是一个频率哦。', '在木头上睡觉，漂流到哪里就在哪里安家。'], en: ['Meow~ As long as there is a river, I will find you.', 'My purr matches the heartbeat of Mars.', 'Sleeping on a log, home is wherever I float.'], se: ['Mjau~ Så länge det finns en flod hittar jag dig.', 'Mitt spinnande matchar Mars hjärtslag.', 'Sover på en stock, hem är där jag flyter.'] } },
-    { id: 'n_kodo', name: 'Kodo.J', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Kodo.J.png', parts: { body: 'body_amber', ears: 'ears_dark', face: 'mouth_smile', hair: 'hair_fashion', hair_b: 'hair_b_none', access: 'access_none' }, pParts: { base: 'planet_base_yellow', surface: 'planet_surf_none', atmosphere: 'planet_atmo_none', companion: 'planet_comp_none' }, stats: { mod: 5, bus: 6, klurighet: 8 }, dialogs: { cn: ['走错路了？没关系，正好在这里办个野餐！', '迷宫里找不到出口，那就把迷宫吃掉！', '只要有蛋糕，哪里都是家。'], en: ['Lost? No problem, let us have a picnic right here!', 'Can not find the exit? Let us eat the maze!', 'Anywhere with cake is home.'], se: ['Vilse? Inga problem, vi har picknick precis här!', 'Hittar du inte ut? Vi äter upp labyrinten!', 'Överallt med tårta är hemma.'] } }
+    { id: 'n_talrris', name: 'Talrris.A', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Talrris.png', parts: { body: 'body_amber', ears: 'ears_camel', face: 'mouth_open', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_none' }, pParts: { base: 'planet_base_white', surface: 'planet_surf_none', atmosphere: 'planet_atmo_aurora', companion: 'planet_comp_comet' }, stats: { mod: 8, bus: 8, klurighet: 4 }, dialogs: { cn: ['啊啊啊啊啊——我在唱歌，你听懂了吗？', '他们说我嘴巴大，但这能装下更多的快乐！', '没有镜子我也知道自己很可爱！'], en: ['Ahhhhh! I am singing, do you understand?', 'They say my mouth is big, but it holds more joy!', 'I know I am cute even without a mirror!'], se: ['Ahhhhh! Jag sjunger, förstår du?', 'De säger att min mun är stor, men den rymmer mer glädje!', 'Jag vet att jag är söt även utan spegel!'] } },
+    { id: 'n_algglaffen', name: 'Älgglaffen.A', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Älgglaffen.png', parts: { body: 'body_dark', ears: 'ears_dark', face: 'eyes_dot', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_tophat' }, pParts: { base: 'planet_base_black', surface: 'planet_surf_stars', atmosphere: 'planet_atmo_nebula', companion: 'planet_comp_station' }, stats: { mod: 7, bus: 7, klurighet: 7 }, dialogs: { cn: ['原来宇宙里还有这么多奇形怪状的生命！', '我的角像叉子？那是用来捕捉流星的！', '当世界一起跳舞，就没有谁是错的形状。'], en: ['So many weird lives in the universe!', 'My horns look like forks? They catch shooting stars!', 'When the world dances, no shape is wrong.'], se: ['Så många konstiga liv i universum!', 'Ser mina horn ut som gafflar? De fångar stjärnskott!', 'När världen dansar är ingen form fel.'] } },
+    { id: 'n_mimi', name: 'Mimi.V', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Mimi.png', parts: { body: 'body_white', ears: 'ears_white', face: 'eyes_dot', hair: 'hair_none', hair_b: 'hair_b_none', access: 'access_none' }, pParts: { base: 'planet_base_green', surface: 'planet_surf_river', atmosphere: 'planet_atmo_glow', companion: 'planet_comp_none' }, stats: { mod: 9, bus: 5, klurighet: 5 }, dialogs: { cn: ['喵～只要有一条河，我就能找到你。', '我的呼噜声，和火星的心跳是一个频率哦。', '在木头上睡觉，漂流到哪里就在哪里安家。'], en: ['Meow~ As long as there is a river, I will find you.', 'My purr matches the heartbeat of Mars.', 'Sleeping on a log, home is wherever I float.'], se: ['Mjau~ Så länge det finns en flod hittar jag dig.', 'Mitt spinnande matchar Mars hjärtslag.', 'Sover på en stock, hem är där jag flyter.'] } },
+    { id: 'n_kodo', name: 'Kodo.J', imgUrl: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Kodo.png', parts: { body: 'body_amber', ears: 'ears_dark', face: 'mouth_smile', hair: 'hair_fashion', hair_b: 'hair_b_none', access: 'access_none' }, pParts: { base: 'planet_base_yellow', surface: 'planet_surf_none', atmosphere: 'planet_atmo_none', companion: 'planet_comp_none' }, stats: { mod: 5, bus: 6, klurighet: 8 }, dialogs: { cn: ['走错路了？没关系，正好在这里办个野餐！', '迷宫里找不到出口，那就把迷宫吃掉！', '只要有蛋糕，哪里都是家。'], en: ['Lost? No problem, let us have a picnic right here!', 'Can not find the exit? Let us eat the maze!', 'Anywhere with cake is home.'], se: ['Vilse? Inga problem, vi har picknick precis här!', 'Hittar du inte ut? Vi äter upp labyrinten!', 'Överallt med tårta är hemma.'] } }
 ];
 
 
@@ -91,10 +91,12 @@ interface SocialScreenProps {
     onUpdatePassport: (id: string, field: keyof PassportData, value: any) => void;
     unlockedParts?: string[]; onUnlockPart?: (partId: string) => void;
     unlockedShopItems?: string[]; onUnlockShopItem?: (itemId: string) => void;
+    inventory: Record<string, number>;
+    onUpdateInventory: (id: string, amount: number) => void;
 }
 
 export const SocialScreen: React.FC<SocialScreenProps> = ({
-    currentLang, carrotCoins, starSand, onUpdateCoins, onUpdateStarSand, passports, onNavigate, playSound, onUpdatePassport, unlockedParts = [], onUnlockPart, unlockedShopItems = [], onUnlockShopItem
+    currentLang, carrotCoins, starSand, onUpdateCoins, onUpdateStarSand, passports, onNavigate, playSound, onUpdatePassport, unlockedParts = [], onUnlockPart, unlockedShopItems = [], onUnlockShopItem, inventory, onUpdateInventory
 }) => {
     const { animateToken } = useAnimateTokens();
 
@@ -163,36 +165,59 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
         const usedNatives = new Set<string>(); // 记录已经抽出的原住民，防止重样！
 
         for (let i = 0; i < count; i++) {
-            const rand = Math.random();
             const pos = getCoordinates(i, 40);
 
-            if (rand < 0.5 && allBottles.length > 0) {
+            // 🌟 核心：绝对权重引擎 (100点总数)
+            const random100 = Math.random() * 100;
+            let chosenType = '';
+
+            // 漂流瓶 (50%) 
+            if (random100 < 50) {
+                chosenType = 'bottle';
+            }
+            // 原住民 (40%，即 50~90 的区间)
+            else if (random100 < 90) {
+                chosenType = 'native';
+            }
+            // 星球配件 (5%，即 90~95 的区间)
+            else if (random100 < 95) {
+                chosenType = 'part';
+            }
+            // 星际奶茶船 (5%，即 95~100 的区间)
+            else {
+                chosenType = 'boba';
+            }
+
+            // --- 兜底逻辑：如果抽到的东西没库存了，怎么办？ ---
+
+            if (chosenType === 'bottle' && allBottles.length > 0) {
                 const bottle = allBottles[Math.floor(Math.random() * allBottles.length)];
                 newEntities.push({ uid: `ent_${Date.now()}_${i}`, type: 'bottle', pos, data: bottle });
-            } else if (rand < 0.7) {
+            }
+            else if (chosenType === 'native') {
                 const availableNatives = NATIVES_DB.filter(n => !usedNatives.has(n.id));
                 if (availableNatives.length > 0) {
                     const native = availableNatives[Math.floor(Math.random() * availableNatives.length)];
-                    usedNatives.add(native.id); // 锁定该原住民
-                    // 随机挑一句台词
+                    usedNatives.add(native.id);
                     const selectedDialog = {
                         cn: native.dialogs.cn[Math.floor(Math.random() * native.dialogs.cn.length)],
                         en: native.dialogs.en[Math.floor(Math.random() * native.dialogs.en.length)],
                         se: native.dialogs.se[Math.floor(Math.random() * native.dialogs.se.length)]
                     };
-                    // 随机给 1 到 5 个胡萝卜币
                     const rewardCoins = Math.floor(Math.random() * 5) + 1;
                     newEntities.push({ uid: `ent_${Date.now()}_${i}`, type: 'native', pos, data: { ...native, dialog: selectedDialog, rewardCoins } });
                 } else {
-                    // 如果原住民全抽完了，用奶茶代替
-                    const boba = BOBA_DB[Math.floor(Math.random() * BOBA_DB.length)];
-                    newEntities.push({ uid: `ent_${Date.now()}_${i}`, type: 'boba', pos, data: boba });
+                    // 原住民抽光了，给个漂流瓶补偿
+                    const backupBottle = allBottles[Math.floor(Math.random() * allBottles.length)] || LORE_BOTTLES[0];
+                    newEntities.push({ uid: `ent_${Date.now()}_${i}`, type: 'bottle', pos, data: backupBottle });
                 }
-            } else if (rand < 0.9 && lockedParts.length > 0) {
+            }
+            else if (chosenType === 'part' && lockedParts.length > 0) {
                 const part = lockedParts[Math.floor(Math.random() * lockedParts.length)];
                 newEntities.push({ uid: `ent_${Date.now()}_${i}`, type: 'part', pos, data: part });
-            } else {
-                // 抽取 12 杯奶茶之一
+            }
+            else {
+                // 抽到奶茶 (或者配件没库存了，用奶茶补偿)
                 const boba = BOBA_DB[Math.floor(Math.random() * BOBA_DB.length)];
                 newEntities.push({ uid: `ent_${Date.now()}_${i}`, type: 'boba', pos, data: boba });
             }
@@ -303,6 +328,8 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
             if (starSand < 30) { playSound('error'); setGlobalAlert(currentLang === 'cn' ? '星砂不够！' : 'Not enough Star Sand!'); return; }
             onUpdateStarSand(-30);
             if (onUnlockShopItem && !unlockedShopItems?.includes(activeEntity.data.id)) onUnlockShopItem(activeEntity.data.id);
+            // 🌟 核心：存进库存账本！
+            onUpdateInventory(activeEntity.data.id, 1);
             playSound('success'); setGlobalAlert(currentLang === 'cn' ? `🥤 成功购买 [${activeEntity.data.name.cn}]！\n已存入农场背包！` : `Bought ${activeEntity.data.name.en}!`);
         }
         else if (action === 'unlock_part') {

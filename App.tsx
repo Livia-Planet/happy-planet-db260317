@@ -130,11 +130,18 @@ export const App: React.FC = () => {
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.FARM_SLOTS, maxFarmSlots.toString()); }, [maxFarmSlots]);
   // 👆 新增结束
 
-  // 👇 探险战利品资产库
+  // 👇 探险战利品资产库 (家具等永久物品)
   const [unlockedShopItems, setUnlockedShopItems] = useState<string[]>(() => {
     const saved = localStorage.getItem('happyPlanet_shopItems');
     return saved ? JSON.parse(saved) : [];
   });
+
+  // 👇 新增：消耗品库存账本 (用来装奶茶！)
+  const [inventory, setInventory] = useState<Record<string, number>>(() => {
+    const saved = localStorage.getItem('happyPlanet_inventory');
+    return saved ? JSON.parse(saved) : {};
+  });
+
   const [unlockedParts, setUnlockedParts] = useState<string[]>(() => {
     const saved = localStorage.getItem('happyPlanet_unlockedParts');
     return saved ? JSON.parse(saved) : [];
@@ -151,8 +158,26 @@ export const App: React.FC = () => {
     const saved = localStorage.getItem('happyPlanet_unlockedEffects');
     return saved ? JSON.parse(saved) : [];
   });
-  useEffect(() => { localStorage.setItem('happyPlanet_unlockedEffects', JSON.stringify(unlockedEffects)); }, [unlockedEffects]);
 
+  // ... 往下找到 useEffect 保存区，加上一行：
+  useEffect(() => { localStorage.setItem('happyPlanet_inventory', JSON.stringify(inventory)); }, [inventory]);
+
+  // 🌟 核心：更新库存的方法
+  const handleUpdateInventory = useCallback((itemId: string, amount: number) => {
+    setInventory(prev => {
+      const current = prev[itemId] || 0;
+      const next = Math.max(0, current + amount);
+      const newInv = { ...prev };
+      if (next === 0) {
+        delete newInv[itemId]; // 喝光了就从包里扔掉
+      } else {
+        newInv[itemId] = next;
+      }
+      return newInv;
+    });
+  }, []);
+
+  useEffect(() => { localStorage.setItem('happyPlanet_unlockedEffects', JSON.stringify(unlockedEffects)); }, [unlockedEffects]);
   useEffect(() => { localStorage.setItem('happyPlanet_shopItems', JSON.stringify(unlockedShopItems)); }, [unlockedShopItems]);
   useEffect(() => { localStorage.setItem('happyPlanet_unlockedParts', JSON.stringify(unlockedParts)); }, [unlockedParts]);
   // 👇 新增存储
@@ -247,8 +272,8 @@ export const App: React.FC = () => {
         ]);
         buffers.current = {
           camera: cameraB, stamp: stampB, coins: coinsB,
-          error: errorB, success: successB, achievement: achievementB, click: clickB, 
-          whoosh: whooshB, start: startB, chewing: chewB, drinking: drinkB, bubble: bubbleB, blowing: blowB, brushing: brushB, wiping: wipB, 
+          error: errorB, success: successB, achievement: achievementB, click: clickB,
+          whoosh: whooshB, start: startB, chewing: chewB, drinking: drinkB, bubble: bubbleB, blowing: blowB, brushing: brushB, wiping: wipB,
           searching: searchB, whirring: whirB // 👈 存入引擎
         };
       } catch (err) { console.error("Audio Load Error:", err); }
@@ -758,6 +783,8 @@ export const App: React.FC = () => {
               // 👇 就是在这里加上这 4 行传参！
               unlockedShopItems={unlockedShopItems}
               unlockedParts={unlockedParts}
+              inventory={inventory} // 👈 传给农场
+              onUpdateInventory={handleUpdateInventory} // 👈 传给农场
               onUnlockShopItem={(item) => setUnlockedShopItems(prev => [...prev, item])}
               onUnlockPart={(part) => setUnlockedParts(prev => [...prev, part])}
               // 👇 新增这两行传参
@@ -797,6 +824,8 @@ export const App: React.FC = () => {
               onUnlockPart={(part) => setUnlockedParts(prev => [...prev, part])}
               unlockedShopItems={unlockedShopItems}
               onUnlockShopItem={(item) => setUnlockedShopItems(prev => [...prev, item])}
+              inventory={inventory} // 👈 传给雷达
+              onUpdateInventory={handleUpdateInventory} // 👈 传给雷达
             />
           )}
 
