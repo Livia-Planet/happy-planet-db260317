@@ -1,0 +1,15 @@
+{
+  "short_name": "兔子星球",
+  "name": "Happy Planet by Livia",
+  "icons": [
+    {
+      "src": "logo512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#FFD700",
+  "background_color": "#ffffff"
+}
