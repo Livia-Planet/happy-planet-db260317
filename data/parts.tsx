@@ -305,47 +305,47 @@ export const PARTS_DB: Record<string, PartDefinition> = {
 export const PLANET_PARTS_DB: Record<string, PartDefinition> = {
   // === BASE (星球基底: 决定星球主色调) ===
   'planet_base_none': { id: 'planet_base_none', category: 'base', name: 'None', stats: stats(0, 0, 0), rarity: 'C', images: { main: '' } },
-  'planet_base_red': { id: 'planet_base_red', category: 'base', name: 'Magma', stats: stats(2, 0, 0), rarity: 'U', images: { main: '/parts/p_b_red.png' } },
-  'planet_base_blue': { id: 'planet_base_blue', category: 'base', name: 'Ocean', stats: stats(0, 0, 2), rarity: 'C', images: { main: '/parts/p_b_blue.png' } },
-  'planet_base_green': { id: 'planet_base_green', category: 'base', name: 'Jungle', stats: stats(0, 2, 0), rarity: 'C', images: { main: '/parts/p_b_green.png' } },
-  'planet_base_yellow': { id: 'planet_base_yellow', category: 'base', name: 'Desert', stats: stats(1, 1, 0), rarity: 'U', images: { main: '/parts/p_b_yellow.png' } },
-  'planet_base_purple': { id: 'planet_base_purple', category: 'base', name: 'Nebula', stats: stats(0, 1, 2), rarity: 'R', images: { main: '/parts/p_b_purple.png' } }, // 气态巨行星
-  'planet_base_white': { id: 'planet_base_white', category: 'base', name: 'Ice', stats: stats(1, 0, 3), rarity: 'R', images: { main: '/parts/p_b_white.png' } },   // 冰封星球
-  'planet_base_black': { id: 'planet_base_black', category: 'base', name: 'Void', stats: stats(3, 3, 3), rarity: 'E', images: { main: '/parts/p_b_black.png' } }, // 黑洞边缘
-  'planet_base_gold': { id: 'planet_base_gold', category: 'base', name: 'Cyber', stats: stats(0, 0, 9), rarity: 'L', images: { main: '/parts/p_b_gold.png' } },  // 机械星球
+  'planet_base_red': { id: 'planet_base_red', category: 'base', name: 'Magma', stats: stats(2, 0, 0), rarity: 'U', images: { main: '' } },
+  'planet_base_blue': { id: 'planet_base_blue', category: 'base', name: 'Ocean', stats: stats(0, 0, 2), rarity: 'C', images: { main: '' } },
+  'planet_base_green': { id: 'planet_base_green', category: 'base', name: 'Jungle', stats: stats(0, 2, 0), rarity: 'C', images: { main: '' } },
+  'planet_base_yellow': { id: 'planet_base_yellow', category: 'base', name: 'Desert', stats: stats(1, 1, 0), rarity: 'U', images: { main: '' } },
+  'planet_base_purple': { id: 'planet_base_purple', category: 'base', name: 'Nebula', stats: stats(0, 1, 2), rarity: 'R', images: { main: '' } },
+  'planet_base_white': { id: 'planet_base_white', category: 'base', name: 'Ice', stats: stats(1, 0, 3), rarity: 'R', images: { main: '' } },
+  'planet_base_black': { id: 'planet_base_black', category: 'base', name: 'Void', stats: stats(3, 3, 3), rarity: 'E', images: { main: '' } },
+  'planet_base_gold': { id: 'planet_base_gold', category: 'base', name: 'Cyber', stats: stats(0, 0, 9), rarity: 'L', images: { main: '' } },
 
   // === SURFACE (地表: 叠加在Base上的纹理) ===
   'planet_surf_none': { id: 'planet_surf_none', category: 'surface', name: 'None', stats: stats(0, 0, 0), rarity: 'C', images: { main: '' } },
-  'planet_surf_craters': { id: 'planet_surf_craters', category: 'surface', name: 'Craters', stats: stats(1, 0, 0), rarity: 'C', images: { main: '/parts/p_s_craters.png' } },
-  'planet_surf_swirls': { id: 'planet_surf_swirls', category: 'surface', name: 'Storms', stats: stats(0, 1, 0), rarity: 'U', images: { main: '/parts/p_s_swirls.png' } },
-  'planet_surf_cracks': { id: 'planet_surf_cracks', category: 'surface', name: 'Cracks', stats: stats(0, 0, 1), rarity: 'U', images: { main: '/parts/p_s_cracks.png' } }, // 地壳裂缝
-  'planet_surf_lava': { id: 'planet_surf_lava', category: 'surface', name: 'Lava', stats: stats(2, 1, 0), rarity: 'R', images: { main: '/parts/p_s_lava.png' } },
-  'planet_surf_crystal': { id: 'planet_surf_crystal', category: 'surface', name: 'Crystal', stats: stats(0, 1, 4), rarity: 'E', images: { main: '/parts/p_s_crystal.png' } }, // 水晶丛
-  'planet_surf_cities': { id: 'planet_surf_cities', category: 'surface', name: 'Lights', stats: stats(0, 3, 2), rarity: 'R', images: { main: '/parts/p_s_cities.png' } }, // 夜晚灯火
-  'planet_surf_rings': { id: 'planet_surf_rings', category: 'surface', name: 'Bands', stats: stats(1, 1, 1), rarity: 'U', images: { main: '/parts/p_s_rings.png' } },   // 木星条纹
-  'planet_surf_fossils': { id: 'planet_surf_fossils', category: 'surface', name: 'Fossil', stats: stats(2, 0, 5), rarity: 'L', images: { main: '/parts/p_s_fossils.png' } }, // 远古骨骼
+  'planet_surf_craters': { id: 'planet_surf_craters', category: 'surface', name: 'Craters', stats: stats(1, 0, 0), rarity: 'C', images: { main: '' } },
+  'planet_surf_swirls': { id: 'planet_surf_swirls', category: 'surface', name: 'Storms', stats: stats(0, 1, 0), rarity: 'U', images: { main: '' } },
+  'planet_surf_cracks': { id: 'planet_surf_cracks', category: 'surface', name: 'Cracks', stats: stats(0, 0, 1), rarity: 'U', images: { main: '' } },
+  'planet_surf_lava': { id: 'planet_surf_lava', category: 'surface', name: 'Lava', stats: stats(2, 1, 0), rarity: 'R', images: { main: '' } },
+  'planet_surf_crystal': { id: 'planet_surf_crystal', category: 'surface', name: 'Crystal', stats: stats(0, 1, 4), rarity: 'E', images: { main: '' } },
+  'planet_surf_cities': { id: 'planet_surf_cities', category: 'surface', name: 'Lights', stats: stats(0, 3, 2), rarity: 'R', images: { main: '' } },
+  'planet_surf_rings': { id: 'planet_surf_rings', category: 'surface', name: 'Bands', stats: stats(1, 1, 1), rarity: 'U', images: { main: '' } },
+  'planet_surf_fossils': { id: 'planet_surf_fossils', category: 'surface', name: 'Fossil', stats: stats(2, 0, 5), rarity: 'L', images: { main: '' } },
 
   // === ATMOSPHERE (大气层: 覆盖在最上层的光影) ===
   'planet_atmo_none': { id: 'planet_atmo_none', category: 'atmosphere', name: 'None', stats: stats(0, 0, 0), rarity: 'C', images: { main: '' } },
-  'planet_atmo_glow': { id: 'planet_atmo_glow', category: 'atmosphere', name: 'Glow', stats: stats(0, 0, 0), rarity: 'C', images: { main: '/parts/p_a_glow.png' } },
-  'planet_atmo_rings': { id: 'planet_atmo_rings', category: 'atmosphere', name: 'Rings', stats: stats(0, 1, 2), rarity: 'R', images: { main: '/parts/p_a_rings.png' } },
-  'planet_atmo_aurora': { id: 'planet_atmo_aurora', category: 'atmosphere', name: 'Aurora', stats: stats(0, 4, 2), rarity: 'E', images: { main: '/parts/p_a_aurora.png' } }, // 极光
-  'planet_atmo_clouds': { id: 'planet_atmo_clouds', category: 'atmosphere', name: 'Clouds', stats: stats(0, 1, 0), rarity: 'C', images: { main: '/parts/p_a_clouds.png' } },
-  'planet_atmo_debris': { id: 'planet_atmo_debris', category: 'atmosphere', name: 'Debris', stats: stats(2, 0, 0), rarity: 'U', images: { main: '/parts/p_a_debris.png' } }, // 星际碎石
-  'planet_atmo_shield': { id: 'planet_atmo_shield', category: 'atmosphere', name: 'Shield', stats: stats(0, 5, 0), rarity: 'L', images: { main: '/parts/p_a_shield.png' } }, // 能量护盾
-  'planet_atmo_nebula': { id: 'planet_atmo_nebula', category: 'atmosphere', name: 'Mist', stats: stats(1, 0, 3), rarity: 'R', images: { main: '/parts/p_a_nebula.png' } },  // 迷雾
-  'planet_atmo_electric': { id: 'planet_atmo_electric', category: 'atmosphere', name: 'Storm', stats: stats(4, 0, 0), rarity: 'E', images: { main: '/parts/p_a_electric.png' } }, // 雷暴
+  'planet_atmo_glow': { id: 'planet_atmo_glow', category: 'atmosphere', name: 'Glow', stats: stats(0, 0, 0), rarity: 'C', images: { main: '' } },
+  'planet_atmo_rings': { id: 'planet_atmo_rings', category: 'atmosphere', name: 'Rings', stats: stats(0, 1, 2), rarity: 'R', images: { main: '' } },
+  'planet_atmo_aurora': { id: 'planet_atmo_aurora', category: 'atmosphere', name: 'Aurora', stats: stats(0, 4, 2), rarity: 'E', images: { main: '' } },
+  'planet_atmo_clouds': { id: 'planet_atmo_clouds', category: 'atmosphere', name: 'Clouds', stats: stats(0, 1, 0), rarity: 'C', images: { main: '' } },
+  'planet_atmo_debris': { id: 'planet_atmo_debris', category: 'atmosphere', name: 'Debris', stats: stats(2, 0, 0), rarity: 'U', images: { main: '' } },
+  'planet_atmo_shield': { id: 'planet_atmo_shield', category: 'atmosphere', name: 'Shield', stats: stats(0, 5, 0), rarity: 'L', images: { main: '' } },
+  'planet_atmo_nebula': { id: 'planet_atmo_nebula', category: 'atmosphere', name: 'Mist', stats: stats(1, 0, 3), rarity: 'R', images: { main: '' } },
+  'planet_atmo_electric': { id: 'planet_atmo_electric', category: 'atmosphere', name: 'Storm', stats: stats(4, 0, 0), rarity: 'E', images: { main: '' } },
 
   // === COMPANION (随从: 绕行的小物体) ===
   'planet_comp_none': { id: 'planet_comp_none', category: 'companion', name: 'None', stats: stats(0, 0, 0), rarity: 'C', images: { main: '' } },
-  'planet_comp_moon': { id: 'planet_comp_moon', category: 'companion', name: 'Moon', stats: stats(0, 0, 1), rarity: 'C', images: { main: '/parts/p_c_moon.png' } },
-  'planet_comp_ufo': { id: 'planet_comp_ufo', category: 'companion', name: 'UFO', stats: stats(0, 0, 0), rarity: 'R', images: { main: '/parts/p_c_ufo.png' } },
-  'planet_comp_rocket': { id: 'planet_comp_rocket', category: 'companion', name: 'Rocket', stats: stats(1, 1, 0), rarity: 'U', images: { main: '/parts/p_c_rocket.png' } },
-  'planet_comp_whale': { id: 'planet_comp_whale', category: 'companion', name: 'Whale', stats: stats(2, 2, 2), rarity: 'L', images: { main: '/parts/p_c_whale.png' } }, // 空间鲸鱼
-  'planet_comp_satellite': { id: 'planet_comp_satellite', category: 'companion', name: 'Sat', stats: stats(0, 0, 3), rarity: 'U', images: { main: '/parts/p_c_sat.png' } }, // 人造卫星
-  'planet_comp_dyson': { id: 'planet_comp_dyson', category: 'companion', name: 'Dyson', stats: stats(0, 0, 10), rarity: 'L', images: { main: '/parts/p_c_dyson.png' } }, // 戴森群
-  'planet_comp_comet': { id: 'planet_comp_comet', category: 'companion', name: 'Comet', stats: stats(2, 0, 0), rarity: 'R', images: { main: '/parts/p_c_comet.png' } }, // 彗星
-  'planet_comp_station': { id: 'planet_comp_station', category: 'companion', name: 'Station', stats: stats(0, 3, 1), rarity: 'E', images: { main: '/parts/p_c_station.png' } }, // 空间站
+  'planet_comp_moon': { id: 'planet_comp_moon', category: 'companion', name: 'Moon', stats: stats(0, 0, 1), rarity: 'C', images: { main: '' } },
+  'planet_comp_ufo': { id: 'planet_comp_ufo', category: 'companion', name: 'UFO', stats: stats(0, 0, 0), rarity: 'R', images: { main: '' } },
+  'planet_comp_rocket': { id: 'planet_comp_rocket', category: 'companion', name: 'Rocket', stats: stats(1, 1, 0), rarity: 'U', images: { main: '' } },
+  'planet_comp_whale': { id: 'planet_comp_whale', category: 'companion', name: 'Whale', stats: stats(2, 2, 2), rarity: 'L', images: { main: '' } },
+  'planet_comp_satellite': { id: 'planet_comp_satellite', category: 'companion', name: 'Sat', stats: stats(0, 0, 3), rarity: 'U', images: { main: '' } },
+  'planet_comp_dyson': { id: 'planet_comp_dyson', category: 'companion', name: 'Dyson', stats: stats(0, 0, 10), rarity: 'L', images: { main: '' } },
+  'planet_comp_comet': { id: 'planet_comp_comet', category: 'companion', name: 'Comet', stats: stats(2, 0, 0), rarity: 'R', images: { main: '' } },
+  'planet_comp_station': { id: 'planet_comp_station', category: 'companion', name: 'Station', stats: stats(0, 3, 1), rarity: 'E', images: { main: '' } },
 };
 
 // 👈 修改参数：传入 unlockedParts

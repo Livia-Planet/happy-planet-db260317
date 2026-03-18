@@ -22,7 +22,7 @@ import { MagicCursor } from './components/MagicCursor';
 import { FarmScreen } from './components/FarmScreen';
 import { FloatingFocus } from './components/FloatingFocus'; // 👈 新增引入
 import { SocialScreen } from './components/SocialScreen';
-
+import { CollectionScreen } from './components/CollectionScreen'; // 👈 新增引入收藏仓库
 import { auth, db } from './utils/firebase'; // 👈 确保这里有 db
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'; // 👈 引入 Firestore 操作函数
@@ -74,6 +74,14 @@ const STORAGE_KEYS = {
 };
 
 export const App: React.FC = () => {
+  // 👇 1. 你的专属星际邀请码（你可以随便修改或增加！）
+  const VALID_INVITE_CODES = ['LIVIA2026', 'BOBU888', 'HAPPYMARS'];
+
+  // 👇 2. 验证状态（验证过一次后，浏览器会记住，下次来就不用再输了）
+  const [isVerified, setIsVerified] = useState(() => localStorage.getItem('happyPlanet_verified') === 'true');
+  const [inviteCode, setInviteCode] = useState('');
+  const [inviteError, setInviteError] = useState(false);
+
   const [isReady, setIsReady] = useState(false);
 
   const [characterData, setCharacterData] = useState<CharacterData>(() => {
@@ -657,7 +665,49 @@ export const App: React.FC = () => {
   // ==========================================
   return (
     <div className={`min-h-screen transition-colors duration-700 ${isFlipped && viewMode === 'editor' ? 'bg-gray-900' : 'bg-livia-bg'} text-gray-900 p-4 md:p-8 font-rounded selection:bg-livia-yellow selection:text-black relative overflow-x-hidden ${bigBangActive ? 'animate-shake blur-sm' : ''}`}>
+      {/* 🚀 终极防护：星际邀请码大门！ */}
+      {!isVerified && (
+        <div className="fixed inset-0 z-[999999] bg-[#0a0a12] flex flex-col items-center justify-center p-6 font-rounded text-white">
+          <div className="absolute inset-0 opacity-40 pointer-events-none"><SpaceBackground bpm={30} themeColor="#60EFFF" meteorDensity={2} /></div>
 
+          <div className="relative z-10 flex flex-col items-center max-w-sm w-full animate-fade-in">
+            <div className="text-6xl mb-6 animate-bounce-slow drop-shadow-[0_0_15px_rgba(96,239,255,0.8)]">🪐</div>
+            <h1 className="text-4xl font-black tracking-widest mb-2 text-center uppercase drop-shadow-[2px_2px_0_#60EFFF] text-transparent bg-clip-text bg-gradient-to-b from-white to-blue-200">Happy Planet</h1>
+            <p className="text-xs font-bold text-[#60EFFF] mb-10 tracking-[0.3em] text-center uppercase">Restricted Access / 仅限受邀居民</p>
+
+            <div className="w-full bg-white/5 p-6 rounded-[2rem] border-2 border-[#60EFFF]/30 backdrop-blur-md shadow-[0_0_40px_rgba(96,239,255,0.1)] flex flex-col gap-4">
+              <input
+                type="text"
+                value={inviteCode}
+                onChange={e => setInviteCode(e.target.value.toUpperCase())}
+                placeholder="ENTER INVITE CODE"
+                className="w-full bg-black/50 border-2 border-[#60EFFF] text-[#60EFFF] px-4 py-4 rounded-2xl text-center font-black text-lg tracking-widest focus:outline-none focus:shadow-[0_0_15px_#60EFFF] transition-shadow placeholder:text-[#60EFFF]/30"
+              />
+
+              {inviteError && <p className="text-red-400 text-xs font-bold text-center animate-shake-quick">⚠️ Invalid Code / 邀请码无效</p>}
+
+              <button
+                onClick={() => {
+                  if (VALID_INVITE_CODES.includes(inviteCode.trim())) {
+                    localStorage.setItem('happyPlanet_verified', 'true');
+                    setIsVerified(true);
+                  } else {
+                    setInviteError(true);
+                    setTimeout(() => setInviteError(false), 2000);
+                  }
+                }}
+                className="w-full bg-[#60EFFF] text-black font-black py-4 rounded-2xl shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none transition-all uppercase tracking-widest text-lg mt-2 hover:bg-[#85C1E9]"
+              >
+                Enter / 登入
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 👇 只有在验证通过后，才会显示下面的整个游戏世界！ */}
+      <div className={`min-h-screen transition-colors duration-700 ${isFlipped && viewMode === 'editor' ? 'bg-gray-900' : 'bg-livia-bg'} text-gray-900 p-4 md:p-8 font-rounded selection:bg-livia-yellow selection:text-black relative overflow-x-hidden ${bigBangActive ? 'animate-shake blur-sm' : ''} ${!isVerified ? 'hidden' : ''}`}></div>
+      
       {/* 🪄 注入超级魔棒组件 */}
       <MagicCursor />
 
@@ -818,6 +868,7 @@ export const App: React.FC = () => {
                 onReward={handleReward}
                 onToggleFarm={handleToggleFarmStatus}
                 onThrowBottle={handleThrowBottle} // 👈 最后一棒：接上发射器！
+                collectedStories={collectedStories} // 👈 【新增】把收藏账本传给档案馆！
               />
             </div>
           )}

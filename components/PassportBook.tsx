@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { PassportData, Language, StoryEntry } from '../types';
+import { PassportData, Language, StoryEntry, CollectedStory } from '../types';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
 import { calculateStats, generateFlavorText, getDominantStat, TRANSLATIONS, getStarDate, ALL_PRESETS, getMixedTraits, calculateStoryReward } from '../utils/gameLogic';
 import { RadarChart } from './RadarChart';
 import { StoryTab } from './StoryTab';
 import { RelationMap } from './RelationMap';
+import { CollectionScreen } from './CollectionScreen'; // 👈 引入刚刚创建的仓库
 
 const IconWarning = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -108,6 +109,7 @@ interface PassportBookProps {
   onToggleFarm: (id: string) => void;
   // 👇 新增这一行：接收三语标题、三语内容和作者名字
   onThrowBottle?: (title: Record<Language, string>, content: Record<Language, string>, authorName: string) => void;
+  collectedStories: CollectedStory[]; // 👈 新增这行
 }
 
 type Tab = 'profile' | 'personality' | 'relations' | 'story';
@@ -262,7 +264,8 @@ export const PassportBook: React.FC<PassportBookProps> = ({
   lang,
   onReward,
   onToggleFarm,
-  onThrowBottle // 👈 接住它
+  onThrowBottle, // 👈 接住它
+  collectedStories // 👈 接住它
 }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -273,6 +276,7 @@ export const PassportBook: React.FC<PassportBookProps> = ({
   const [currentTheme, setCurrentTheme] = useState(THEMES[0]);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isThemeOpen, setIsThemeOpen] = useState(false);
+  const [isCollectionOpen, setIsCollectionOpen] = useState(false); // 👈 新增：控制仓库的开关
 
   // 控制自定义排序下拉菜单的展开
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -562,6 +566,17 @@ export const PassportBook: React.FC<PassportBookProps> = ({
               {lang === 'cn' ? '星际档案馆' : 'Archives'}
             </h2>
 
+            {/* 🌟 新增：故事收藏仓库按钮！ */}
+            <button
+              onClick={() => setIsCollectionOpen(true)}
+              className="w-12 h-12 flex items-center justify-center bg-[#FF90E8] text-black border-[3px] border-black rounded-xl shadow-[4px_4px_0_black] hover:-translate-y-1 active:translate-y-0.5 active:shadow-none transition-all"
+              title="Story Collection"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-6 h-6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+              </svg>
+            </button>
+
             {/* 统计触发按钮 */}
             <button
               onClick={() => setIsStatsOpen(true)}
@@ -570,7 +585,6 @@ export const PassportBook: React.FC<PassportBookProps> = ({
             >
               <IconAstroStats className="w-6 h-6" />
             </button>
-
           </div>
         </div>
 
@@ -927,6 +941,15 @@ export const PassportBook: React.FC<PassportBookProps> = ({
             </div>
           </div>,
           document.body
+        )}
+
+        {/* 🌟 渲染故事仓库 */}
+        {isCollectionOpen && (
+          <CollectionScreen
+            collectedStories={collectedStories}
+            onBack={() => setIsCollectionOpen(false)}
+            lang={lang}
+          />
         )}
 
       </div>
