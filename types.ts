@@ -101,6 +101,9 @@ export interface StoryEntry {
   imageUrl?: string; // 👈 新增：用来存放奇遇事件的插画！
   hasReceivedReward?: boolean;   // 👈 新增这行：给防重复领奖功能上个“合法户口”！
   isBottled?: boolean; // 👈 新增：标记这篇故事是否已经扔进了漂流瓶
+  // 👇 加上这两行，让本地日记也能记录心心和评论！
+  likes?: number;
+  comments?: CommentData[];
 }
 
 // --- 视图路由系统 ---
@@ -116,3 +119,22 @@ export interface PetStatus {
 }
 // --- 消耗品库存系统 ---
 export type Inventory = Record<string, number>;
+
+// --- 星际社交系统扩展 ---
+export interface CommentData {
+  author: string;
+  text: string;
+  date: string;
+}
+
+export interface CollectedStory {
+  id: string;          // 原始 ID
+  dbId?: string;       // 如果是云端来的，记录 Firebase 的真实文档 ID
+  title: Record<Language, string>;
+  content: Record<Language, string>;
+  author: string;
+  date: string;
+  likes?: number;
+  comments?: CommentData[];
+  isCloud?: boolean;   // 标记是否来自云端真实玩家
+}

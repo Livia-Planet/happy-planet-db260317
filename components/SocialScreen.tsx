@@ -1,12 +1,14 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Language, PassportData, ViewMode, StoryEntry } from '../types';
+import { Language, PassportData, ViewMode, StoryEntry, CollectedStory } from '../types';
 import { Avatar } from './Avatar';
 import { getDominantStat, calculateStats, getStarDate } from '../utils/gameLogic';
 import { CarrotCoinIcon } from './Icons';
 import { SpaceBackground } from './SpaceBackground';
 import { useAnimateTokens } from '../hooks/useAnimateTokens';
 import { PLANET_PARTS_DB } from '../data/parts';
+import { db, auth } from '../utils/firebase'; // 👈 引入数据库和身份验证
+import { collection, getDocs, query, orderBy, limit, doc, updateDoc, increment, arrayUnion } from 'firebase/firestore'; // 👈 引入捞瓶子的工具
 
 // 🌟 全新 SVG 图标库 (包含奶茶和充能状态)
 const SocialIcons = {
@@ -38,7 +40,15 @@ const SocialIcons = {
     ),
     MysteryGift: ({ className = "w-10 h-10" }) => (<svg viewBox="0 0 24 24" fill="#A8E6CF" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>),
     CarePackage: ({ className = "w-6 h-6" }) => (<svg viewBox="0 0 24 24" fill="#FF90E8" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="8" width="18" height="13" rx="2" /><path d="M12 8v13" /><path d="M19 12H5" /><path d="M12 8c-2-3-5-2-5 0s5 2 5 2 5-1 5-2-3-3-5 0z" fill="#FFD700" /></svg>),
-    Envelope: ({ className = "w-6 h-6" }) => (<svg viewBox="0 0 24 24" fill="#FFFBEB" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 8l9 6 9-6" /><rect x="3" y="6" width="18" height="12" rx="2" /></svg>)
+    Envelope: ({ className = "w-6 h-6" }) => (<svg viewBox="0 0 24 24" fill="#FFFBEB" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 8l9 6 9-6" /><rect x="3" y="6" width="18" height="12" rx="2" /></svg>),
+
+    // 放入 SocialIcons 对象内部
+    Heart: ({ className = "w-6 h-6" }) => (
+        <svg viewBox="0 0 24 24" fill="#FF90E8" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+    ),
+    Star: ({ className = "w-6 h-6" }) => (
+        <svg viewBox="0 0 24 24" fill="#FFD700" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" /></svg>
+    ),
 };
 
 // 🌟 史诗级神谕漂流瓶扩充 (10+ 传说故事)
@@ -93,10 +103,13 @@ interface SocialScreenProps {
     unlockedShopItems?: string[]; onUnlockShopItem?: (itemId: string) => void;
     inventory: Record<string, number>;
     onUpdateInventory: (id: string, amount: number) => void;
+    // 👇 新增这两行！告诉机器我们要接收这俩参数了
+    collectedStories: CollectedStory[];
+    onCollectStory: (story: CollectedStory) => void;
 }
 
 export const SocialScreen: React.FC<SocialScreenProps> = ({
-    currentLang, carrotCoins, starSand, onUpdateCoins, onUpdateStarSand, passports, onNavigate, playSound, onUpdatePassport, unlockedParts = [], onUnlockPart, unlockedShopItems = [], onUnlockShopItem, inventory, onUpdateInventory
+    currentLang, carrotCoins, starSand, onUpdateCoins, onUpdateStarSand, passports, onNavigate, playSound, onUpdatePassport, unlockedParts = [], onUnlockPart, unlockedShopItems = [], onUnlockShopItem, inventory, onUpdateInventory, collectedStories, onCollectStory
 }) => {
     const { animateToken } = useAnimateTokens();
 
@@ -144,6 +157,42 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
         }
     }, [battery, lastScanTime]);
 
+    // 🌟 云端真实漂流瓶的存储点
+    const [realBottles, setRealBottles] = useState<any[]>([]);
+
+    // 🌟 在进入雷达页面时，自动去茫茫星海里捞 20 个最新的瓶子！
+    useEffect(() => {
+        const fetchCosmicBottles = async () => {
+            try {
+                // 1. 设置雷达频道：去 'bottles' 集合，按时间倒序，捞取最新的 20 个瓶子
+                const q = query(collection(db, "bottles"), orderBy("createdAt", "desc"), limit(20));
+                const querySnapshot = await getDocs(q);
+
+                const fetchedBottles = querySnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id, // Firebase 自动生成的唯一 ID
+                        author: data.author || 'Unknown Traveler',
+                        date: data.date || getStarDate(),
+                        title: data.title || { cn: '无题', en: 'Untitled', se: 'Namnlös' },
+                        content: data.content || { cn: '...', en: '...', se: '...' },
+                        uid: data.uid // 记录是谁发的
+                    };
+                });
+
+                // 2. 过滤掉自己发的瓶子（可选，如果你想捞到自己的也可以不留这行）
+                // const othersBottles = fetchedBottles.filter(b => b.uid !== auth.currentUser?.uid);
+
+                setRealBottles(fetchedBottles);
+                console.log("📡 雷达接收到云端信号，成功捞起真实漂流瓶数量:", fetchedBottles.length);
+            } catch (error) {
+                console.error("📡 雷达信号受干扰，捞取失败:", error);
+            }
+        };
+
+        fetchCosmicBottles();
+    }, []); // 空数组表示只在刚打开雷达时捞一次
+
     const permanentNeighbors = useMemo(() => passports.filter(p => !p.isAssignedToFarm), [passports]);
 
     const getCoordinates = (index: number, baseRadius: number = 20) => {
@@ -158,7 +207,8 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
         const newEntities = [];
 
         const playerBottles = passports.flatMap(p => (p.stories || []).filter(s => s.isBottled).map(s => ({ id: s.id, author: p.starName || p.name, date: s.date, title: s.title, content: s.content })));
-        const allBottles = [...LORE_BOTTLES, ...playerBottles].filter(b => !readBottles.includes(b.id));
+        // 🌟 史诗级融合：神话传说 + 本地日记 + 云端其他玩家的真实日记！
+        const allBottles = [...LORE_BOTTLES, ...playerBottles, ...realBottles].filter(b => !readBottles.includes(b.id));
 
         const lockedParts = Object.values(PLANET_PARTS_DB).filter(p => p.isUnlockable && !unlockedParts.includes(p.id));
 
@@ -321,46 +371,58 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
     };
 
     // 认领盲盒实体 (阅后即焚)
-    const handleClaimEntity = (action: 'like_bottle' | 'listen_native' | 'unlock_part' | 'buy_boba') => {
+    const [commentText, setCommentText] = useState('');
+    const handleClaimEntity = async (action: 'like_bottle' | 'listen_native' | 'unlock_part' | 'buy_boba' | 'save_bottle' | 'comment_bottle') => {
         if (!activeEntity) return;
 
-        if (action === 'buy_boba') {
-            if (starSand < 30) { playSound('error'); setGlobalAlert(currentLang === 'cn' ? '星砂不够！' : 'Not enough Star Sand!'); return; }
-            onUpdateStarSand(-30);
-            if (onUnlockShopItem && !unlockedShopItems?.includes(activeEntity.data.id)) onUnlockShopItem(activeEntity.data.id);
-            // 🌟 核心：存进库存账本！
-            onUpdateInventory(activeEntity.data.id, 1);
-            playSound('success'); setGlobalAlert(currentLang === 'cn' ? `🥤 成功购买 [${activeEntity.data.name.cn}]！\n已存入农场背包！` : `Bought ${activeEntity.data.name.en}!`);
-        }
-        else if (action === 'unlock_part') {
-            if (carrotCoins < 20) { playSound('error'); setGlobalAlert(currentLang === 'cn' ? '胡萝卜币不够破译遗迹！' : 'Not enough carrots!'); return; }
-            onUpdateCoins(-20);
-            animateToken('social-wallet-carrot', `ent_${activeEntity.uid}`, '🥕', false);
-            setTimeout(() => {
-                playSound('achievement');
-                if (onUnlockPart) onUnlockPart(activeEntity.data.id);
-                setGlobalAlert(currentLang === 'cn' ? `🎁 遗迹破译成功！\n[${activeEntity.data.name[currentLang]}] 已加入创造器！` : 'New Planet Part Unlocked!');
-
-                playSound('whoosh');
-                setEntities(prev => prev.filter(e => e.uid !== activeEntity.uid));
-                setActiveEntity(null);
-            }, 500);
-            return; // 提前退出，等待动画
-        }
-        else if (action === 'listen_native') {
-            playSound('coins');
-            animateToken('avatar-center', 'social-wallet-carrot', '🥕', true);
-            onUpdateCoins(activeEntity.data.rewardCoins); // 随机 1-5 个金币！
-            setGlobalAlert(currentLang === 'cn' ? `${activeEntity.data.name} 笑着送给你 ${activeEntity.data.rewardCoins} 个 🥕！` : `Received ${activeEntity.data.rewardCoins} Carrots!`);
+        if (action === 'save_bottle') {
+            playSound('click');
+            // 存入刚刚在 App.tsx 写的收藏夹！
+            if ((window as any).onCollectStory) {
+                (window as any).onCollectStory(activeEntity.data);
+            }
+            setGlobalAlert(currentLang === 'cn' ? '⭐ 收藏成功！\n已存入档案馆的故事仓库！' : '⭐ Saved to Archive!');
         }
         else if (action === 'like_bottle') {
-            playSound('stamp'); animateToken('avatar-center', 'social-wallet-starsand', '✨', true); onUpdateStarSand(1);
+            playSound('stamp');
+            animateToken('avatar-center', 'social-wallet-starsand', '✨', true);
+            onUpdateStarSand(1);
             setReadBottles(prev => [...prev, activeEntity.data.id]);
-        }
 
-        playSound('whoosh');
-        setEntities(prev => prev.filter(e => e.uid !== activeEntity.uid));
-        setActiveEntity(null);
+            // 🚀 核心：如果是云端瓶子，真实写入 Firebase！
+            if (activeEntity.data.isCloud && activeEntity.data.dbId) {
+                try {
+                    const bottleRef = doc(db, "bottles", activeEntity.data.dbId);
+                    await updateDoc(bottleRef, { likes: increment(1) });
+                } catch (e) { console.error("点赞同步失败", e); }
+            }
+
+            playSound('whoosh');
+            setEntities(prev => prev.filter(e => e.uid !== activeEntity.uid));
+            setActiveEntity(null);
+        }
+        else if (action === 'comment_bottle') {
+            if (!commentText.trim()) return;
+            playSound('whoosh');
+
+            // 🚀 核心：如果是云端瓶子，真实评论写入 Firebase！
+            if (activeEntity.data.isCloud && activeEntity.data.dbId) {
+                try {
+                    const activeFarmPet = passports.find(p => p.isAssignedToFarm);
+                    const myName = activeFarmPet ? activeFarmPet.name : 'A Traveler';
+                    const bottleRef = doc(db, "bottles", activeEntity.data.dbId);
+                    await updateDoc(bottleRef, {
+                        comments: arrayUnion({ author: myName, text: commentText, date: getStarDate() })
+                    });
+                } catch (e) { console.error("评论同步失败", e); }
+            }
+
+            setCommentText('');
+            setGlobalAlert(currentLang === 'cn' ? '🚀 评论已发送！\n星空彼岸的旅人会收到你的心意！' : '🚀 Comment sent to space!');
+            setEntities(prev => prev.filter(e => e.uid !== activeEntity.uid));
+            setActiveEntity(null);
+        }
+        // ... (保留其他的 buy_boba, unlock_part, listen_native 逻辑)
     };
 
     return (
@@ -490,7 +552,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
 
                     {activeEntity && (
                         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in pointer-events-auto">
-                            <div className="bg-white border-[5px] border-black rounded-[3rem] p-8 w-full max-w-sm shadow-[15px_15px_0_black] flex flex-col items-center animate-scale-in relative" style={{ backgroundImage: 'radial-gradient(#e0e0dc 1.2px, transparent 1.2px)', backgroundSize: '18px 18px' }}>
+                            <div className="bg-white border-[5px] border-black rounded-[3rem] p-6 md:p-8 w-full max-w-sm max-h-[90vh] shadow-[15px_15px_0_black] flex flex-col items-center animate-scale-in relative" style={{ backgroundImage: 'radial-gradient(#e0e0dc 1.2px, transparent 1.2px)', backgroundSize: '18px 18px' }}>
                                 <button onClick={() => setActiveEntity(null)} className="absolute top-4 right-6 text-4xl font-black text-gray-400 hover:text-black transition-colors">&times;</button>
 
                                 {/* 3.1 原住民 */}
@@ -510,16 +572,70 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                                     </>
                                 )}
 
-                                {/* 3.2 漂流瓶 */}
+                                {/* 3.2 漂流瓶 (小红书/Instagram 社交版) */}
                                 {activeEntity.type === 'bottle' && (
                                     <>
-                                        <div className="bg-blue-100 text-blue-800 font-mono text-[10px] font-bold px-4 py-1 rounded-full border-2 border-black mb-6 uppercase tracking-[0.2em] shadow-sm">{activeEntity.data.date}</div>
-                                        <h3 className="font-black font-hand text-3xl uppercase tracking-tighter text-center mb-4">{activeEntity.data.title[currentLang]}</h3>
-                                        <p className="font-hand text-xl text-gray-700 text-center leading-relaxed mb-8 px-2 whitespace-pre-line">"{activeEntity.data.content[currentLang]}"</p>
-                                        <div className="font-mono text-xs text-gray-400 uppercase tracking-widest mb-6">FROM: {activeEntity.data.author}</div>
-                                        <button onClick={() => handleClaimEntity('like_bottle')} className="w-full bg-[#FFD700] border-[4px] border-black py-4 rounded-2xl font-black text-lg shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 hover:bg-[#FACC15]">
-                                            {currentLang === 'cn' ? '贴上鼓励星标' : 'STAMP WITH LOVE'} <SocialIcons.StarSand className="w-5 h-5" />+1
-                                        </button>
+                                        {/* 🌟 限制高度的滚动内容区：再长也不怕被挤出去了！ */}
+                                        <div className="w-full flex flex-col items-center overflow-y-auto custom-scrollbar px-2 mb-4">
+                                            <div className="bg-blue-100 text-blue-800 font-mono text-[10px] font-bold px-4 py-1 rounded-full border-2 border-black mb-4 uppercase tracking-[0.2em] shadow-sm shrink-0 mt-2">
+                                                {activeEntity.data.date}
+                                            </div>
+                                            <h3 className="font-black font-hand text-3xl uppercase tracking-tighter text-center mb-4 shrink-0">
+                                                {activeEntity.data.title[currentLang]}
+                                            </h3>
+                                            <p className="font-hand text-xl text-gray-700 text-center leading-relaxed mb-4 whitespace-pre-line">
+                                                "{activeEntity.data.content[currentLang]}"
+                                            </p>
+                                        </div>
+
+                                        <div className="font-mono text-xs text-gray-400 uppercase tracking-widest mb-4 shrink-0">
+                                            FROM: {activeEntity.data.author}
+                                        </div>
+
+                                        {/* 🌟 社交互动操控区 */}
+                                        <div className="w-full flex flex-col gap-3 shrink-0">
+                                            {/* 点赞与收藏双排按钮 */}
+                                            <div className="flex gap-3 w-full">
+                                                <button onClick={() => handleClaimEntity('like_bottle')} className="flex-1 bg-[#FF90E8] border-[3px] border-black py-3 rounded-2xl font-black text-sm shadow-[3px_3px_0_black] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 hover:bg-[#FF7CE0]">
+                                                    <SocialIcons.Heart className="w-5 h-5" /> {currentLang === 'cn' ? '点赞' : 'LIKE'}
+                                                </button>
+                                                <button onClick={() => handleClaimEntity('save_bottle')} className="flex-1 bg-[#FFD700] border-[3px] border-black py-3 rounded-2xl font-black text-sm shadow-[3px_3px_0_black] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 hover:bg-[#FACC15]">
+                                                    <SocialIcons.Star className="w-5 h-5" /> {currentLang === 'cn' ? '收藏' : 'SAVE'}
+                                                </button>
+                                            </div>
+
+                                            {/* 评论输入框 */}
+                                            <div className="w-full flex items-center gap-2 bg-gray-100 border-[3px] border-black rounded-2xl p-1 shadow-inner">
+                                                <input
+                                                    type="text"
+                                                    value={commentText}
+                                                    onChange={(e) => setCommentText(e.target.value)}
+                                                    placeholder={currentLang === 'cn' ? '发一条友善的星际评论吧...' : 'Leave a comment...'}
+                                                    className="flex-1 bg-transparent border-none px-3 font-bold text-sm focus:outline-none placeholder:text-gray-400"
+                                                />
+                                                <button onClick={() => handleClaimEntity('comment_bottle')} className="bg-[#60EFFF] border-[2px] border-black w-10 h-10 rounded-xl flex items-center justify-center font-black active:scale-95 transition-transform text-xl">
+                                                    ↑
+                                                </button>
+                                            </div>
+
+                                            {/* 评论输入框 */}
+                                            <div className="w-full flex items-center gap-2 bg-gray-100 border-[3px] border-black rounded-2xl p-1 shadow-inner">
+                                                <input
+                                                    type="text"
+                                                    placeholder={currentLang === 'cn' ? '发一条友善的星际评论吧...' : 'Leave a comment...'}
+                                                    className="flex-1 bg-transparent border-none px-3 font-bold text-sm focus:outline-none placeholder:text-gray-400"
+                                                />
+                                                <button
+                                                    onClick={() => {
+                                                        playSound('whoosh');
+                                                        setGlobalAlert(currentLang === 'cn' ? '🚀 评论已发送！\n对方在遥远的星系会收到你的心意！' : '🚀 Comment sent to space!');
+                                                    }}
+                                                    className="bg-[#60EFFF] border-[2px] border-black w-10 h-10 rounded-xl flex items-center justify-center font-black active:scale-95 transition-transform"
+                                                >
+                                                    ↑
+                                                </button>
+                                            </div>
+                                        </div>
                                     </>
                                 )}
 

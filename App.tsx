@@ -9,7 +9,7 @@ import { RedX, CarrotCoinIcon, ArchivesIcon, DiceIcon } from './components/Icons
 import { ParticleOverlay } from './components/effects/ParticleOverlay';
 import { useAnimateTokens } from './hooks/useAnimateTokens';
 import { SuccessOverlay } from './components/effects/SuccessOverlay';
-import { CharacterData, PartCategory, PlanetCategory, Language, PassportData, UnlockedMedal, AchievementDef, ViewMode } from './types';
+import { CharacterData, PartCategory, PlanetCategory, Language, PassportData, UnlockedMedal, AchievementDef, ViewMode, CollectedStory } from './types';
 import { StartScreen } from './components/StartScreen';
 import { getPartList } from './data/parts';
 import { calculateStats, generateFlavorText, TRANSLATIONS, DEFAULT_BIOS, generateUniqueId, ALL_PRESETS, generateStarName, getWeightedRandomPart, calculateFinalRarity, getStarDate } from './utils/gameLogic';
@@ -161,6 +161,21 @@ export const App: React.FC = () => {
     const saved = localStorage.getItem('happyPlanet_shopItems');
     return saved ? JSON.parse(saved) : [];
   });
+
+  // 👇 星际手帐：故事收藏仓库
+  const [collectedStories, setCollectedStories] = useState<CollectedStory[]>(() => {
+    const saved = localStorage.getItem('happyPlanet_collectedStories');
+    return saved ? JSON.parse(saved) : [];
+  });
+  useEffect(() => { localStorage.setItem('happyPlanet_collectedStories', JSON.stringify(collectedStories)); }, [collectedStories]);
+
+  const handleCollectStory = useCallback((story: CollectedStory) => {
+    setCollectedStories(prev => {
+      // 防止重复收藏
+      if (prev.find(s => s.id === story.id)) return prev;
+      return [story, ...prev];
+    });
+  }, []);
 
   // 👇 新增：消耗品库存账本 (用来装奶茶！)
   const [inventory, setInventory] = useState<Record<string, number>>(() => {
@@ -458,28 +473,22 @@ export const App: React.FC = () => {
   // 🚀 终极魔法：将漂流瓶写入 Firebase 云端
   // ==========================================
   const handleThrowBottle = async (title: Record<Language, string>, content: Record<Language, string>, authorName: string) => {
-    if (!userUid) {
-      console.warn("雷达报错：未连接到星际网络，无法发射漂流瓶！");
-      return;
-    }
-
+    if (!userUid) return;
     try {
-      // 指向数据库中的 'bottles' 抽屉（集合）
       const bottlesRef = collection(db, "bottles");
-
-      // 执行写入操作！
       await addDoc(bottlesRef, {
-        uid: userUid,                 // 绑定你的匿名灵魂 ID
-        author: authorName,           // 角色名字
-        title: title,                 // 标题 (包含三种语言)
-        content: content,             // 内容 (包含三种语言)
-        createdAt: serverTimestamp(), // 云端服务器的绝对时间
-        date: getStarDate()           // 游戏内的格式化日期
+        uid: userUid,
+        author: authorName,
+        title: title,
+        content: content,
+        createdAt: serverTimestamp(),
+        date: getStarDate(), // 👈 注意这里的逗号
+        likes: 0,
+        comments: []
       });
-
-      console.log("🚀 Biu~ 漂流瓶已成功发射到 Firebase 的星海中！");
+      console.log("🚀 漂流瓶已发射！");
     } catch (error) {
-      console.error("发射失败，漂流瓶坠毁:", error);
+      console.error("发射失败:", error);
     }
   };
 
@@ -882,6 +891,9 @@ export const App: React.FC = () => {
               onUnlockShopItem={(item) => setUnlockedShopItems(prev => [...prev, item])}
               inventory={inventory} // 👈 传给雷达
               onUpdateInventory={handleUpdateInventory} // 👈 传给雷达
+              // ... 其他 props 保持不变
+              collectedStories={collectedStories}
+              onCollectStory={handleCollectStory}
             />
           )}
 
