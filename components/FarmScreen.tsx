@@ -407,55 +407,58 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
             )}
 
             {/* 顶部胶囊货币 UI */}
-            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 flex gap-3 pointer-events-auto">
-                <div id="farm-wallet-carrot" className="h-10 bg-white border-[3px] border-black px-3 rounded-full shadow-[3px_3px_0_black] flex items-center gap-2 transition-transform">
-                    <CarrotCoinIcon className="w-5 h-5" />
-                    <span className="font-black text-lg mt-0.5 text-black">{carrotCoins}</span>
-                </div>
-                {starSand !== undefined && (
-                    <div id="farm-wallet-starsand" className="h-10 bg-white border-[3px] border-black px-3 rounded-full shadow-[3px_3px_0_black] flex items-center gap-2 transition-transform">
-                        <FarmIcons.StarSand className="w-5 h-5" />
-                        <span className="font-black text-lg mt-0.5 text-black">{starSand}</span>
+            {/* 1. 把顶部货币与左上角身份牌垂直合并，放在一起 */}
+            <div className="absolute top-6 left-4 md:left-6 z-50 flex flex-col gap-3 pointer-events-auto">
+                <div className="flex gap-2">
+                    <div id="farm-wallet-carrot" className="h-10 bg-white border-[3px] border-black px-3 rounded-full shadow-[3px_3px_0_black] flex items-center gap-2 transition-transform">
+                        <CarrotCoinIcon className="w-5 h-5" />
+                        <span className="font-black text-lg mt-0.5 text-black">{carrotCoins}</span>
                     </div>
-                )}
-            </div>
-
-            {/* 左上角身份牌 (带有颜色变化和完美的夹娃娃机动效) */}
-            <header className="absolute top-0 left-6 z-30 flex flex-col items-center pointer-events-auto">
-                {selectedPet ? (
-                    <div className={`relative flex flex-col items-center ${badgeAnim}`}>
-                        {/* 🌟 视觉魔法：长长的挂绳，延伸到屏幕外面，永远不会露出断掉的头部！ */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-2 h-[500px] bg-gray-400 border-x-[3px] border-black z-0" />
-
-                        {/* 夹子头部 */}
-                        <div className="w-10 h-6 bg-gray-300 border-[3px] border-black rounded-b-xl shadow-[inset_0_-3px_0_rgba(0,0,0,0.2)] z-10 relative flex justify-center items-end pb-1">
-                            <div className="w-2 h-2 bg-gray-800 rounded-full" />
+                    {starSand !== undefined && (
+                        <div id="farm-wallet-starsand" className="h-10 bg-white border-[3px] border-black px-3 rounded-full shadow-[3px_3px_0_black] flex items-center gap-2 transition-transform">
+                            <FarmIcons.StarSand className="w-5 h-5" />
+                            <span className="font-black text-lg mt-0.5 text-black">{starSand}</span>
                         </div>
+                    )}
+                </div>
 
-                        {/* 身份牌本体 */}
-                        <div className={`border-[4px] border-black rounded-[24px] p-3 shadow-[6px_6px_0_black] flex flex-col items-center w-[140px] mt-[-6px] transition-colors duration-500 hover:translate-y-1 ${badgeColors[activeTab]}`}>
-                            <div className="w-full aspect-square bg-[#E0F2FE] border-[3px] border-black rounded-xl overflow-hidden relative shadow-inner mb-2 flex items-center justify-center">
-                                <div className="absolute w-[160px] h-[160px] flex items-center justify-center transform scale-[0.6] translate-y-3">
-                                    <Avatar selectedParts={selectedPet.selectedParts} dominantStat={getDominantStat(calculateStats(selectedPet.selectedParts))} transparent={true} />
+                {/* 左上角身份牌 (带有颜色变化和完美的夹娃娃机动效) */}
+                <header className="absolute top-0 left-6 z-30 flex flex-col items-center pointer-events-auto">
+                    {selectedPet ? (
+                        <div className={`relative flex flex-col items-center ${badgeAnim}`}>
+                            {/* 🌟 视觉魔法：长长的挂绳，延伸到屏幕外面，永远不会露出断掉的头部！ */}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-2 h-[500px] bg-gray-400 border-x-[3px] border-black z-0" />
+
+                            {/* 夹子头部 */}
+                            <div className="w-10 h-6 bg-gray-300 border-[3px] border-black rounded-b-xl shadow-[inset_0_-3px_0_rgba(0,0,0,0.2)] z-10 relative flex justify-center items-end pb-1">
+                                <div className="w-2 h-2 bg-gray-800 rounded-full" />
+                            </div>
+
+                            {/* 身份牌本体 */}
+                            <div className={`border-[4px] border-black rounded-[24px] p-3 shadow-[6px_6px_0_black] flex flex-col items-center w-[140px] mt-[-6px] transition-colors duration-500 hover:translate-y-1 ${badgeColors[activeTab]}`}>
+                                <div className="w-full aspect-square bg-[#E0F2FE] border-[3px] border-black rounded-xl overflow-hidden relative shadow-inner mb-2 flex items-center justify-center">
+                                    <div className="absolute w-[160px] h-[160px] flex items-center justify-center transform scale-[0.6] translate-y-3">
+                                        <Avatar selectedParts={selectedPet.selectedParts} dominantStat={getDominantStat(calculateStats(selectedPet.selectedParts))} transparent={true} />
+                                    </div>
+                                </div>
+                                <div className="font-black text-[11px] uppercase tracking-widest bg-black text-white px-2 py-1 rounded-full w-full text-center truncate mb-2">
+                                    {selectedPet.starName}
+                                </div>
+                                <div className="w-full flex flex-col gap-1.5 bg-white p-1.5 rounded-xl border-2 border-black">
+                                    <StatBar icon={<div className="w-4 h-4"><FarmIcons.Hunger /></div>} value={selectedPet.hunger ?? 80} color="bg-[#D2691E]" />
+                                    <StatBar icon={<div className="w-4 h-4"><FarmIcons.Intimacy /></div>} value={selectedPet.intimacy ?? 0} color="bg-[#FF90E8]" />
                                 </div>
                             </div>
-                            <div className="font-black text-[11px] uppercase tracking-widest bg-black text-white px-2 py-1 rounded-full w-full text-center truncate mb-2">
-                                {selectedPet.starName}
-                            </div>
-                            <div className="w-full flex flex-col gap-1.5 bg-white p-1.5 rounded-xl border-2 border-black">
-                                <StatBar icon={<div className="w-4 h-4"><FarmIcons.Hunger /></div>} value={selectedPet.hunger ?? 80} color="bg-[#D2691E]" />
-                                <StatBar icon={<div className="w-4 h-4"><FarmIcons.Intimacy /></div>} value={selectedPet.intimacy ?? 0} color="bg-[#FF90E8]" />
-                            </div>
                         </div>
-                    </div>
-                ) : (
-                    <div className="bg-white/80 mt-4 border-[4px] border-black border-dashed p-3 rounded-2xl text-center font-black text-xs opacity-60">{T.noPet[currentLang]}</div>
-                )}
-            </header>
+                    ) : (
+                        <div className="bg-white/80 mt-4 border-[4px] border-black border-dashed p-3 rounded-2xl text-center font-black text-xs opacity-60">{T.noPet[currentLang]}</div>
+                    )}
+                </header>
+            </div>
 
             {/* --- 核心交互区 --- */}
-            <main className="relative z-10 flex-1 w-full flex flex-wrap items-center justify-center p-4 gap-8 md:gap-16 pt-20 translate-y-16">
-                {/* 锚点用于全局动画定位 */}
+            {/* 2. 兔子容器：禁止换行 (flex-nowrap)，靠底对齐 (items-end)，增加左侧内边距 (pl-36) 避开身份牌 */}
+            <main className="relative z-10 flex-1 w-full flex flex-nowrap items-end justify-start md:justify-center p-4 pl-40 md:pl-48 gap-6 md:gap-16 pt-32 pb-8 overflow-x-auto hide-scrollbar">
                 <div id="avatar-center" className="absolute top-1/2 left-1/2 w-1 h-1 pointer-events-none" />
 
                 {activePets.length > 0 ? (
@@ -479,7 +482,7 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
                                         setSelectedPetId(pet.id);
                                     }
                                 }}
-                                className="relative flex flex-col items-center cursor-pointer group"
+                                className="relative flex flex-col items-center cursor-pointer group shrink-0 pb-10"
                             >
                                 {/* 🌟 1. 果汁多巴胺选中光环 (替代旧黄圈) */}
                                 {isSelected && (

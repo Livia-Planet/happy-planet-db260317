@@ -472,8 +472,8 @@ export const PassportBook: React.FC<PassportBookProps> = ({
         {/* ======================================================= */}
         {/* 1. 全新进化：单行顶置工具栏 (左轻柔，右硬核) */}
         {/* ======================================================= */}
-        <div className="flex flex-wrap items-center justify-between gap-4 py-8 mb-8 z-[100]">
-
+        {/* 1. 头部重构：手机竖屏上下排布，大屏左右排布，适当增加顶部间距避开右上角主菜单 */}
+        <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-4 pt-14 md:pt-8 pb-4 mb-4 z-[100] w-full">
           {/* 【左侧】透明/磨砂功能组 (主题点 + 搜索 + 排序) */}
           <div className="flex items-center gap-2 bg-white/20 backdrop-blur-xl p-2 rounded-2xl border border-white/30 shadow-lg">
 
@@ -794,85 +794,84 @@ export const PassportBook: React.FC<PassportBookProps> = ({
             return (
               <div key="stats-modal" className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
                 <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setIsStatsOpen(false)} />
-                <div className="relative bg-[#0a0a0c] border border-blue-500/30 rounded-[2.5rem] w-full max-w-3xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.9)] animate-in zoom-in-95 duration-300 font-rounded text-white">
-                  <div className="p-8 md:p-12 flex flex-col gap-8">
-                    <div className="flex justify-between items-start border-b border-white/10 pb-6">
-                      <div>
-                        <h3 className="text-3xl md:text-4xl font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-200">
-                          {T.title[l]}
-                        </h3>
-                        <p className="text-[10px] opacity-30 font-mono tracking-[0.3em] mt-2">{T.sub[l]} // STABLE_v3.0</p>
-                      </div>
-                      <div className="bg-red-500/10 border border-red-500/50 px-3 py-1.5 rounded-lg text-[10px] text-red-400 animate-pulse font-black flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-red-500" /> ONLINE
-                      </div>
+                <div className="relative bg-[#0a0a0c] border border-blue-500/30 rounded-[2.5rem] w-full max-w-3xl max-h-[85vh] overflow-y-auto custom-scrollbar shadow-[0_0_80px_rgba(0,0,0,0.9)] animate-in zoom-in-95 duration-300 font-rounded text-white">                  <div className="p-8 md:p-12 flex flex-col gap-8">
+                  <div className="flex justify-between items-start border-b border-white/10 pb-6">
+                    <div>
+                      <h3 className="text-3xl md:text-4xl font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-200">
+                        {T.title[l]}
+                      </h3>
+                      <p className="text-[10px] opacity-30 font-mono tracking-[0.3em] mt-2">{T.sub[l]} // STABLE_v3.0</p>
                     </div>
-
-                    <div className="grid grid-cols-4 gap-4">
-                      <div className="bg-white/5 p-5 rounded-2xl flex flex-col items-center">
-                        <span className="text-[9px] opacity-40 uppercase mb-2">{T.citizens[l]}</span>
-                        <span className="text-2xl font-black">{safePassports.length}</span>
-                      </div>
-                      <div className="bg-white/5 p-5 rounded-2xl flex flex-col items-center">
-                        <span className="text-[9px] opacity-40 uppercase mb-2">{T.stories[l]}</span>
-                        <span className="text-2xl font-black text-green-400">{totalLitStars}</span>
-                      </div>
-                      <div className="bg-white/5 p-5 rounded-2xl flex flex-col items-center">
-                        <span className="text-[9px] opacity-40 uppercase mb-2">{T.galaxies[l]}</span>
-                        <span className="text-2xl font-black text-purple-400">{totalCompletedGalaxies}</span>
-                      </div>
-                      <div className="bg-white/5 p-5 rounded-2xl flex flex-col items-center">
-                        <span className="text-[9px] opacity-40 uppercase mb-2">{T.time[l]}</span>
-                        <span className="text-2xl font-black text-blue-400">{formatTime(sessionTime)}</span>
-                      </div>
+                    <div className="bg-red-500/10 border border-red-500/50 px-3 py-1.5 rounded-lg text-[10px] text-red-400 animate-pulse font-black flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-red-500" /> ONLINE
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-black/40 rounded-[2rem] p-8 border border-white/5">
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="text-[10px] font-black opacity-40 uppercase tracking-widest mb-4">{T.trait[l]}</div>
-                          <ul className="space-y-2 text-[10px] font-bold">
-                            <li className="flex justify-between items-center"><span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#ef4444]" /> {T.MOD[l]}</span><span>{traits.mod}</span></li>
-                            <li className="flex justify-between items-center"><span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#f59e0b]" /> {T.BUS[l]}</span><span>{traits.bus}</span></li>
-                            <li className="flex justify-between items-center"><span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#3b82f6]" /> {T.KLUR[l]}</span><span>{traits.klurighet}</span></li>
-                          </ul>
-                        </div>
-                        {renderDonut([
-                          { label: 'MOD', value: traits.mod, color: '#ef4444' },
-                          { label: 'BUS', value: traits.bus, color: '#f59e0b' },
-                          { label: 'KLUR', value: traits.klurighet, color: '#3b82f6' }
-                        ])}
-                      </div>
-
-                      <div className="flex items-center justify-between gap-4 md:border-l border-white/10 md:pl-8">
-                        <div className="flex-1">
-                          <div className="text-[10px] font-black opacity-40 uppercase tracking-widest mb-4">{T.rarity[l]}</div>
-                          <ul className="space-y-1.5 text-[9px] font-bold">
-                            {['L', 'E', 'R', 'U', 'C'].map(rk => (
-                              <li key={rk} className="flex justify-between items-center">
-                                <span className="text-white/80">{T[rk as 'L'][l]}</span>
-                                <span>{rarities[rk as keyof typeof rarities]}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        {renderDonut([
-                          { label: 'L', value: rarities.L, color: '#fbbf24' },
-                          { label: 'E', value: rarities.E, color: '#c084fc' },
-                          { label: 'R', value: rarities.R, color: '#3b82f6' },
-                          { label: 'U', value: rarities.U, color: '#22c55e' },
-                          { label: 'C', value: rarities.C, color: '#94a3b8' }
-                        ])}
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => setIsStatsOpen(false)}
-                      className="w-full py-5 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-2xl font-black text-sm tracking-[0.3em] border border-blue-400/30 active:scale-[0.98] transition-transform"
-                    >
-                      {T.close[l]}
-                    </button>
                   </div>
+
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="bg-white/5 p-5 rounded-2xl flex flex-col items-center">
+                      <span className="text-[9px] opacity-40 uppercase mb-2">{T.citizens[l]}</span>
+                      <span className="text-2xl font-black">{safePassports.length}</span>
+                    </div>
+                    <div className="bg-white/5 p-5 rounded-2xl flex flex-col items-center">
+                      <span className="text-[9px] opacity-40 uppercase mb-2">{T.stories[l]}</span>
+                      <span className="text-2xl font-black text-green-400">{totalLitStars}</span>
+                    </div>
+                    <div className="bg-white/5 p-5 rounded-2xl flex flex-col items-center">
+                      <span className="text-[9px] opacity-40 uppercase mb-2">{T.galaxies[l]}</span>
+                      <span className="text-2xl font-black text-purple-400">{totalCompletedGalaxies}</span>
+                    </div>
+                    <div className="bg-white/5 p-5 rounded-2xl flex flex-col items-center">
+                      <span className="text-[9px] opacity-40 uppercase mb-2">{T.time[l]}</span>
+                      <span className="text-2xl font-black text-blue-400">{formatTime(sessionTime)}</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-black/40 rounded-[2rem] p-8 border border-white/5">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="text-[10px] font-black opacity-40 uppercase tracking-widest mb-4">{T.trait[l]}</div>
+                        <ul className="space-y-2 text-[10px] font-bold">
+                          <li className="flex justify-between items-center"><span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#ef4444]" /> {T.MOD[l]}</span><span>{traits.mod}</span></li>
+                          <li className="flex justify-between items-center"><span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#f59e0b]" /> {T.BUS[l]}</span><span>{traits.bus}</span></li>
+                          <li className="flex justify-between items-center"><span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#3b82f6]" /> {T.KLUR[l]}</span><span>{traits.klurighet}</span></li>
+                        </ul>
+                      </div>
+                      {renderDonut([
+                        { label: 'MOD', value: traits.mod, color: '#ef4444' },
+                        { label: 'BUS', value: traits.bus, color: '#f59e0b' },
+                        { label: 'KLUR', value: traits.klurighet, color: '#3b82f6' }
+                      ])}
+                    </div>
+
+                    <div className="flex items-center justify-between gap-4 md:border-l border-white/10 md:pl-8">
+                      <div className="flex-1">
+                        <div className="text-[10px] font-black opacity-40 uppercase tracking-widest mb-4">{T.rarity[l]}</div>
+                        <ul className="space-y-1.5 text-[9px] font-bold">
+                          {['L', 'E', 'R', 'U', 'C'].map(rk => (
+                            <li key={rk} className="flex justify-between items-center">
+                              <span className="text-white/80">{T[rk as 'L'][l]}</span>
+                              <span>{rarities[rk as keyof typeof rarities]}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      {renderDonut([
+                        { label: 'L', value: rarities.L, color: '#fbbf24' },
+                        { label: 'E', value: rarities.E, color: '#c084fc' },
+                        { label: 'R', value: rarities.R, color: '#3b82f6' },
+                        { label: 'U', value: rarities.U, color: '#22c55e' },
+                        { label: 'C', value: rarities.C, color: '#94a3b8' }
+                      ])}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setIsStatsOpen(false)}
+                    className="w-full py-5 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-2xl font-black text-sm tracking-[0.3em] border border-blue-400/30 active:scale-[0.98] transition-transform"
+                  >
+                    {T.close[l]}
+                  </button>
+                </div>
                 </div>
               </div>
             );
@@ -1042,22 +1041,21 @@ export const PassportBook: React.FC<PassportBookProps> = ({
             </button>
           </div>
 
-          {/* Tabs */}
-          <div className="flex px-6 mt-6 border-b-2 border-gray-200">
-            {(['profile', 'personality', 'relations', 'story'] as Tab[]).map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`
+          {/* 2. Tabs 重构：增加溢出横向滚动，禁止换行 */}
+          <div className="flex px-4 md:px-6 mt-6 border-b-2 border-gray-200 overflow-x-auto hide-scrollbar">            {(['profile', 'personality', 'relations', 'story'] as Tab[]).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`
                   px-4 py-2 font-bold font-rounded text-sm md:text-base transition-colors relative top-[2px] border-b-[3px]
                   ${activeTab === tab
-                    ? (isFlipped ? 'text-white border-livia-blue' : 'text-black border-livia-yellow')
-                    : 'text-gray-400 border-transparent hover:text-gray-500'}
+                  ? (isFlipped ? 'text-white border-livia-blue' : 'text-black border-livia-yellow')
+                  : 'text-gray-400 border-transparent hover:text-gray-500'}
                 `}
-              >
-                {TRANSLATIONS.ui.tabs[tab][lang]}
-              </button>
-            ))}
+            >
+              {TRANSLATIONS.ui.tabs[tab][lang]}
+            </button>
+          ))}
           </div>
 
           {/* Content Area */}

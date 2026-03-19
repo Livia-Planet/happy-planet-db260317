@@ -23,13 +23,13 @@ export const CollectionScreen: React.FC<CollectionScreenProps> = ({ collectedSto
     };
 
     return (
-        <div className="fixed inset-0 z-[1000] bg-[#FFFBEB] overflow-hidden font-rounded p-6" style={{ backgroundImage: 'radial-gradient(#e0e0dc 1.2px, transparent 1.2px)', backgroundSize: '18px 18px' }}>
-            {/* 🌟 头部标题和返回按钮 */}
-            <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-50">
-                <h1 className="font-black text-3xl uppercase tracking-widest text-black flex items-center gap-3 bg-white/80 px-6 py-2 rounded-full border-4 border-black shadow-[4px_4px_0_black]">
-                    📚 {T.title[lang]}
+        <div className="fixed inset-0 z-[1000] bg-[#FFFBEB] overflow-hidden font-rounded flex flex-col" style={{ backgroundImage: 'radial-gradient(#e0e0dc 1.2px, transparent 1.2px)', backgroundSize: '18px 18px' }}>
+            {/* 🌟 修复：保证 X 按钮永远在最右侧不被挤走 */}
+            <div className="flex justify-between items-center p-4 md:p-6 shrink-0 z-50 w-full gap-2">
+                <h1 className="font-black text-base md:text-3xl uppercase tracking-widest text-black flex items-center gap-2 bg-white/80 px-4 py-2 rounded-full border-[3px] md:border-4 border-black shadow-[3px_3px_0_black] md:shadow-[4px_4px_0_black] flex-1 overflow-hidden">
+                    📚 <span className="truncate">{T.title[lang]}</span>
                 </h1>
-                <button onClick={onBack} className="w-14 h-14 bg-white border-4 border-black rounded-full flex items-center justify-center shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none text-4xl hover:bg-gray-100">
+                <button onClick={onBack} className="w-10 h-10 md:w-14 md:h-14 bg-white border-[3px] md:border-4 border-black rounded-full flex items-center justify-center shadow-[3px_3px_0_black] md:shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none text-2xl md:text-4xl hover:bg-gray-100 shrink-0">
                     ×
                 </button>
             </div>

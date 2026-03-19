@@ -707,7 +707,7 @@ export const App: React.FC = () => {
 
       {/* 👇 只有在验证通过后，才会显示下面的整个游戏世界！ */}
       <div className={`min-h-screen transition-colors duration-700 ${isFlipped && viewMode === 'editor' ? 'bg-gray-900' : 'bg-livia-bg'} text-gray-900 p-4 md:p-8 font-rounded selection:bg-livia-yellow selection:text-black relative overflow-x-hidden ${bigBangActive ? 'animate-shake blur-sm' : ''} ${!isVerified ? 'hidden' : ''}`}></div>
-      
+
       {/* 🪄 注入超级魔棒组件 */}
       <MagicCursor />
 
@@ -812,35 +812,41 @@ export const App: React.FC = () => {
             )}
           </div>
 
+          {/* 🌟 修复：缩小了 pt-20 为 pt-14，大幅减少顶部留白 */}
           {viewMode === 'editor' && (
-            <>
-              <header className={`max-w-4xl mx-auto mb-6 text-center mt-12 md:mt-0 relative z-10 transition-opacity duration-500 ${isIssuing ? 'opacity-0' : 'opacity-100'}`}>
+            <div className={`fixed inset-0 overflow-y-auto overflow-x-hidden custom-scrollbar transition-colors duration-700 pt-14 md:pt-10 pb-10 ${isFlipped ? 'bg-gray-900' : 'bg-livia-bg'}`}>
+              <header className={`max-w-4xl mx-auto mb-2 md:mb-6 text-center relative z-10 transition-opacity duration-500 ${isIssuing ? 'opacity-0' : 'opacity-100'}`}>
                 <h1 className={`text-4xl md:text-6xl font-black tracking-tight drop-shadow-[2px_2px_0_rgba(0,0,0,1)] stroke-black transition-colors duration-500 ${isFlipped ? 'text-livia-blue' : 'text-livia-orange'}`} style={{ WebkitTextStroke: '2px black' }}>{TRANSLATIONS.appTitle[currentLang]}</h1>
-                <p className={`mt-2 font-hand text-xl md:text-2xl transition-colors duration-500 ${isFlipped ? 'text-gray-300' : 'text-gray-700'}`}>{currentLang === 'cn' ? "官方居民定制器" : "Official Resident Customizer"}</p>
+                <p className={`mt-1 font-hand text-base md:text-2xl transition-colors duration-500 ${isFlipped ? 'text-gray-300' : 'text-gray-700'}`}>{currentLang === 'cn' ? "官方居民定制器" : "Official Resident Customizer"}</p>
               </header>
 
-              <main className="max-w-4xl mx-auto flex flex-col md:flex-row items-center md:items-start justify-center gap-10">
-                <div className={`flex flex-col items-center relative transition-all duration-700 ease-in-out ${isIssuing ? 'z-[110] scale-105 md:scale-110 drop-shadow-2xl' : 'z-10'}`}>
-                  <Card data={characterData} stats={currentStats} flavorText={flavorText} isFlipped={isFlipped} onFlip={toggleFlip} lang={currentLang} showStamp={false} stampAngle={-15} particles={[]} hideRarity={true} />
-                  <div className={`mt-6 text-center transition-opacity duration-500 ${isIssuing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-                    <button onClick={toggleFlip} className={`font-hand text-lg transition-all duration-300 px-6 py-2 rounded-full ${isFlipped ? 'bg-white/10 text-white backdrop-blur-md border border-white/20 hover:bg-white/20' : 'text-gray-900 underline hover:text-livia-orange'}`}>
-                      {isFlipped ? `${TRANSLATIONS.buttons.showFront[currentLang]} ↩` : `${TRANSLATIONS.buttons.showBack[currentLang]} ↪`}
-                    </button>
+              {/* 🌟 修复：横屏完美并排，竖屏上下贴紧 */}
+              <main className="max-w-5xl mx-auto flex flex-col landscape:flex-row md:flex-row items-center landscape:items-start md:items-start justify-center gap-2 landscape:gap-8 md:gap-10 w-full px-2">
+
+                {/* 🌟 修复：手机竖屏等比缩小 20% (scale-[0.8])，给下方留出充足空间 */}
+                <div className={`flex flex-col items-center justify-start h-[360px] landscape:h-auto md:h-auto shrink-0 transition-all duration-700 ease-in-out ${isIssuing ? 'z-[110] scale-105 md:scale-110 drop-shadow-2xl' : 'z-10'}`}>
+                  <div className="transform scale-[0.8] landscape:scale-100 md:scale-100 origin-top transition-transform duration-300">
+                    <Card data={characterData} stats={currentStats} flavorText={flavorText} isFlipped={isFlipped} onFlip={toggleFlip} lang={currentLang} showStamp={false} stampAngle={-15} particles={[]} hideRarity={true} />
+                    <div className={`mt-4 text-center transition-opacity duration-500 ${isIssuing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                      <button onClick={toggleFlip} className={`font-hand text-xl md:text-2xl transition-all duration-300 px-6 py-2 rounded-full ${isFlipped ? 'bg-white/10 text-white backdrop-blur-md border border-white/20 hover:bg-white/20' : 'text-gray-900 underline hover:text-livia-orange'}`}>
+                        {isFlipped ? `${TRANSLATIONS.buttons.showFront[currentLang]} ↩` : `${TRANSLATIONS.buttons.showBack[currentLang]} ↪`}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                <div className={`flex flex-col gap-6 items-center md:items-start relative z-10 transition-opacity duration-500 ${isIssuing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                <div className={`flex flex-col gap-3 md:gap-6 items-center md:items-start w-full max-w-[360px] shrink-0 relative z-10 transition-opacity duration-500 ${isIssuing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                   <Controls
                     data={characterData}
                     derivedStats={currentStats}
                     activeTab={activeTab}
                     isBackView={isFlipped}
-                    onTabChange={(tab) => { playSound('click'); setActiveTab(tab); }} // 👈 分类切换声
+                    onTabChange={(tab) => { playSound('click'); setActiveTab(tab); }}
                     updateName={handleUpdateName}
                     updatePart={handleUpdatePart}
                     updatePlanetPart={handleUpdatePlanetPart}
                     lang={currentLang}
-                    unlockedParts={unlockedParts} // 👈 新增这一行！
+                    unlockedParts={unlockedParts}
                   />
                   <div className="w-full max-w-[340px] flex flex-col gap-4 pb-8">
                     <div className="flex gap-4 w-full">
@@ -854,7 +860,7 @@ export const App: React.FC = () => {
                   </div>
                 </div>
               </main>
-            </>
+            </div>
           )}
 
           {viewMode === 'passport' && (

@@ -8,8 +8,7 @@ import { SpaceBackground } from './SpaceBackground';
 import { useAnimateTokens } from '../hooks/useAnimateTokens';
 import { PLANET_PARTS_DB } from '../data/parts';
 import { db, auth } from '../utils/firebase'; // 👈 引入数据库和身份验证
-import { collection, getDocs, query, orderBy, limit, doc, updateDoc, increment, arrayUnion } from 'firebase/firestore'; // 👈 引入捞瓶子的工具
-
+import { collection, getDocs, getDoc, query, orderBy, limit, doc, updateDoc, increment, arrayUnion } from 'firebase/firestore';
 // 🌟 全新 SVG 图标库 (包含奶茶和充能状态)
 const SocialIcons = {
     StarSand: ({ className = "w-6 h-6" }) => (<svg viewBox="0 0 24 24" fill="#60EFFF" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 2l2.4 7.6H22l-6.2 4.5 2.4 7.6-6.2-4.5-6.2 4.5 2.4-7.6L2 9.6h7.6z" /><circle cx="12" cy="12" r="3" fill="white" /></svg>),
@@ -488,7 +487,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                     return (
                         <div key={neighbor.id} id={`perm-${neighbor.id}`} onClick={(e) => { e.stopPropagation(); playSound('click'); setSelectedNeighbor(neighbor); showBubble('greet', neighbor.id); }} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-pointer group hover:scale-110 transition-transform duration-300 pointer-events-auto" style={{ left: `${pos.x}%`, top: `${pos.y}%`, animation: `planet-float ${4 + idx}s ease-in-out infinite` }}>
                             {speechBubble?.id === neighbor.id && (
-                                <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-[100] animate-bubble-pop pointer-events-none w-max max-w-[160px]">
+                                <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-[1100] animate-bubble-pop pointer-events-none w-max max-w-[160px]">
                                     <div className="bg-white border-[3px] border-black px-3 py-1.5 rounded-2xl shadow-[4px_4px_0_black] relative"><span className="font-black text-xs leading-tight block text-center text-black">{speechBubble.text}</span><div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-b-[3px] border-r-[3px] border-black transform rotate-45" /></div>
                                 </div>
                             )}
@@ -525,7 +524,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
             {typeof document !== 'undefined' && createPortal(
                 <>
                     {selectedNeighbor && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in pointer-events-auto">
+                        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in pointer-events-auto">
                             <div className="bg-[#fdfdf9] border-[5px] border-black rounded-[3rem] p-8 w-full max-w-sm shadow-[15px_15px_0_black] flex flex-col items-center animate-scale-in relative">
                                 <button onClick={() => setSelectedNeighbor(null)} className="absolute top-4 right-6 text-4xl font-black text-gray-400 hover:text-black transition-colors">&times;</button>
                                 <div className="w-24 h-24 bg-gray-100 border-[4px] border-black rounded-full overflow-hidden flex items-center justify-center shadow-inner mb-4"><div className="scale-[0.7] origin-center translate-y-0"><Avatar selectedParts={selectedNeighbor.selectedParts} dominantStat={getDominantStat(calculateStats(selectedNeighbor.selectedParts, selectedNeighbor.stats))} transparent /></div></div>
@@ -537,7 +536,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                     )}
 
                     {stampPrompt && (
-                        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in pointer-events-auto">
+                        <div className="fixed inset-0 z-[1110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in pointer-events-auto">
                             <div className="bg-[#FFFBEB] border-[5px] border-black rounded-[2rem] p-6 w-full max-w-xs shadow-[10px_10px_0_black] flex flex-col items-center animate-bounce-in relative">
                                 <div className="w-16 h-16 bg-[#FFD700] rounded-full border-[3px] border-black flex items-center justify-center -mt-12 mb-4 shadow-[4px_4px_0_black]"><SocialIcons.Envelope className="w-8 h-8" /></div>
                                 <h3 className="font-black text-xl mb-2">{currentLang === 'cn' ? '包裹送达啦！' : 'Package Delivered!'}</h3>
@@ -551,7 +550,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                     )}
 
                     {activeEntity && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in pointer-events-auto">
+                        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in pointer-events-auto">
                             <div className="bg-white border-[5px] border-black rounded-[3rem] p-6 md:p-8 w-full max-w-sm max-h-[90vh] shadow-[15px_15px_0_black] flex flex-col items-center animate-scale-in relative" style={{ backgroundImage: 'radial-gradient(#e0e0dc 1.2px, transparent 1.2px)', backgroundSize: '18px 18px' }}>
                                 <button onClick={() => setActiveEntity(null)} className="absolute top-4 right-6 text-4xl font-black text-gray-400 hover:text-black transition-colors">&times;</button>
 
@@ -566,7 +565,14 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                                             <p className="font-bold text-gray-800 text-sm text-center">"{activeEntity.data.dialog[currentLang]}"</p>
                                             <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#E0F2FE] border-t-[3px] border-l-[3px] border-black transform rotate-45" />
                                         </div>
-                                        <button onClick={() => handleClaimEntity('listen_native')} className="w-full bg-[#FFD700] border-[4px] border-black py-4 rounded-2xl font-black text-lg shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2">
+                                        {/* 🌟 核心修复：加入 e.stopPropagation() 防止点击失效 */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // 👈 就是这句救命代码！
+                                                handleClaimEntity('listen_native');
+                                            }}
+                                            className="relative z-50 w-full bg-[#FFD700] border-[4px] border-black py-4 rounded-2xl font-black text-lg shadow-[4px_4px_0_black] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2"
+                                        >
                                             {currentLang === 'cn' ? '聆听并告别' : 'LISTEN & BYE'} <CarrotCoinIcon className="w-5 h-5" />+{activeEntity.data.rewardCoins}
                                         </button>
                                     </>
