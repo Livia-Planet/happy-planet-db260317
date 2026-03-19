@@ -839,7 +839,7 @@ export const FarmScreen: React.FC<FarmScreenProps> = ({
             {/* 💌 多功能结算弹窗 (使用 Portal 彻底解决任何偏移问题！) */}
             {claimedPostcard && typeof document !== 'undefined' && createPortal(
                 <div className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-auto p-4 animate-fade-in">
-                    <div className="bg-white p-5 pb-8 rounded-[2rem] shadow-[15px_15px_0_rgba(0,0,0,0.8)] w-full max-w-[320px] animate-bounce-in flex flex-col items-center relative">
+                    <div className="bg-white p-5 pb-8 rounded-[2rem] shadow-[15px_15px_0_rgba(0,0,0,0.8)] w-full max-w-[320px] animate-scale-in flex flex-col items-center relative">                        
                         <div className="absolute -top-4 w-24 h-8 bg-white/50 backdrop-blur-md border border-gray-200 rotate-3 shadow-sm z-10" />
 
                         {claimedPostcard.type === 'event' ? (

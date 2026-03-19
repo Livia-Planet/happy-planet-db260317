@@ -744,7 +744,7 @@ export const App: React.FC = () => {
 
           {medalMode !== 'hidden' && (
             <div className="fixed inset-0 pointer-events-none z-[5] overflow-hidden">
-              <div className="relative w-full h-full pointer-events-auto">
+              <div className="relative w-full h-full pointer-events-none">
                 {Object.entries(unlockedMedals).map(([id, medalData]) => {
                   const def = ACHIEVEMENTS_DB?.[id];
                   if (!def) return null;
@@ -814,7 +814,7 @@ export const App: React.FC = () => {
 
           {/* 🌟 修复：缩小了 pt-20 为 pt-14，大幅减少顶部留白 */}
           {viewMode === 'editor' && (
-            <div className={`fixed inset-0 overflow-y-auto overflow-x-hidden custom-scrollbar transition-colors duration-700 pt-14 md:pt-10 pb-10 ${isFlipped ? 'bg-gray-900' : 'bg-livia-bg'}`}>
+            <div className={`fixed inset-0 overflow-y-auto overflow-x-hidden custom-scrollbar transition-colors duration-700 pt-20 md:pt-24 pb-16 ${isFlipped ? 'bg-gray-900' : 'bg-livia-bg'}`}>
               <header className={`max-w-4xl mx-auto mb-2 md:mb-6 text-center relative z-10 transition-opacity duration-500 ${isIssuing ? 'opacity-0' : 'opacity-100'}`}>
                 <h1 className={`text-4xl md:text-6xl font-black tracking-tight drop-shadow-[2px_2px_0_rgba(0,0,0,1)] stroke-black transition-colors duration-500 ${isFlipped ? 'text-livia-blue' : 'text-livia-orange'}`} style={{ WebkitTextStroke: '2px black' }}>{TRANSLATIONS.appTitle[currentLang]}</h1>
                 <p className={`mt-1 font-hand text-base md:text-2xl transition-colors duration-500 ${isFlipped ? 'text-gray-300' : 'text-gray-700'}`}>{currentLang === 'cn' ? "官方居民定制器" : "Official Resident Customizer"}</p>
@@ -863,8 +863,9 @@ export const App: React.FC = () => {
             </div>
           )}
 
+          {/* 护照档案馆 */}
           {viewMode === 'passport' && (
-            <div className="relative z-10 pt-16 pb-20">
+            <div className="fixed inset-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-[#2c3e50] z-10 pt-20 md:pt-24 pb-16">
               <PassportBook
                 passports={savedPassports}
                 onBack={() => { playSound('click'); setViewMode('editor'); }}
@@ -873,8 +874,8 @@ export const App: React.FC = () => {
                 lang={currentLang}
                 onReward={handleReward}
                 onToggleFarm={handleToggleFarmStatus}
-                onThrowBottle={handleThrowBottle} // 👈 最后一棒：接上发射器！
-                collectedStories={collectedStories} // 👈 【新增】把收藏账本传给档案馆！
+                onThrowBottle={handleThrowBottle}
+                collectedStories={collectedStories}
               />
             </div>
           )}

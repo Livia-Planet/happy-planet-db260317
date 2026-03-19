@@ -106,7 +106,7 @@ export const DraggableMedal: React.FC<Props> = ({ medal, def, onPositionChange, 
     return (
         <div
             ref={domRef}
-            className={`absolute select-none touch-none transition-transform duration-100 flex items-center justify-center ${isDragging ? 'scale-110 cursor-grabbing z-[100]' : 'cursor-grab'}`}
+            className={`absolute select-none touch-none pointer-events-auto transition-transform duration-100 flex items-center justify-center ${isDragging ? 'scale-110 cursor-grabbing z-[100]' : 'cursor-grab'}`}
             style={{
                 width: physics.current.radius * 2,
                 height: physics.current.radius * 2,

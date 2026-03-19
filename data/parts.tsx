@@ -262,7 +262,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     offsetY: 0,
     images: {
       front: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Duddu400x400-gear.png',
-      back: '/parts/head_helmet_back.png'
+      back: ''
     }
   },
   'access_Tophat': {
@@ -274,7 +274,7 @@ export const PARTS_DB: Record<string, PartDefinition> = {
     offsetY: 0,
     images: {
       front: 'https://raw.githubusercontent.com/Livia-Planet/my-images/main/img/star-passport/Character%20Generator-Issi400x400-gearfont.png',
-      back: '/parts/head_tophat_back.png'
+      back: ''
     }
   },
   'access_babycap': {

@@ -376,7 +376,6 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
 
         if (action === 'save_bottle') {
             playSound('click');
-            // 存入刚刚在 App.tsx 写的收藏夹！
             if ((window as any).onCollectStory) {
                 (window as any).onCollectStory(activeEntity.data);
             }
@@ -388,14 +387,12 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
             onUpdateStarSand(1);
             setReadBottles(prev => [...prev, activeEntity.data.id]);
 
-            // 🚀 核心：如果是云端瓶子，真实写入 Firebase！
             if (activeEntity.data.isCloud && activeEntity.data.dbId) {
                 try {
                     const bottleRef = doc(db, "bottles", activeEntity.data.dbId);
                     await updateDoc(bottleRef, { likes: increment(1) });
                 } catch (e) { console.error("点赞同步失败", e); }
             }
-
             playSound('whoosh');
             setEntities(prev => prev.filter(e => e.uid !== activeEntity.uid));
             setActiveEntity(null);
@@ -404,7 +401,6 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
             if (!commentText.trim()) return;
             playSound('whoosh');
 
-            // 🚀 核心：如果是云端瓶子，真实评论写入 Firebase！
             if (activeEntity.data.isCloud && activeEntity.data.dbId) {
                 try {
                     const activeFarmPet = passports.find(p => p.isAssignedToFarm);
@@ -421,7 +417,35 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
             setEntities(prev => prev.filter(e => e.uid !== activeEntity.uid));
             setActiveEntity(null);
         }
-        // ... (保留其他的 buy_boba, unlock_part, listen_native 逻辑)
+        // 👇 曾经被 AI 弄丢的核心逻辑，现在全找回来了！ 👇
+        else if (action === 'listen_native') {
+            playSound('coins');
+            animateToken('avatar-center', 'social-wallet-carrot', '🥕', true);
+            onUpdateCoins(activeEntity.data.rewardCoins);
+            setEntities(prev => prev.filter(e => e.uid !== activeEntity.uid));
+            setActiveEntity(null);
+        }
+        else if (action === 'unlock_part') {
+            playSound('achievement');
+            onUpdateCoins(-20);
+            if (onUnlockPart) onUnlockPart(activeEntity.data.id);
+            setGlobalAlert(currentLang === 'cn' ? `✨ 破译成功！\n[ ${activeEntity.data.name[currentLang]} ] 已加入创造器！` : `✨ Decoded!\n[ ${activeEntity.data.name[currentLang]} ] added!`);
+            setEntities(prev => prev.filter(e => e.uid !== activeEntity.uid));
+            setActiveEntity(null);
+        }
+        else if (action === 'buy_boba') {
+            if (starSand < 30) {
+                playSound('error');
+                setGlobalAlert(currentLang === 'cn' ? '星砂不足！点赞别人的漂流瓶可以获得星砂哦。' : 'Not enough Star Sand!');
+                return;
+            }
+            playSound('achievement');
+            onUpdateStarSand(-30);
+            onUpdateInventory(activeEntity.data.id, 1);
+            setGlobalAlert(currentLang === 'cn' ? `🥤 购买成功！\n${activeEntity.data.name[currentLang]} 已放入背包！` : `🥤 Bought ${activeEntity.data.name[currentLang]}!`);
+            setEntities(prev => prev.filter(e => e.uid !== activeEntity.uid));
+            setActiveEntity(null);
+        }
     };
 
     return (

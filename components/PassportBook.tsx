@@ -473,7 +473,35 @@ export const PassportBook: React.FC<PassportBookProps> = ({
         {/* 1. 全新进化：单行顶置工具栏 (左轻柔，右硬核) */}
         {/* ======================================================= */}
         {/* 1. 头部重构：手机竖屏上下排布，大屏左右排布，适当增加顶部间距避开右上角主菜单 */}
-        <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-4 pt-14 md:pt-8 pb-4 mb-4 z-[100] w-full">
+        <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-4 pt-4 md:pt-0 pb-4 mb-4 z-[100] w-full">
+
+          {/* 【右侧】硬核黑框组 (标题 + 统计报告 + 返回按钮) */}
+          <div className="flex items-center gap-4">
+            <h2 className={`text-2xl md:text-3xl font-black italic uppercase tracking-tighter mr-2 ${currentTheme.text}`} style={{ WebkitTextStroke: '0.5px black' }}>
+              {lang === 'cn' ? '星际档案馆' : 'Archives'}
+            </h2>
+
+            {/* 🌟 新增：故事收藏仓库按钮！ */}
+            <button
+              onClick={() => setIsCollectionOpen(true)}
+              className="w-12 h-12 flex items-center justify-center bg-[#FF90E8] text-black border-[3px] border-black rounded-xl shadow-[4px_4px_0_black] hover:-translate-y-1 active:translate-y-0.5 active:shadow-none transition-all"
+              title="Story Collection"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-6 h-6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+              </svg>
+            </button>
+
+            {/* 统计触发按钮 */}
+            <button
+              onClick={() => setIsStatsOpen(true)}
+              className="w-12 h-12 flex items-center justify-center bg-[#FFD93D] text-black border-[3px] border-black rounded-xl shadow-[4px_4px_0_black] hover:-translate-y-1 active:translate-y-0.5 active:shadow-none transition-all"
+              title="Astro Report"
+            >
+              <IconAstroStats className="w-6 h-6" />
+            </button>
+          </div>
+
           {/* 【左侧】透明/磨砂功能组 (主题点 + 搜索 + 排序) */}
           <div className="flex items-center gap-2 bg-white/20 backdrop-blur-xl p-2 rounded-2xl border border-white/30 shadow-lg">
 
@@ -558,33 +586,6 @@ export const PassportBook: React.FC<PassportBookProps> = ({
                 className={`bg-transparent border-none text-[11px] font-black tracking-tight focus:outline-none w-32 placeholder:opacity-30 ${currentTheme.text}`}
               />
             </div>
-          </div>
-
-          {/* 【右侧】硬核黑框组 (标题 + 统计报告 + 返回按钮) */}
-          <div className="flex items-center gap-4">
-            <h2 className={`text-2xl md:text-3xl font-black italic uppercase tracking-tighter mr-2 ${currentTheme.text}`} style={{ WebkitTextStroke: '0.5px black' }}>
-              {lang === 'cn' ? '星际档案馆' : 'Archives'}
-            </h2>
-
-            {/* 🌟 新增：故事收藏仓库按钮！ */}
-            <button
-              onClick={() => setIsCollectionOpen(true)}
-              className="w-12 h-12 flex items-center justify-center bg-[#FF90E8] text-black border-[3px] border-black rounded-xl shadow-[4px_4px_0_black] hover:-translate-y-1 active:translate-y-0.5 active:shadow-none transition-all"
-              title="Story Collection"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-6 h-6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-              </svg>
-            </button>
-
-            {/* 统计触发按钮 */}
-            <button
-              onClick={() => setIsStatsOpen(true)}
-              className="w-12 h-12 flex items-center justify-center bg-[#FFD93D] text-black border-[3px] border-black rounded-xl shadow-[4px_4px_0_black] hover:-translate-y-1 active:translate-y-0.5 active:shadow-none transition-all"
-              title="Astro Report"
-            >
-              <IconAstroStats className="w-6 h-6" />
-            </button>
           </div>
         </div>
 
